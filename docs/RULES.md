@@ -15,6 +15,14 @@
 | securitycenter | `virus-engine.sec.miui.com` | 默认关闭：风险应用云查 |
 | securitycenter | `framework.sec.miui.com` | 默认关闭：XSOF 合作方鉴权 |
 | securitycenter | `data.sec.miui.com` | 默认关闭：月报、防窥/广告等配置接口 |
+| securitycenter | `flash.sec.miui.com/user/cat` | 默认关闭：上传非系统应用包名数组（防窥分类） |
+| securitycenter | `api.sec.miui.com/earthquake/volunteer/sensor/upload` | 默认开启：志愿者传感器，OAID + 经纬度 |
+| securitycenter | `api.sec.miui.com/LBS/`、`/earthquake/`、`srv.sec.miui.com/earthquake/`、`gateway-papa.cloud.weizhi.com`、`eps.caict.ac.cn` | 默认关闭：地震预警 / 报警定位 / EPS |
+| securitycenter | `srv.sec.miui.com/data/adb` | 默认关闭：ADB 授权验证 |
+| guardprovider | `virus-engine.sec.miui.com` | 默认关闭：Flamingo 云查上传应用清单 |
+| trustservice | `find.api.micloud.xiaomi.net` | 默认关闭：设备证书 / 密钥上报 |
+| registration | `typdm.tydevice.com` | 默认开启：明文 HTTP 上传 CTEI / IMEI / MAC |
+| registration | `zzhc.vnet.cn` | 默认关闭：设备注册（IMEI / IMSI / ICCID） |
 | securitycenter | `fraud-detection.engine.miui.com` | 反诈配置 |
 | securitycenter | `flash.sec.miui.com` + `/detect/` | 检测接口 |
 | packageinstaller | `api.installer.xiaomi.com` + `/avl/upload` | 上传接口 |

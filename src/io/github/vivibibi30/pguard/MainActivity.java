@@ -83,6 +83,7 @@ public class MainActivity extends Activity {
                     new Item("应用列表云查", "仅拦 flash.sec.miui.com，不动病毒库", Config.K_GUARD_APPLIST, true),
                     new Item("AI 通话预警云检测", "detection-aigc.engine.miui.com", Config.K_GUARD_AIGC, true),
                     new Item("反诈配置拉取", "fraud-detection.engine.miui.com", Config.K_GUARD_FRAUD, true),
+                    new Item("云查上传（Flamingo）", "virus-engine.sec.miui.com；关闭后不再上传应用清单，本地病毒库照常", Config.K_GP_CLOUDSCAN, false),
             }),
             new Group("安全中心", "com.miui.securitycenter", Config.K_G_SECCENTER, new Item[]{
                     new Item("XSOF 行为查询拦截", "第三方查不到截图 / 通话 / 屏幕共享记录", Config.K_XSOF, true),
@@ -90,6 +91,10 @@ public class MainActivity extends Activity {
                     new Item("病毒库云查", "virus-engine.sec.miui.com，关闭后不再云端查毒", Config.K_SC_VIRUS, false),
                     new Item("XSOF 合作方鉴权", "framework.sec.miui.com，可能影响第三方调用", Config.K_SC_FRAMEWORK, false),
                     new Item("月报与配置上报", "data.sec.miui.com，含防窥/广告等接口", Config.K_SC_DATA, false),
+                    new Item("防窥分类上报", "上传非系统应用包名数组；关闭后防窥识别可能变差", Config.K_SC_APPCLASS, false),
+                    new Item("志愿者传感器上报", "OAID + 经纬度 + 时间；非志愿者无影响", Config.K_SC_VOLUNTEER, true),
+                    new Item("地震/报警/EPS 定位", "关闭后地震预警、紧急报警定位可能失效", Config.K_SC_LOCATION, false),
+                    new Item("ADB 授权验证", "srv.sec.miui.com/data/adb；关闭后 ADB 安装授权可能失败", Config.K_SC_ADB, false),
             }),
             new Group("小米统计", "com.miui.analytics", Config.K_G_ANALYTICS, new Item[]{
                     new Item("拦截上报", "tracking / om.tracking / sdkconfig", Config.K_ANALYTICS, true),
@@ -106,8 +111,13 @@ public class MainActivity extends Activity {
             new Group("小米服务框架", "com.xiaomi.xmsf", Config.K_G_AD_XMSF, new Item[]{
                     new Item("广告接口", "adv.sec.miui.com", Config.K_AD_XMSF, true),
             }),
+            new Group("运营商服务", "com.xiaomi.registration", Config.K_G_REGISTRATION, new Item[]{
+                    new Item("设备注册（zzhc）", "IMEI/IMSI/ICCID；关闭后 VoLTE / 运营商功能可能异常", Config.K_REG_ZZHC, false),
+                    new Item("明文 CTEI 上报", "http://typdm.tydevice.com，IMEI / MAC / BSSID 明文 GET", Config.K_REG_TYPDM, true),
+            }),
             new Group("小米可信服务", "com.xiaomi.trustservice", Config.K_G_TRUST, new Item[]{
                     new Item("屏蔽 MRM 认证链", "会影响设备证书 / 查找设备", Config.K_TRUST, false),
+                    new Item("设备证书/密钥上报", "find.api.micloud.xiaomi.net；关闭后查找设备、设备证书可能异常", Config.K_TRUST_FIND, false),
             }),
             new Group("翻译组件", "com.xiaomi.aiasst.vision", Config.K_G_AIASST, new Item[]{
                     new Item("语音识别上传", "只断 /speech/ 路径，保留文字翻译", Config.K_AIASST, false),

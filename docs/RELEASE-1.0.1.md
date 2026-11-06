@@ -23,12 +23,12 @@
 |---|---|---|
 | SystemHelper | `com.mobiletools.systemhelper` | 运营商遥测：设备 / SIM / 基站 / 应用列表 |
 | 系统安全组件 | `com.miui.guardprovider` | 应用列表云查、AI 通话预警云检测、反诈配置拉取 |
-| 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、反诈配置拉取；云查 / 合作方鉴权 / 月报默认关闭 |
+| 安全中心 | `com.miui.securitycenter` | XSOF、反诈配置、志愿者传感器上报；云查 / 鉴权 / 月报 / 防窥分类 / 地震报警定位 / ADB 验证默认关闭 |
 | 小米统计 | `com.miui.analytics` | tracking / om.tracking / sdkconfig 整域，含 DoH 旁路 |
 | 应用安装器 | `com.miui.packageinstaller` | AVL 上报、活跃统计、安装页广告位 |
 | 应用商店 | `com.xiaomi.market` | 广告配置下发 |
 | 小米服务框架 | `com.xiaomi.xmsf` | 广告接口 |
-| 小米可信服务 | `com.xiaomi.trustservice` | MRM 远程认证链（默认关闭） |
+| 小米可信服务 | `com.xiaomi.trustservice` | MRM 认证链、设备证书/密钥上报（均默认关闭） |
 | 翻译组件 | `com.xiaomi.aiasst.vision` | 语音识别上传（默认关闭） |
 
 ## 界面预览

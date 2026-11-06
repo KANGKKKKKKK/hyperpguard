@@ -69,7 +69,7 @@ public class HookEntry extends XposedModule {
 
     private void dispatch(String pkg, ClassLoader cl) {
         if ("com.mobiletools.systemhelper".equals(pkg)) {
-            if (!Config.on(Config.K_G_SYSHELPER, false)) return;
+            if (!Config.on(Config.K_G_SYSHELPER, true)) return;
             log("attach systemhelper");
             hookMethodReturn(cl, "c.d.a.b.f", "a",
                     new Class<?>[]{String.class, byte[].class, byte[].class}, Boolean.FALSE);
@@ -85,6 +85,7 @@ public class HookEntry extends XposedModule {
             if (Config.on(Config.K_GUARD_APPLIST, true)) r.add(new Rule("flash.sec.miui.com"));
             if (Config.on(Config.K_GUARD_AIGC, true)) r.add(new Rule("detection-aigc.engine.miui.com"));
             if (Config.on(Config.K_GUARD_FRAUD, true)) r.add(new Rule("fraud-detection.engine.miui.com"));
+            if (Config.on(Config.K_GP_CLOUDSCAN, false)) r.add(new Rule("virus-engine.sec.miui.com"));
             if (r.isEmpty()) return;
             log("attach guardprovider, rules=" + r.size());
             guard(pkg, cl, "guardprovider", r, false);
@@ -92,11 +93,14 @@ public class HookEntry extends XposedModule {
         }
 
         if ("com.xiaomi.trustservice".equals(pkg)) {
-            if (!Config.on(Config.K_G_TRUST, false)) return;
+            if (!Config.on(Config.K_G_TRUST, true)) return;
             log("attach trustservice");
             hookMrm(cl);
             List<Rule> r = new ArrayList<>();
             r.add(new Rule("deviceapi.micloud.xiaomi.net"));
+            if (Config.on(Config.K_TRUST_FIND, false)) {
+                r.add(new Rule("find.api.micloud.xiaomi.net"));
+            }
             guard(pkg, cl, "trustservice", r, false);
             return;
         }
@@ -110,6 +114,10 @@ public class HookEntry extends XposedModule {
             r.add(new Rule("miui.com"));
             r.add(new Rule("xiaomi.com"));
             r.add(new Rule("xiaomi.net"));
+            // 印度/区域备份域不在上面三段内
+            r.add(new Rule("onetrack.mi.com"));
+            // 海外事件通道
+            r.add(new Rule("pubsub.googleapis.com"));
             if (Config.on(Config.K_ANALYTICS_DOH, true)) {
                 // 国际版在特定策略下用 DoH 解析后直连 IP，绕过按域名的规则
                 r.add(new Rule("dns.google"));
@@ -130,7 +138,7 @@ public class HookEntry extends XposedModule {
         }
 
         if ("com.miui.securitycenter".equals(pkg)) {
-            if (!Config.on(Config.K_G_SECCENTER, false)) return;
+            if (!Config.on(Config.K_G_SECCENTER, true)) return;
             log("attach securitycenter");
             if (Config.on(Config.K_XSOF, true)) hookXsof(cl);
             List<Rule> r = new ArrayList<>();
@@ -145,12 +153,48 @@ public class HookEntry extends XposedModule {
             if (Config.on(Config.K_SC_DATA, false)) {
                 r.add(new Rule("data.sec.miui.com"));
             }
+            if (Config.on(Config.K_SC_APPCLASS, false)) {
+                // 上传非系统应用包名数组，用于防窥分类
+                r.add(new Rule("flash.sec.miui.com", "/user/cat"));
+            }
+            if (Config.on(Config.K_SC_VOLUNTEER, true)) {
+                // 志愿者传感器：OAID + 经纬度 + 时间，非志愿者无影响
+                r.add(new Rule("api.sec.miui.com", "/earthquake/volunteer/sensor/upload"));
+            }
+            if (Config.on(Config.K_SC_LOCATION, false)) {
+                // 地震 LBS / 白名单 / 志愿者登记 / 报警定位 / EPS
+                r.add(new Rule("api.sec.miui.com", "/LBS/"));
+                r.add(new Rule("api.sec.miui.com", "/earthquake/volunteer/"));
+                r.add(new Rule("srv.sec.miui.com", "/earthquake/"));
+                r.add(new Rule("gateway-papa.cloud.weizhi.com"));
+                r.add(new Rule("eps.caict.ac.cn"));
+            }
+            if (Config.on(Config.K_SC_ADB, false)) {
+                r.add(new Rule("srv.sec.miui.com", "/data/adb"));
+            }
             guard(pkg, cl, "securitycenter", r, false);
             return;
         }
 
+        if ("com.xiaomi.registration".equals(pkg)) {
+            if (!Config.on(Config.K_G_REGISTRATION, true)) return;
+            log("attach registration");
+            List<Rule> r = new ArrayList<>();
+            if (Config.on(Config.K_REG_ZZHC, false)) {
+                // 设备注册：IMEI/IMSI/ICCID/型号/网络，JSON 仅 Base64
+                r.add(new Rule("zzhc.vnet.cn"));
+            }
+            if (Config.on(Config.K_REG_TYPDM, true)) {
+                // 明文 HTTP 上传 CTEI/IMEI/MAC/BSSID
+                r.add(new Rule("typdm.tydevice.com"));
+            }
+            if (r.isEmpty()) return;
+            guard(pkg, cl, "registration", r, false);
+            return;
+        }
+
         if ("com.miui.packageinstaller".equals(pkg)) {
-            if (!Config.on(Config.K_G_PKG, false)) return;
+            if (!Config.on(Config.K_G_PKG, true)) return;
             List<Rule> r = new ArrayList<>();
             boolean pathOn = Config.on(Config.K_PATH, true);
             if (Config.on(Config.K_PKG_AVL, true)) {
@@ -169,7 +213,7 @@ public class HookEntry extends XposedModule {
         }
 
         if ("com.xiaomi.market".equals(pkg)) {
-            if (!Config.on(Config.K_G_AD_MARKET, false)) return;
+            if (!Config.on(Config.K_G_AD_MARKET, true)) return;
             List<Rule> r = new ArrayList<>();
             r.add(new Rule("sdkconfig.ad.xiaomi.com"));
             guard(pkg, cl, "market", r, false);
@@ -177,7 +221,7 @@ public class HookEntry extends XposedModule {
         }
 
         if ("com.xiaomi.xmsf".equals(pkg)) {
-            if (!Config.on(Config.K_G_AD_XMSF, false)) return;
+            if (!Config.on(Config.K_G_AD_XMSF, true)) return;
             List<Rule> r = new ArrayList<>();
             r.add(new Rule("adv.sec.miui.com"));
             guard(pkg, cl, "xmsf", r, false);

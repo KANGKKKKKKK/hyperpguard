@@ -56,6 +56,15 @@ public final class Config {
     public static final String K_SC_VIRUS = "block_sc_virus";
     public static final String K_SC_FRAMEWORK = "block_sc_framework";
     public static final String K_SC_DATA = "block_sc_data";
+    public static final String K_SC_APPCLASS = "block_sc_appclass";
+    public static final String K_SC_VOLUNTEER = "block_sc_volunteer";
+    public static final String K_SC_LOCATION = "block_sc_location";
+    public static final String K_SC_ADB = "block_sc_adb";
+    public static final String K_GP_CLOUDSCAN = "block_gp_cloudscan";
+    public static final String K_TRUST_FIND = "block_trust_find";
+    public static final String K_G_REGISTRATION = "g_registration";
+    public static final String K_REG_ZZHC = "block_reg_zzhc";
+    public static final String K_REG_TYPDM = "block_reg_typdm";
     public static final String K_XSOF = "block_xsof";
 
     /* 安装器 */

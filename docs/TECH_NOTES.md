@@ -112,6 +112,15 @@
 这段是跨进程交接，只拦 analytics 自身 UID 挡不住；要覆盖需要在 XMSF 侧加规则，但那会波及推送，默认不做。
 
 
+## 组门 fallback 陷阱（1.0.1 修）
+
+hook 侧 `Config.on(key, fallback)` 直接返回 fallback（读不到 UI 的 SharedPreferences），因此
+`if (!Config.on(Config.K_G_XXX, false)) return;` 这类"组开关"判断等于恒 false —— 整段 hook 从不安装。
+
+受影响的是 SystemHelper、安全中心、MiTrustService、应用安装器、应用商店、XMSF 六段；
+guardprovider 与 analytics 没有这个门，所以只有它们真正生效过。修复方式：组门统一用 `true` 作为
+fallback，子项各自保留原本的默认值。
+
 ## 观察到的历史失效点
 
 | 现象 | 原因 | 处理 |

@@ -65,14 +65,15 @@
 | 组件 | 包名 | 拦截内容 | 默认 |
 |---|---|---|---|
 | SystemHelper | `com.mobiletools.systemhelper` | 运营商遥测：设备 / SIM / 基站 / 应用列表 | 开 |
-| 系统安全组件 | `com.miui.guardprovider` | 应用列表云查、AI 通话预警云检测、反诈配置拉取 | 开 |
-| 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、反诈配置拉取；云查 / 合作方鉴权 / 月报三项默认关闭 | 开 |
+| 系统安全组件 | `com.miui.guardprovider` | 应用列表云查、AI 通话预警云检测、反诈配置拉取；Flamingo 云查上传默认关闭 | 开 |
+| 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、反诈配置拉取、志愿者传感器上报；云查 / 合作方鉴权 / 月报 / 防窥分类 / 地震报警定位 / ADB 验证默认关闭 | 开 |
 | 小米统计 | `com.miui.analytics` | tracking / om.tracking / sdkconfig 整域，含 DoH 旁路 | 开 |
 | 应用安装器 | `com.miui.packageinstaller` | AVL 上报、活跃统计、安装页广告位 | 开 |
 | 应用商店 | `com.xiaomi.market` | 广告配置下发 | 开 |
 | 小米服务框架 | `com.xiaomi.xmsf` | 广告接口 | 开 |
-| 小米可信服务 | `com.xiaomi.trustservice` | MRM 远程认证链 | 关 |
+| 小米可信服务 | `com.xiaomi.trustservice` | MRM 远程认证链（关）、设备证书/密钥上报（关） | 关 |
 | 翻译组件 | `com.xiaomi.aiasst.vision` | 语音识别上传（`/speech/`） | 关 |
+| 运营商服务 | `com.xiaomi.registration` | 设备注册（zzhc，关）、明文 CTEI 上报（开） | — |
 
 默认关闭的两项（小米可信服务、翻译组件）会影响设备证书、查找设备与语音识别，需要时再单独开启。
 
@@ -344,6 +345,9 @@ build.sh                           一键构建
 - analytics 方法层补 `d.f.n#y(long,long)`（6.19.0 实测），并对 `(long,long) -> JSONObject` 签名做全量扫描，覆盖 6.33.0 的 `a.b.a.*` 改名
 - 安全中心新增三个默认关闭的子项：病毒库云查（`virus-engine.sec.miui.com`）、XSOF 合作方鉴权（`framework.sec.miui.com`）、月报与配置上报（`data.sec.miui.com`）
 - 移除「服务与反馈」（`com.miui.miservice`）占位：无卡片、无规则，留着只会出现勾不上的推荐项
+- 新增运营商服务分组：`typdm.tydevice.com`（明文 HTTP 上传 IMEI/MAC）默认拦，`zzhc.vnet.cn`（设备注册）默认关
+- 新增默认关闭的子项：防窥分类上报、地震/报警/EPS 定位、ADB 授权验证、Flamingo 云查上传、设备证书/密钥上报；志愿者传感器上报默认拦
+- 修复：组门用 `Config.on(key, false)` 判断，而 hook 侧恒返回 fallback，导致 SystemHelper / 安全中心 / MiTrustService / 安装器 / 商店 / XMSF 六段 hook 从未安装
 - 修复：应用重装导致 uid 变化后 KernelSU 授权失效
 
 ### 1.0.0
