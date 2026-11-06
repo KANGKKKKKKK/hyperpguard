@@ -6,6 +6,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -24,6 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -218,6 +220,70 @@ public class MainActivity extends Activity {
         setContentView(sv);
     }
 
+    /* ---------------- LSPosed 作用域同步 ---------------- */
+
+    /**
+     * 把某一组开关同步到 LSPosed 的作用域表。
+     * 直接改 /data/adb/lspd/config/modules_config.db：先连同 -wal/-shm 复制出来，
+     * 用 SQLiteDatabase 合并修改，再写回主库并清除旧 WAL，避免回滚覆盖。
+     * 改完后新启动的进程即按新作用域注入；已运行进程需重启或重启设备。
+     */
+    private void syncScope(final String pkg, final boolean enable) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String msg;
+                try {
+                    File dir = new File(getCacheDir(), "lspd");
+                    dir.mkdirs();
+                    String src = "/data/adb/lspd/config/modules_config.db";
+                    String dst = new File(dir, "modules_config.db").getAbsolutePath();
+
+                    execSu("cp -f " + src + " " + dst);
+                    execSu("cp -f " + src + "-wal " + dst + "-wal 2>/dev/null; true");
+                    execSu("cp -f " + src + "-shm " + dst + "-shm 2>/dev/null; true");
+                    execSu("chmod 666 " + dst + "*");
+
+                    SQLiteDatabase db = SQLiteDatabase.openDatabase(
+                            dst, null, SQLiteDatabase.OPEN_READWRITE);
+                    if (enable) {
+                        db.execSQL("INSERT OR IGNORE INTO scope"
+                                        + "(module_pkg_name,app_pkg_name,user_id) VALUES(?,?,0)",
+                                new Object[]{Config.PKG, pkg});
+                    } else {
+                        db.execSQL("DELETE FROM scope WHERE module_pkg_name=? AND app_pkg_name=?",
+                                new Object[]{Config.PKG, pkg});
+                    }
+                    db.close();
+
+                    execSu("rm -f " + src + "-wal " + src + "-shm");
+                    execSu("cp -f " + dst + " " + src);
+                    execSu("chmod 666 " + src);
+
+                    msg = (enable ? "已加入作用域：" : "已移出作用域：") + pkg
+                            + "\n重启目标应用后生效";
+                } catch (Throwable t) {
+                    msg = "作用域同步失败：" + t + "\n可在 LSPosed 中手动勾选";
+                }
+                final String m = msg;
+                ui.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, m, Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private void execSu(String cmd) {
+        try {
+            Process p = Runtime.getRuntime().exec(new String[]{"su", "-c", cmd});
+            p.waitFor();
+        } catch (Throwable ignored) {
+        }
+    }
+
     /* ---------------- 环境检测 ---------------- */
 
     private void checkEnvironment(final LinearLayout box) {
@@ -386,8 +452,9 @@ public class MainActivity extends Activity {
             public void onCheckedChanged(CompoundButton v, boolean checked) {
                 Config.uiSet(MainActivity.this, g.key, checked);
                 applyGroupState(g, true);
+                syncScope(g.pkg, checked);
                 Toast.makeText(MainActivity.this,
-                        g.title + (checked ? " 已启用" : " 已停用，重启后不再注入"),
+                        g.title + (checked ? " 已启用，正在同步作用域" : " 已停用，正在同步作用域"),
                         Toast.LENGTH_SHORT).show();
             }
         });
