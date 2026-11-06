@@ -191,8 +191,9 @@ public class MainActivity extends Activity {
         LinearLayout bulk = new LinearLayout(this);
         bulk.setOrientation(LinearLayout.HORIZONTAL);
         bulk.setPadding(0, 0, 0, dp(6));
-        bulk.addView(bulkButton("全部启用", true));
-        bulk.addView(bulkButton("全部停用", false));
+        bulk.addView(bulkButton("全部启用", this::requestAll));
+        bulk.addView(bulkButton("全部停用", this::removeAll));
+        bulk.addView(bulkButton("全部重启", this::restartAll));
         root.addView(bulk);
 
 
@@ -476,7 +477,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private android.view.View bulkButton(final String label, final boolean enable) {
+    private android.view.View bulkButton(final String label, final Runnable action) {
         TextView tv = new TextView(this);
         tv.setText(label);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
@@ -485,10 +486,7 @@ public class MainActivity extends Activity {
         tv.setPadding(0, dp(8), 0, dp(8));
         tv.setLayoutParams(new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        tv.setOnClickListener(v -> {
-            if (enable) requestAll();
-            else removeAll();
-        });
+        tv.setOnClickListener(v -> action.run());
         return tv;
     }
 
@@ -673,6 +671,45 @@ public class MainActivity extends Activity {
                             "am force-stop " + pkg});
                     int code = p.waitFor();
                     msg = code == 0 ? (pkg + " 已重启") : (pkg + " 重启失败 code=" + code);
+                } catch (Throwable t) {
+                    msg = "重启失败：" + t;
+                }
+                final String m = msg;
+                ui.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, m, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        }).start();
+    }
+
+    /** 重启作用域内全部应用，让 hook 重新加载 */
+    private void restartAll() {
+        final List<String> pkgs = new ArrayList<>();
+        java.util.List<String> sc = safeScope();
+        if (sc != null && !sc.isEmpty()) {
+            pkgs.addAll(sc);
+        } else {
+            for (Group g : GROUPS) pkgs.add(g.pkg);
+        }
+        if (pkgs.isEmpty()) {
+            Toast.makeText(this, "作用域为空", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Toast.makeText(this, "正在重启 " + pkgs.size() + " 个应用（需 root）",
+                Toast.LENGTH_SHORT).show();
+        final StringBuilder cmd = new StringBuilder();
+        for (String p : pkgs) cmd.append("am force-stop ").append(p).append("; ");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String msg;
+                try {
+                    Process p = Runtime.getRuntime().exec(new String[]{"su", "-c", cmd.toString()});
+                    int code = p.waitFor();
+                    msg = "已重启 " + pkgs.size() + " 个应用" + (code == 0 ? "" : "（code=" + code + "）");
                 } catch (Throwable t) {
                     msg = "重启失败：" + t;
                 }
