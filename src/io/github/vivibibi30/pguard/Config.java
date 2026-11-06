@@ -46,6 +46,7 @@ public final class Config {
     /* analytics */
     public static final String K_ANALYTICS = "block_analytics";
     public static final String K_STRICT = "strict_all";
+    public static final String K_ANALYTICS_DOH = "block_analytics_doh";
 
     /* 翻译组件 */
     public static final String K_AIASST = "block_aiasst";

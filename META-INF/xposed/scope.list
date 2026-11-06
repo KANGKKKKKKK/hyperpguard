@@ -1,8 +1,9 @@
-com.mobiletools.systemhelper
+com.miui.analytics
 com.miui.guardprovider
-com.xiaomi.trustservice
-com.xiaomi.aiasst.vision
-com.miui.securitycenter
 com.miui.packageinstaller
+com.miui.securitycenter
+com.mobiletools.systemhelper
+com.xiaomi.aiasst.vision
 com.xiaomi.market
+com.xiaomi.trustservice
 com.xiaomi.xmsf

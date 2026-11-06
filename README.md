@@ -38,6 +38,8 @@
 | SystemHelper | `c.d.a.b.f#a(String, byte[], byte[])` | 发送函数返回 false |
 | SystemHelper | `c.d.a.b.e#a(String)` | 不再写入待发队列 |
 | trustservice | `ServiceManager.getService/waitForService` 含 `mrm` | MRM 服务取不到，远程认证链断开 |
+| analytics | `d.f.n#y(long,long)`（6.19.0 实测） | 应用使用记录不生成 |
+| analytics | `onetrack.p.u#w` / `c.f.k#y` / `onetrack.q.c#a,b,c`（旧版） | 存在才挂，版本不符仅记 `hook miss` |
 
 方法层与网络层互不依赖：类名变化时域名规则仍在工作，域名更换时方法层仍在工作，日志中可分辨是哪一层在起作用。
 
@@ -64,6 +66,7 @@
 | SystemHelper | `com.mobiletools.systemhelper` | 运营商遥测：设备 / SIM / 基站 / 应用列表 | 开 |
 | 系统安全组件 | `com.miui.guardprovider` | 应用列表云查、AI 通话预警云检测、反诈配置拉取 | 开 |
 | 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、反诈配置拉取 | 开 |
+| 小米统计 | `com.miui.analytics` | tracking / om.tracking / sdkconfig 整域，含 DoH 旁路 | 开 |
 | 应用安装器 | `com.miui.packageinstaller` | AVL 上报、活跃统计、安装页广告位 | 开 |
 | 应用商店 | `com.xiaomi.market` | 广告配置下发 | 开 |
 | 小米服务框架 | `com.xiaomi.xmsf` | 广告接口 | 开 |
@@ -107,9 +110,10 @@
 
    ```
    com.mobiletools.systemhelper    com.miui.guardprovider
-   com.miui.securitycenter         com.miui.packageinstaller
-   com.xiaomi.market               com.xiaomi.xmsf
-   com.xiaomi.trustservice         com.xiaomi.aiasst.vision
+   com.miui.securitycenter         com.miui.analytics
+   com.miui.packageinstaller       com.xiaomi.market
+   com.xiaomi.xmsf                 com.xiaomi.trustservice
+   com.xiaomi.aiasst.vision
    ```
 
 4. 在模块里对目标应用点一次「重启」，让它重新加载即可生效
@@ -257,6 +261,7 @@ build.sh                           一键构建
 - 拦截范围限于已经识别的路径与规则，不代表覆盖 HyperOS 的全部采集或联网行为
 - 方法层依赖当前版本的类名与签名，系统组件升级后可能 `hook miss`；此时网络层仍然工作
 - 使用 native 网络栈（如 Cronet）的请求不受 Java 层 hook 影响
+- analytics 会把材料通过 XMSF 广播交出去，这一段属于跨进程交接，只拦 analytics 自身 UID 覆盖不到
 - 若某个域名同时承担上报与功能，本模块按路径拆分处理；未拆分的条目默认关闭
 - 本地数据库不再增长不能单独证明不存在其他采集或上传途径
 - 模块不修改系统 APK，不删除已有数据，停用后行为立即恢复
@@ -333,7 +338,9 @@ build.sh                           一键构建
 - 应用总开关关闭时，其下子项置灰且不可操作；打开后恢复
 - 「重启」「查看记录」需要 root 的提示写进设置卡片，应用启动不再自动 `su`
 - 构建：固定签名 `debug.keystore` 并校验证书指纹；META-INF 打进 APK 根目录
-- 移除「小米统计」分组：原方法层规则针对旧版混淆类名，在 6.19.0 上全部对不上，且该包通常被广告模块替换
+- 「小米统计」改为整域拦截（`miui.com` / `xiaomi.com` / `xiaomi.net`），覆盖 `tracking`、`om.tracking`、区域与备份域、`sdkconfig` 等新版通道
+- 「小米统计」新增「阻断 DoH 旁路」：拦 `dns.google` 与 `8.8.8.8` / `8.8.4.4`，对应 6.33.0 国际版的 DoH + IP 缓存重试
+- analytics 方法层补 `d.f.n#y(long,long)`（6.19.0 实测），旧版类名保留但版本不符时只记 `hook miss`
 - 修复：应用重装导致 uid 变化后 KernelSU 授权失效
 
 ### 1.0.0

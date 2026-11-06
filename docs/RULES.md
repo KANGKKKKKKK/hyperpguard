@@ -10,6 +10,8 @@
 | guardprovider | `flash.sec.miui.com` | 应用特征上传接口 |
 | guardprovider | `detection-aigc.engine.miui.com` | AI 通话预警云检测 |
 | guardprovider | `fraud-detection.engine.miui.com` | 反诈配置拉取 |
+| analytics | `*.miui.com` `*.xiaomi.com` `*.xiaomi.net` | 整域拦截，覆盖 tracking / om.tracking / 区域与备份域 / sdkconfig |
+| analytics | `dns.google` `8.8.8.8` `8.8.4.4` | 6.33.0 国际版 DoH + IP 缓存重试通道 |
 | securitycenter | `fraud-detection.engine.miui.com` | 反诈配置 |
 | securitycenter | `flash.sec.miui.com` + `/detect/` | 检测接口 |
 | packageinstaller | `api.installer.xiaomi.com` + `/avl/upload` | 上传接口 |

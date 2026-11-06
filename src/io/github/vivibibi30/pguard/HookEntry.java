@@ -101,6 +101,25 @@ public class HookEntry extends XposedModule {
             return;
         }
 
+        if ("com.miui.analytics".equals(pkg)) {
+            if (!Config.on(Config.K_ANALYTICS, true)) return;
+            log("attach analytics");
+            hookAnalyticsMethods(cl);
+            List<Rule> r = new ArrayList<>();
+            // 统计进程整域拦截：tracking(.miui.com) / 区域与 om.tracking / sdkconfig 全覆盖
+            r.add(new Rule("miui.com"));
+            r.add(new Rule("xiaomi.com"));
+            r.add(new Rule("xiaomi.net"));
+            if (Config.on(Config.K_ANALYTICS_DOH, true)) {
+                // 国际版在特定策略下用 DoH 解析后直连 IP，绕过按域名的规则
+                r.add(new Rule("dns.google"));
+                r.add(new Rule("8.8.8.8"));
+                r.add(new Rule("8.8.4.4"));
+            }
+            guard(pkg, cl, "analytics", r, Config.strict());
+            return;
+        }
+
         if ("com.xiaomi.aiasst.vision".equals(pkg)) {
             if (!Config.on(Config.K_AIASST, false)) return;
             log("attach aiasst.vision");
@@ -157,6 +176,23 @@ public class HookEntry extends XposedModule {
     }
 
     /* ---------------- 方法层 ---------------- */
+
+    private void hookAnalyticsMethods(ClassLoader cl) {
+        // 旧版 analytics：类名随版本变化，存在才挂，不存在只留 miss 日志
+        hookMethodReturn(cl, "com.miui.analytics.onetrack.p.u", "w",
+                new Class<?>[]{long.class, long.class}, null);
+        hookMethodReturn(cl, "com.miui.analytics.c.f.k", "y",
+                new Class<?>[]{long.class, long.class}, null);
+        hookMethodReturn(cl, "com.miui.analytics.onetrack.q.c", "a",
+                new Class<?>[]{android.content.Context.class}, Integer.valueOf(0));
+        hookMethodReturn(cl, "com.miui.analytics.onetrack.q.c", "b",
+                new Class<?>[]{android.content.Context.class}, "NONE");
+        hookMethodReturn(cl, "com.miui.analytics.onetrack.q.c", "c",
+                new Class<?>[0], Boolean.FALSE);
+        // 6.19.0：应用使用记录聚合（app_start / app_end / app_duration / radio）
+        hookMethodReturn(cl, "com.miui.analytics.d.f.n", "y",
+                new Class<?>[]{long.class, long.class}, null);
+    }
 
     private void hookMrm(ClassLoader cl) {
         try {

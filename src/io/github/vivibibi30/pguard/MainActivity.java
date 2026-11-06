@@ -88,6 +88,10 @@ public class MainActivity extends Activity {
                     new Item("XSOF 行为查询拦截", "第三方查不到截图 / 通话 / 屏幕共享记录", Config.K_XSOF, true),
                     new Item("反诈配置拉取", "fraud-detection.engine.miui.com", Config.K_SECCENTER, true),
             }),
+            new Group("小米统计", "com.miui.analytics", Config.K_G_ANALYTICS, new Item[]{
+                    new Item("拦截上报", "tracking / om.tracking / sdkconfig", Config.K_ANALYTICS, true),
+                    new Item("阻断 DoH 旁路", "dns.google 与 8.8.8.8，防解析绕过域名规则", Config.K_ANALYTICS_DOH, true),
+            }),
             new Group("应用安装器", "com.miui.packageinstaller", Config.K_G_PKG, new Item[]{
                     new Item("AVL 上报", "…/avl/upload", Config.K_PKG_AVL, true),
                     new Item("安装活跃统计", "…/statistics/appactive", Config.K_PKG_STAT, true),

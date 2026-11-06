@@ -71,22 +71,34 @@
 | `/info/layout` | 返回 `AdModel`（广告位配置） | 拦（归入广告组） |
 | `/interceptcheck` | 游戏安装安全拦截（功能） | **不拦** |
 
-## 小米统计 · `com.miui.analytics`（分组已移除）
+## 小米统计 · `com.miui.analytics`
 
-原实现按公开资料硬编码了 5 个方法：`onetrack.p.u#w(long,long)`、`c.f.k#y(long,long)`、
-`onetrack.q.c#a(Context)/#b(Context)/#c()`。对原始 APK（6.19.0，1.4 MB）反编译核对后发现全部对不上：
+该包混淆强度高、类名逐版本变化，因此按「网络层为主、方法层尽力」实现。
 
-| 目标 | 6.19.0 实际情况 |
-|---|---|
-| `com.miui.analytics.c.f.k` | 类不存在 |
-| `com.miui.analytics.onetrack.p.u#w` | 类在，无 `w` 方法（实际为 `s`/`t`/`v`/`a`/`u`） |
-| `com.miui.analytics.onetrack.q.c#a/#b/#c` | 类在，签名是 `(String,long)`、`(boolean,String,IOException,String)`、`(String,int,String)` |
+### 方法层（版本相关，存在才挂）
 
-真实位置是 `com.miui.analytics.d.f.n#y(long,long)`（返回应用使用记录的 JSONObject）和
-`com.miui.analytics.onetrack.q.c` 的 `f`/`g`/`h`/`i`/`j`/`k`/`l`/`m`（自带 HttpURLConnection 发送）。
+| 版本 | 目标 | 说明 |
+|---|---|---|
+| 6.19.0 | `com.miui.analytics.d.f.n#y(long, long)` | 实测存在，返回应用使用记录 JSON（`app_start` / `app_end` / `app_duration` / `radio` / `seq`），返回 `null` |
+| 旧版 | `onetrack.p.u#w`、`c.f.k#y`、`onetrack.q.c#a/#b/#c` | 公开资料里的旧混淆名；6.19.0 上类不存在或签名不符，仅在旧版本生效 |
+| 6.33.0 | `a.b.a.e.h0.y`（使用事件）、`a.b.a.e.f0.z`（事件处理 + `track/v4`）、`a.b.a.e.i0.c`（发送通道） | 来自第三方静态分析（FAQQAQ/HyperOS4-XSOF-Analysis），本机无该版本，未实测，暂不硬编码 |
 
-由于该类名随版本变化、本机又用模块把 AnalyticsCore 替换成了空壳，1.0.1 起直接移除「小米统计」分组，
-不再提供无效开关。
+### 网络层（与版本无关，主防线）
+
+整域拦截 `miui.com` / `xiaomi.com` / `xiaomi.net`，覆盖：
+
+- `tracking.miui.com/track/v4`（OneTrack）、`/track/v1`（旧统计）、`/track/key_get`、`/track/getNonce`
+- `om.tracking.miui.com/track/mt`（国内 EventMonitor，精确 hosts 规则覆盖不到）
+- `tracking.india/rus/eu/intl.miui.com` 与 `pn-tracking-bak.onetrack.mi.com`
+- `sdkconfig(.intl).xiaomi.com`（配置与自更新）
+
+另外单独拦 `dns.google` 与 `8.8.8.8` / `8.8.4.4`：6.33.0 国际版在策略与网络异常条件下会走 DoH 解析后直连 IP，纯域名规则会被绕过。
+
+### 覆盖不到的部分
+
+`com.miui.analytics.internal.collection.AppenderManager` 会把材料 JSON 广播给
+`com.xiaomi.xmsf/com.xiaomi.xmsf.push.service.receivers.XMSFUploadReceiver`（action `com.xiaomi.xmsf.push.XMSF_UPLOAD_ACTIVE`）。
+这段是跨进程交接，只拦 analytics 自身 UID 挡不住；要覆盖需要在 XMSF 侧加规则，但那会波及推送，默认不做。
 
 
 ## 观察到的历史失效点
