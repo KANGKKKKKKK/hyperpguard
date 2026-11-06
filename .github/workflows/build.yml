@@ -100,6 +100,28 @@ jobs:
           echo "RELEASE_VER=$V" >> "$GITHUB_ENV"
           echo "release notes: $F (version $V)"
 
+      # 同步到 LSPosed 分发仓库（tag 必须是 versionCode-versionName）
+      - name: Publish to LSPosed repo
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.LSPOSED_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "未配置 LSPOSED_TOKEN，跳过"
+            exit 0
+          fi
+          CODE=$("$AAPT2" dump badging PrivacyGuard.apk | sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p" | head -1)
+          NAME=$("$AAPT2" dump badging PrivacyGuard.apk | sed -n "s/.*versionName='\([^']*\)'.*/\1/p" | head -1)
+          TAG="$CODE-$NAME"
+          NOTES="docs/RELEASE-$NAME.md"
+          [ -f "$NOTES" ] || NOTES="docs/RELEASE.md"
+          cp PrivacyGuard.apk "/tmp/PrivacyGuard-$NAME.apk"
+          gh release create "$TAG" "/tmp/PrivacyGuard-$NAME.apk" \
+            --repo Xposed-Modules-Repo/io.github.vivibibi30.pguard \
+            --title "$NAME" --notes-file "$NOTES" \
+          || gh release upload "$TAG" "/tmp/PrivacyGuard-$NAME.apk" \
+            --repo Xposed-Modules-Repo/io.github.vivibibi30.pguard --clobber
+
       - name: Publish Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
