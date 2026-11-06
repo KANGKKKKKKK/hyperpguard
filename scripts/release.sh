@@ -10,9 +10,9 @@ set -e
 TOKEN=${GITHUB_TOKEN:?请提供 GITHUB_TOKEN（带 repo 权限的 PAT）}
 REPO=${REPO:-vivibibi30/pguard}
 TAG=${TAG:-v1.1.0}
-NAME=${NAME:-PrivacyGuard 1.1.0}
+NAME=${NAME:-HyperPGuard 1.1.0}
 BODY=${BODY:-docs/RELEASE-1.1.0.md}
-APK=${1:-PrivacyGuard.apk}
+APK=${1:-HyperPGuard.apk}
 API=https://api.github.com
 AUTH="Authorization: Bearer $TOKEN"
 

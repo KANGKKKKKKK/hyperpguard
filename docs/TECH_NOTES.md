@@ -128,16 +128,16 @@
 真机验证（重启安全中心后）：
 
 ```
-I PrivacyGuard: attach securitycenter
-I PrivacyGuard: hook ok android.telephony.TelephonyManager#getDeviceId
-I PrivacyGuard: hook ok android.telephony.TelephonyManager#getImei
-I PrivacyGuard: hook ok android.telephony.TelephonyManager#getMeid
-I PrivacyGuard: hook ok android.telephony.TelephonyManager#getSubscriberId
-I PrivacyGuard: hook ok android.telephony.TelephonyManager#getSimSerialNumber
-I PrivacyGuard: xsof provider hooked
-I PrivacyGuard: xsof aidl hooked=7
-I PrivacyGuard: xsof db write hooked=27
-I PrivacyGuard: xsof score hooked=1
+I HyperPGuard: attach securitycenter
+I HyperPGuard: hook ok android.telephony.TelephonyManager#getDeviceId
+I HyperPGuard: hook ok android.telephony.TelephonyManager#getImei
+I HyperPGuard: hook ok android.telephony.TelephonyManager#getMeid
+I HyperPGuard: hook ok android.telephony.TelephonyManager#getSubscriberId
+I HyperPGuard: hook ok android.telephony.TelephonyManager#getSimSerialNumber
+I HyperPGuard: xsof provider hooked
+I HyperPGuard: xsof aidl hooked=7
+I HyperPGuard: xsof db write hooked=27
+I HyperPGuard: xsof score hooked=1
 ```
 
 ## 组门 fallback 陷阱（1.0.1 修）

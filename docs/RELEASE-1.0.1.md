@@ -1,4 +1,4 @@
-# PrivacyGuard 1.0.1
+# HyperPGuard 1.0.1
 
 [![Build APK](https://github.com/vivibibi30/pguard/actions/workflows/build.yml/badge.svg)](https://github.com/vivibibi30/pguard/actions/workflows/build.yml)
 
@@ -73,7 +73,7 @@
 
 ## 安装
 
-1. 安装本页附件 `PrivacyGuard-1.0.1.apk`
+1. 安装本页附件 `HyperPGuard-1.0.1.apk`
 2. 在 LSPosed 中启用「隐私上报拦截」
 3. 打开模块，首次会向 LSPosed 请求全部作用域，允许即可；也可在 LSPosed 里手动勾选
 4. 在模块里对目标应用点一次「重启」即可生效
@@ -86,8 +86,8 @@
 ```
 
 ```sh
-apksigner verify --print-certs PrivacyGuard.apk   # 证书指纹应一致
-sha256sum PrivacyGuard.apk                        # 与下载页显示的 sha256 对照
+apksigner verify --print-certs HyperPGuard.apk   # 证书指纹应一致
+sha256sum HyperPGuard.apk                        # 与下载页显示的 sha256 对照
 ```
 
 附件由 CI 构建，字节哈希会随构建变化，以 Release 附件页显示的 `sha256:` 为准；证书指纹固定不变，可用来确认是不是同一把密钥签的。

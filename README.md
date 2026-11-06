@@ -1,8 +1,8 @@
-# PrivacyGuard
+# HyperPGuard
 
 面向 MIUI / HyperOS 的隐私上报拦截模块（LSPosed / Xposed）。
 
-[![Build APK](https://github.com/vivibibi30/pguard/actions/workflows/build.yml/badge.svg)](https://github.com/vivibibi30/pguard/actions/workflows/build.yml)
+[![Build APK](https://github.com/vivibibi30/hyperpguard/actions/workflows/build.yml/badge.svg)](https://github.com/vivibibi30/hyperpguard/actions/workflows/build.yml)
 
 预装系统组件会持续采集设备标识、应用使用记录、位置、通话行为等信息，并通过网络或跨进程接口提供给厂商、运营商或第三方。本模块在**采集入口、本地存储、对外接口、网络出口**四个环节同时设防，按应用分组独立开关。
 
@@ -118,7 +118,7 @@
 
 ## 安装
 
-1. 安装 `PrivacyGuard-1.1.0.apk`
+1. 安装 `HyperPGuard-1.1.0.apk`
 2. 打开 LSPosed → 模块，启用「隐私上报拦截」
 3. 首次打开模块会自动向 LSPosed 请求全部作用域，允许即可；也可在 LSPosed 里手动勾选：
 
@@ -208,17 +208,17 @@
 3. 在模块里点「查看记录」，应看到：
 
    ```
-   [PrivacyGuard] attach guardprovider, rules=3
-   [PrivacyGuard] guardprovider X(host) flash.sec.miui.com
+   [HyperPGuard] attach guardprovider, rules=3
+   [HyperPGuard] guardprovider X(host) flash.sec.miui.com
    ```
 
 4. 检查 XSOF 部分是否全部为 `hooked`，没有 `miss`：
 
    ```
-   [PrivacyGuard] xsof provider hooked
-   [PrivacyGuard] xsof aidl hooked=7
-   [PrivacyGuard] xsof db write hooked=27
-   [PrivacyGuard] xsof score hooked=1
+   [HyperPGuard] xsof provider hooked
+   [HyperPGuard] xsof aidl hooked=7
+   [HyperPGuard] xsof db write hooked=27
+   [HyperPGuard] xsof score hooked=1
    ```
 
 5. 若某个应用日志里只有 `attach` 没有 `X(...)`，说明规则没命中——开抓取模式跑一段时间，把 `?` 开头的域名补进规则。
@@ -312,6 +312,16 @@ build.sh                           一键构建
 感谢以上作者与维护者。
 
 ## 更新日志
+
+### 1.2.0（对比 1.1.2）
+
+| 项 | 1.1.2 | 1.2.0 |
+|---|---|---|
+| 模块名 | PrivacyGuard | HyperPGuard |
+| 包名 | `io.github.vivibibi30.pguard` | `io.github.vivibibi30.hyperpguard` |
+| 功能 | — | 与 1.1.2 相同 |
+
+包名变更后属于新的模块身份，安装后需在 LSPosed 重新启用并勾选作用域。
 
 ### 1.1.2（对比 1.1.1）
 

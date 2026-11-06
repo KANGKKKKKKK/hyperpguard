@@ -1,4 +1,4 @@
-package io.github.vivibibi30.pguard;
+package io.github.vivibibi30.hyperpguard;
 
 import java.util.ArrayList;
 import java.util.List;

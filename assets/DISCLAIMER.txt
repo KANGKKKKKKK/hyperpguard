@@ -1,4 +1,4 @@
-隐私上报拦截（PrivacyGuard）免责声明
+隐私上报拦截（HyperPGuard）免责声明
 版本 1.8
 ========================================
 
@@ -64,7 +64,7 @@
 ----------------------------------------
 English Summary
 ----------------------------------------
-PrivacyGuard is a personal privacy tool for Android devices you own and fully
+HyperPGuard is a personal privacy tool for Android devices you own and fully
 control. It blocks preinstalled system components from transmitting device and
 usage data to vendor or carrier servers.
 

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="io.github.vivibibi30.pguard"
-    android:versionCode="5"
-    android:versionName="1.1.2">
+    package="io.github.vivibibi30.hyperpguard"
+    android:versionCode="6"
+    android:versionName="1.2.0">
 
     <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="34" />
 
@@ -14,7 +14,7 @@
 
         <provider
             android:name="io.github.libxposed.service.XposedProvider"
-            android:authorities="io.github.vivibibi30.pguard.XposedService"
+            android:authorities="io.github.vivibibi30.hyperpguard.XposedService"
             android:exported="true" />
 
         <activity

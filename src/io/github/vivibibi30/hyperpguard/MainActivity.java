@@ -1,4 +1,4 @@
-package io.github.vivibibi30.pguard;
+package io.github.vivibibi30.hyperpguard;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -153,7 +153,7 @@ public class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         TextView title = new TextView(this);
-        title.setText("隐私上报拦截");
+        title.setText("HyperPGuard");
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
         title.setTypeface(null, Typeface.BOLD);
         title.setTextColor(TEXT);
@@ -237,7 +237,7 @@ public class MainActivity extends Activity {
             @Override
             public void onServiceBind(XposedService service) {
                 xposed = service;
-                android.util.Log.i("PrivacyGuard", "XposedService bound: "
+                android.util.Log.i("HyperPGuard", "XposedService bound: "
                         + service.getFrameworkName() + " " + service.getFrameworkVersion());
                 ui.post(MainActivity.this::syncFromService);
             }
@@ -265,7 +265,7 @@ public class MainActivity extends Activity {
                     Toast.LENGTH_LONG).show();
             return;
         }
-        android.util.Log.i("PrivacyGuard", "requestScope(" + pkg + ") sending");
+        android.util.Log.i("HyperPGuard", "requestScope(" + pkg + ") sending");
         try {
             xposed.requestScope(Collections.singletonList(pkg),
                     new XposedService.OnScopeEventListener() {
@@ -277,7 +277,7 @@ public class MainActivity extends Activity {
 
                         @Override
                         public void onScopeRequestFailed(String message) {
-                            android.util.Log.w("PrivacyGuard", "requestScope(" + pkg + ") failed: " + message);
+                            android.util.Log.w("HyperPGuard", "requestScope(" + pkg + ") failed: " + message);
                             ui.post(() -> Toast.makeText(MainActivity.this,
                                     "未加入作用域：" + message, Toast.LENGTH_LONG).show());
                         }
@@ -413,10 +413,10 @@ public class MainActivity extends Activity {
         if (xposed == null) return null;
         try {
             java.util.List<String> sc = xposed.getScope();
-            android.util.Log.i("PrivacyGuard", "getScope -> " + sc);
+            android.util.Log.i("HyperPGuard", "getScope -> " + sc);
             return sc;
         } catch (Throwable t) {
-            android.util.Log.w("PrivacyGuard", "getScope fail", t);
+            android.util.Log.w("HyperPGuard", "getScope fail", t);
             return null;
         }
     }
@@ -710,7 +710,7 @@ public class MainActivity extends Activity {
         Process p = null;
         try {
             p = Runtime.getRuntime().exec(new String[]{"su", "-c",
-                    "logcat -d -v time -t 30000 | grep -F PrivacyGuard | tail -n 600"});
+                    "logcat -d -v time -t 30000 | grep -F HyperPGuard | tail -n 600"});
             BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
             StringBuilder sb = new StringBuilder();
             String line;
@@ -763,7 +763,7 @@ public class MainActivity extends Activity {
         }
         Intent i = new Intent(Intent.ACTION_SEND);
         i.setType("text/plain");
-        i.putExtra(Intent.EXTRA_SUBJECT, "PrivacyGuard 拦截日志");
+        i.putExtra(Intent.EXTRA_SUBJECT, "HyperPGuard 拦截日志");
         i.putExtra(Intent.EXTRA_TEXT, log);
         startActivity(Intent.createChooser(i, "分享日志"));
     }

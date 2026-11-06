@@ -1,5 +1,5 @@
 #!/bin/sh
-# PrivacyGuard build script (libxposed API 102)
+# HyperPGuard build script (libxposed API 102)
 #
 # 依赖：JDK 11+、平台 android.jar、build-tools 中的 d8 / aapt2 / zipalign / apksigner
 #
@@ -58,7 +58,7 @@ if [ "$KS_SHA256" != "$EXPECT_SHA256" ]; then
 fi
 echo "签名证书 SHA-256: $KS_SHA256"
 
-rm -rf build PrivacyGuard.apk
+rm -rf build HyperPGuard.apk
 mkdir -p build/classes build/dex build/gen
 
 echo "[1/6] javac"
@@ -92,13 +92,13 @@ rm -rf build/META-INF && cp -r META-INF build/
 
 echo "[6/6] sign"
 "$APKSIGNER" sign --ks "$KS" --ks-pass pass:android --key-pass pass:android \
-  --out PrivacyGuard.apk build/app-aligned.apk
+  --out HyperPGuard.apk build/app-aligned.apk
 
-"$APKSIGNER" verify --print-certs PrivacyGuard.apk 2>/dev/null | grep "certificate SHA-256" || true
+"$APKSIGNER" verify --print-certs HyperPGuard.apk 2>/dev/null | grep "certificate SHA-256" || true
 
-echo "OK -> $ROOT/PrivacyGuard.apk"
-ls -la PrivacyGuard.apk
+echo "OK -> $ROOT/HyperPGuard.apk"
+ls -la HyperPGuard.apk
 echo
 echo "更新方式（务必覆盖安装，不要卸载）："
-echo "  adb install -r PrivacyGuard.apk"
-echo "  # 手机上：su -c 'pm install -r /sdcard/Download/PrivacyGuard-1.0.1.apk'"
+echo "  adb install -r HyperPGuard.apk"
+echo "  # 手机上：su -c 'pm install -r /sdcard/Download/HyperPGuard-1.0.1.apk'"

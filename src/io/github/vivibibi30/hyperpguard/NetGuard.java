@@ -1,4 +1,4 @@
-package io.github.vivibibi30.pguard;
+package io.github.vivibibi30.hyperpguard;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -47,7 +47,7 @@ final class NetGuard {
                 URL u = (URL) chain.getThisObject();
                 String host = u.getHost();
                 if (host != null && check(tag, host, u.getPath(), rules, strictAll, pathOn, sniffOn)) {
-                    throw new java.io.IOException("blocked by PrivacyGuard: " + host);
+                    throw new java.io.IOException("blocked by HyperPGuard: " + host);
                 }
                 return chain.proceed();
             });
@@ -61,7 +61,7 @@ final class NetGuard {
                 m.hook(method).intercept(chain -> {
                     String host = (String) chain.getArg(0);
                     if (host != null && check(tag, host, null, rules, strictAll, pathOn, false)) {
-                        throw new java.net.UnknownHostException("blocked by PrivacyGuard: " + host);
+                        throw new java.net.UnknownHostException("blocked by HyperPGuard: " + host);
                     }
                     return chain.proceed();
                 });
@@ -75,7 +75,7 @@ final class NetGuard {
                 m.hook(ctor).intercept(chain -> {
                     String host = pickHost(chain.getArgs());
                     if (host != null && check(tag, host, null, rules, strictAll, false, false)) {
-                        throw new java.io.IOException("blocked by PrivacyGuard: " + host);
+                        throw new java.io.IOException("blocked by HyperPGuard: " + host);
                     }
                     return chain.proceed();
                 });
@@ -91,7 +91,7 @@ final class NetGuard {
                         host = ((InetSocketAddress) a0).getHostString();
                     }
                     if (host != null && check(tag, host, null, rules, strictAll, false, false)) {
-                        throw new java.io.IOException("blocked by PrivacyGuard: " + host);
+                        throw new java.io.IOException("blocked by HyperPGuard: " + host);
                     }
                     return chain.proceed();
                 });

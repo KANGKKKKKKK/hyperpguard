@@ -1,4 +1,4 @@
-# PrivacyGuard 1.1.1
+# HyperPGuard 1.1.1
 
 [![Build APK](https://github.com/vivibibi30/pguard/actions/workflows/build.yml/badge.svg)](https://github.com/vivibibi30/pguard/actions/workflows/build.yml)
 

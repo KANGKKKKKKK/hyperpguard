@@ -2,14 +2,14 @@
 
 ## 首次
 
-1. 打开 <https://modules.lsposed.org/submission>，GitHub 登录后填 `https://github.com/vivibibi30/pguard`
-2. 审核通过后会出现分发仓库 `Xposed-Modules-Repo/io.github.vivibibi30.pguard`
+1. 打开 <https://modules.lsposed.org/submission>，GitHub 登录后填 `https://github.com/vivibibi30/hyperpguard`
+2. 审核通过后会出现分发仓库 `Xposed-Modules-Repo/io.github.vivibibi30.hyperpguard`
 3. 把 `dist/` 下的 `SUMMARY`、`SOURCE_URL`、`README.md` 复制到该仓库根目录并推送
 
 ```sh
-git clone https://github.com/Xposed-Modules-Repo/io.github.vivibibi30.pguard
-cp dist/SUMMARY dist/SOURCE_URL dist/README.md io.github.vivibibi30.pguard/
-cd io.github.vivibibi30.pguard && git add -A && git commit -m "init" && git push
+git clone https://github.com/Xposed-Modules-Repo/io.github.vivibibi30.hyperpguard
+cp dist/SUMMARY dist/SOURCE_URL dist/README.md io.github.vivibibi30.hyperpguard/
+cd io.github.vivibibi30.hyperpguard && git add -A && git commit -m "init" && git push
 ```
 
 ## 每次发版
