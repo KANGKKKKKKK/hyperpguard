@@ -119,11 +119,14 @@ jobs:
           NOTES="docs/RELEASE-$NAME.md"
           [ -f "$NOTES" ] || NOTES="docs/RELEASE.md"
           cp HyperPGuard.apk "/tmp/HyperPGuard-$NAME.apk"
-          gh release create "$TAG" "/tmp/HyperPGuard-$NAME.apk" \
-            --repo "Xposed-Modules-Repo/$DIST" \
-            --title "$NAME" --notes-file "$NOTES" \
-          || gh release upload "$TAG" "/tmp/HyperPGuard-$NAME.apk" \
-            --repo "Xposed-Modules-Repo/$DIST" --clobber
+          REPO="Xposed-Modules-Repo/$DIST"
+          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            gh release delete-asset "$TAG" "HyperPGuard-$NAME.apk" --repo "$REPO" --yes 2>/dev/null || true
+            gh release upload "$TAG" "/tmp/HyperPGuard-$NAME.apk" --repo "$REPO"
+          else
+            gh release create "$TAG" "/tmp/HyperPGuard-$NAME.apk" --repo "$REPO" \
+              --title "$NAME" --notes-file "$NOTES"
+          fi
 
       - name: Publish Release
         if: startsWith(github.ref, 'refs/tags/')
