@@ -17,8 +17,8 @@ set -e
 ROOT=$(cd "$(dirname "$0")" && pwd)
 cd "$ROOT"
 
-ANDROID_JAR=${ANDROID_JAR:-/workspace/lsp/android-35/android.jar}
-D8=${D8:-/workspace/lsp/bt37/android-37.0/d8}
+ANDROID_JAR=${ANDROID_JAR:-$ROOT/../lsp/android-35/android.jar}
+D8=${D8:-$ROOT/../lsp/bt37/android-37.0/d8}
 AAPT2=${AAPT2:-aapt2}
 ZIPALIGN=${ZIPALIGN:-zipalign}
 APKSIGNER=${APKSIGNER:-apksigner}
