@@ -239,6 +239,8 @@ public class MainActivity extends Activity {
                     String src = "/data/adb/lspd/config/modules_config.db";
                     String dst = new File(dir, "modules_config.db").getAbsolutePath();
 
+                    // 首次修改前保留原始备份
+                    execSu("test -f " + src + ".pguard.bak || cp -f " + src + " " + src + ".pguard.bak");
                     execSu("cp -f " + src + " " + dst);
                     execSu("cp -f " + src + "-wal " + dst + "-wal 2>/dev/null; true");
                     execSu("cp -f " + src + "-shm " + dst + "-shm 2>/dev/null; true");
