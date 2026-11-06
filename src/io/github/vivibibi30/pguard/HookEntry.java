@@ -136,6 +136,15 @@ public class HookEntry extends XposedModule {
             List<Rule> r = new ArrayList<>();
             r.add(new Rule("fraud-detection.engine.miui.com"));
             r.add(new Rule("flash.sec.miui.com", "/detect/"));
+            if (Config.on(Config.K_SC_VIRUS, false)) {
+                r.add(new Rule("virus-engine.sec.miui.com"));
+            }
+            if (Config.on(Config.K_SC_FRAMEWORK, false)) {
+                r.add(new Rule("framework.sec.miui.com"));
+            }
+            if (Config.on(Config.K_SC_DATA, false)) {
+                r.add(new Rule("data.sec.miui.com"));
+            }
             guard(pkg, cl, "securitycenter", r, false);
             return;
         }
@@ -192,6 +201,65 @@ public class HookEntry extends XposedModule {
         // 6.19.0：应用使用记录聚合（app_start / app_end / app_duration / radio）
         hookMethodReturn(cl, "com.miui.analytics.d.f.n", "y",
                 new Class<?>[]{long.class, long.class}, null);
+        // 6.33.0 起包名整体混淆成 a.b.a.*，类名逐版变化，改为按签名扫描
+        hookAnalyticsUsageByScan(cl);
+    }
+
+    /**
+     * 版本无关的兜底：遍历 analytics 的 dex，把「(long, long) -> JSONObject」的方法全部置空。
+     * 6.19.0 是 d.f.n#y/z，6.33.0 变成 a.b.a.e.h0.*，签名保持一致的都能命中。
+     */
+    private void hookAnalyticsUsageByScan(ClassLoader cl) {
+        int scanned = 0, hooked = 0;
+        try {
+            java.util.List<String> names = new ArrayList<>();
+            Class<?> bdcl = Class.forName("dalvik.system.BaseDexClassLoader", false, cl);
+            java.lang.reflect.Field fPathList = bdcl.getDeclaredField("pathList");
+            fPathList.setAccessible(true);
+            Object pathList = fPathList.get(cl);
+            if (pathList == null) return;
+            java.lang.reflect.Field fElems = pathList.getClass().getDeclaredField("dexElements");
+            fElems.setAccessible(true);
+            Object[] elems = (Object[]) fElems.get(pathList);
+            for (Object el : elems) {
+                if (el == null) continue;
+                try {
+                    java.lang.reflect.Field fDex = el.getClass().getDeclaredField("dexFile");
+                    fDex.setAccessible(true);
+                    Object dex = fDex.get(el);
+                    if (dex instanceof dalvik.system.DexFile) {
+                        java.util.Enumeration<String> en = ((dalvik.system.DexFile) dex).entries();
+                        while (en.hasMoreElements() && names.size() < 20000) {
+                            names.add(en.nextElement());
+                        }
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+            for (String n : names) {
+                if (!n.startsWith("com.miui.analytics") && !n.startsWith("a.b.a.")) continue;
+                Class<?> c;
+                try {
+                    c = Class.forName(n, false, cl);
+                } catch (Throwable t) {
+                    continue;
+                }
+                scanned++;
+                for (Method m : c.getDeclaredMethods()) {
+                    Class<?>[] p = m.getParameterTypes();
+                    if (p.length != 2 || p[0] != long.class || p[1] != long.class) continue;
+                    if (m.getReturnType() != org.json.JSONObject.class) continue;
+                    try {
+                        hook(m).intercept(chain -> null);
+                        hooked++;
+                    } catch (Throwable ignored) {
+                    }
+                }
+            }
+            log("analytics scan scanned=" + scanned + " hooked=" + hooked);
+        } catch (Throwable t) {
+            log("analytics scan fail: " + t);
+        }
     }
 
     private void hookMrm(ClassLoader cl) {

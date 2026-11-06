@@ -23,7 +23,7 @@
 |---|---|---|
 | SystemHelper | `com.mobiletools.systemhelper` | 运营商遥测：设备 / SIM / 基站 / 应用列表 |
 | 系统安全组件 | `com.miui.guardprovider` | 应用列表云查、AI 通话预警云检测、反诈配置拉取 |
-| 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、反诈配置拉取 |
+| 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、反诈配置拉取；云查 / 合作方鉴权 / 月报默认关闭 |
 | 小米统计 | `com.miui.analytics` | tracking / om.tracking / sdkconfig 整域，含 DoH 旁路 |
 | 应用安装器 | `com.miui.packageinstaller` | AVL 上报、活跃统计、安装页广告位 |
 | 应用商店 | `com.xiaomi.market` | 广告配置下发 |

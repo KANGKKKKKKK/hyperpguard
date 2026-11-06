@@ -40,6 +40,7 @@
 | trustservice | `ServiceManager.getService/waitForService` 含 `mrm` | MRM 服务取不到，远程认证链断开 |
 | analytics | `d.f.n#y(long,long)`（6.19.0 实测） | 应用使用记录不生成 |
 | analytics | `onetrack.p.u#w` / `c.f.k#y` / `onetrack.q.c#a,b,c`（旧版） | 存在才挂，版本不符仅记 `hook miss` |
+| analytics | 扫描所有 `(long, long) -> JSONObject` 方法（6.33.0 起包名变成 `a.b.a.*`） | 命中即置空，日志输出 `analytics scan scanned=N hooked=N` |
 
 方法层与网络层互不依赖：类名变化时域名规则仍在工作，域名更换时方法层仍在工作，日志中可分辨是哪一层在起作用。
 
@@ -65,7 +66,7 @@
 |---|---|---|---|
 | SystemHelper | `com.mobiletools.systemhelper` | 运营商遥测：设备 / SIM / 基站 / 应用列表 | 开 |
 | 系统安全组件 | `com.miui.guardprovider` | 应用列表云查、AI 通话预警云检测、反诈配置拉取 | 开 |
-| 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、反诈配置拉取 | 开 |
+| 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、反诈配置拉取；云查 / 合作方鉴权 / 月报三项默认关闭 | 开 |
 | 小米统计 | `com.miui.analytics` | tracking / om.tracking / sdkconfig 整域，含 DoH 旁路 | 开 |
 | 应用安装器 | `com.miui.packageinstaller` | AVL 上报、活跃统计、安装页广告位 | 开 |
 | 应用商店 | `com.xiaomi.market` | 广告配置下发 | 开 |
@@ -340,7 +341,9 @@ build.sh                           一键构建
 - 构建：固定签名 `debug.keystore` 并校验证书指纹；META-INF 打进 APK 根目录
 - 「小米统计」改为整域拦截（`miui.com` / `xiaomi.com` / `xiaomi.net`），覆盖 `tracking`、`om.tracking`、区域与备份域、`sdkconfig` 等新版通道
 - 「小米统计」新增「阻断 DoH 旁路」：拦 `dns.google` 与 `8.8.8.8` / `8.8.4.4`，对应 6.33.0 国际版的 DoH + IP 缓存重试
-- analytics 方法层补 `d.f.n#y(long,long)`（6.19.0 实测），旧版类名保留但版本不符时只记 `hook miss`
+- analytics 方法层补 `d.f.n#y(long,long)`（6.19.0 实测），并对 `(long,long) -> JSONObject` 签名做全量扫描，覆盖 6.33.0 的 `a.b.a.*` 改名
+- 安全中心新增三个默认关闭的子项：病毒库云查（`virus-engine.sec.miui.com`）、XSOF 合作方鉴权（`framework.sec.miui.com`）、月报与配置上报（`data.sec.miui.com`）
+- 移除「服务与反馈」（`com.miui.miservice`）占位：无卡片、无规则，留着只会出现勾不上的推荐项
 - 修复：应用重装导致 uid 变化后 KernelSU 授权失效
 
 ### 1.0.0

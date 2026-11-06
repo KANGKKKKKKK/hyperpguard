@@ -53,6 +53,9 @@ public final class Config {
 
     /* 安全中心 */
     public static final String K_SECCENTER = "block_securitycenter";
+    public static final String K_SC_VIRUS = "block_sc_virus";
+    public static final String K_SC_FRAMEWORK = "block_sc_framework";
+    public static final String K_SC_DATA = "block_sc_data";
     public static final String K_XSOF = "block_xsof";
 
     /* 安装器 */

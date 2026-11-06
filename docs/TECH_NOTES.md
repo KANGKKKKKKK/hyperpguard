@@ -81,7 +81,18 @@
 |---|---|---|
 | 6.19.0 | `com.miui.analytics.d.f.n#y(long, long)` | 实测存在，返回应用使用记录 JSON（`app_start` / `app_end` / `app_duration` / `radio` / `seq`），返回 `null` |
 | 旧版 | `onetrack.p.u#w`、`c.f.k#y`、`onetrack.q.c#a/#b/#c` | 公开资料里的旧混淆名；6.19.0 上类不存在或签名不符，仅在旧版本生效 |
-| 6.33.0 | `a.b.a.e.h0.y`（使用事件）、`a.b.a.e.f0.z`（事件处理 + `track/v4`）、`a.b.a.e.i0.c`（发送通道） | 来自第三方静态分析（FAQQAQ/HyperOS4-XSOF-Analysis），本机无该版本，未实测，暂不硬编码 |
+| 6.33.0 | `a.b.a.e.h0.y`（使用事件）、`a.b.a.e.f0.z`（事件处理 + `track/v4`）、`a.b.a.e.i0.c`（发送通道） | 来自第三方静态分析（FAQQAQ/HyperOS4-XSOF-Analysis）；不硬编码类名，改由下面的签名扫描覆盖 |
+
+### 签名扫描（覆盖改名后的版本）
+
+6.33.0 起包名整体混淆成 `a.b.a.*`，类与方法名逐版变化，硬编码必然过期。实现改为：
+
+1. 通过 `BaseDexClassLoader.pathList → dexElements → dexFile.entries()` 枚举 analytics 自己的类名
+2. 只保留 `com.miui.analytics*` 与 `a.b.a.*`
+3. 命中「参数 `(long, long)`、返回 `JSONObject`」的方法全部置空
+
+6.19.0 上命中 `d.f.n#y` / `d.f.n#z`，6.33.0 上命中对应使用记录构造方法；每次注入都会打印
+`analytics scan scanned=N hooked=N`，可直接在日志里确认命中数量。
 
 ### 网络层（与版本无关，主防线）
 

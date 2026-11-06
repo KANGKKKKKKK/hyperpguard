@@ -12,6 +12,9 @@
 | guardprovider | `fraud-detection.engine.miui.com` | 反诈配置拉取 |
 | analytics | `*.miui.com` `*.xiaomi.com` `*.xiaomi.net` | 整域拦截，覆盖 tracking / om.tracking / 区域与备份域 / sdkconfig |
 | analytics | `dns.google` `8.8.8.8` `8.8.4.4` | 6.33.0 国际版 DoH + IP 缓存重试通道 |
+| securitycenter | `virus-engine.sec.miui.com` | 默认关闭：风险应用云查 |
+| securitycenter | `framework.sec.miui.com` | 默认关闭：XSOF 合作方鉴权 |
+| securitycenter | `data.sec.miui.com` | 默认关闭：月报、防窥/广告等配置接口 |
 | securitycenter | `fraud-detection.engine.miui.com` | 反诈配置 |
 | securitycenter | `flash.sec.miui.com` + `/detect/` | 检测接口 |
 | packageinstaller | `api.installer.xiaomi.com` + `/avl/upload` | 上传接口 |

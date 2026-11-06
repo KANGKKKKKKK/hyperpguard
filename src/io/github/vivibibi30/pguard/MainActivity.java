@@ -87,6 +87,9 @@ public class MainActivity extends Activity {
             new Group("安全中心", "com.miui.securitycenter", Config.K_G_SECCENTER, new Item[]{
                     new Item("XSOF 行为查询拦截", "第三方查不到截图 / 通话 / 屏幕共享记录", Config.K_XSOF, true),
                     new Item("反诈配置拉取", "fraud-detection.engine.miui.com", Config.K_SECCENTER, true),
+                    new Item("病毒库云查", "virus-engine.sec.miui.com，关闭后不再云端查毒", Config.K_SC_VIRUS, false),
+                    new Item("XSOF 合作方鉴权", "framework.sec.miui.com，可能影响第三方调用", Config.K_SC_FRAMEWORK, false),
+                    new Item("月报与配置上报", "data.sec.miui.com，含防窥/广告等接口", Config.K_SC_DATA, false),
             }),
             new Group("小米统计", "com.miui.analytics", Config.K_G_ANALYTICS, new Item[]{
                     new Item("拦截上报", "tracking / om.tracking / sdkconfig", Config.K_ANALYTICS, true),
