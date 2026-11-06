@@ -14,7 +14,7 @@ public final class Config {
 
     public static final String PKG = "io.github.vivibibi30.pguard";
     public static final String PREFS = "pg";
-    public static final String VERSION = "1.1.1";
+    public static final String VERSION = "1.1.2";
 
     /* 全局 */
     public static final String K_MASTER = "master";
@@ -62,7 +62,9 @@ public final class Config {
     public static final String K_SC_VOLUNTEER = "block_sc_volunteer";
     public static final String K_SC_LOCATION = "block_sc_location";
     public static final String K_SC_ADB = "block_sc_adb";
+    public static final String K_SC_DBGUARD = "block_sc_dbguard";
     public static final String K_GP_CLOUDSCAN = "block_gp_cloudscan";
+    public static final String K_GP_SCREENGUARD = "block_gp_screenguard";
     public static final String K_TRUST_FIND = "block_trust_find";
     public static final String K_G_REGISTRATION = "g_registration";
     public static final String K_REG_ZZHC = "block_reg_zzhc";

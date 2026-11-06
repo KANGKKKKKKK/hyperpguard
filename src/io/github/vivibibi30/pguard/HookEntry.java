@@ -64,6 +64,9 @@ public class HookEntry extends XposedModule {
             if (r.isEmpty()) return;
             Logs.i("attach guardprovider, rules=" + r.size());
             privacy.install(cl, true, false, true, false, false);
+            if (Config.on(Config.K_GP_SCREENGUARD, true)) {
+                CaptureHooks.screenCapture(this, cl);
+            }
             net.install(cl, "guardprovider", r, false);
             return;
         }
@@ -115,6 +118,9 @@ public class HookEntry extends XposedModule {
             Logs.i("attach securitycenter");
             privacy.install(cl, false, false, true, false, false);
             if (Config.on(Config.K_XSOF, true)) xsof.install(cl);
+            if (Config.on(Config.K_SC_DBGUARD, true)) {
+                CaptureHooks.dbWrites(this, cl);
+            }
             List<NetGuard.Rule> r = new ArrayList<>();
             r.add(new NetGuard.Rule("fraud-detection.engine.miui.com"));
             r.add(new NetGuard.Rule("flash.sec.miui.com", "/detect/"));

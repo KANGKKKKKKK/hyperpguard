@@ -304,6 +304,7 @@ build.sh                           一键构建
 - **XSOF Privacy**（yunyizea）— 8 类行为记录的拦截范围、`(null, 1017)` 拒绝语义、按组组织 hook
 - **Hyper 隐私卫士**（`io.github.hyperprivacyguard`）— SystemHelper 采集入口特征、guardprovider 应用列表采集
 - **HyperOS4-XSOF-Analysis**（FAQQAQ）— 7 个组件的静态逆向记录：整域范围、`om.tracking.miui.com/track/mt`、区域与备份域、DoH 重试、`framework.sec.miui.com`、`virus-engine.sec.miui.com`、地震/报警/EPS 族、`typdm.tydevice.com` 明文上报、analytics 6.33.0 的 `a.b.a.*` 结构
+- **OSAKOo**（酷安）— [HyperOS 行为数据库与静默录屏的复核](https://www.coolapk.com/feed/74882729?s=MzNlYzk4NWUxNWZhMjRnNmFlZTFjMDJ6a1664)：`fraud_detection_data.db` 八张表与 `screenshort_time` 拼写、`createScreenCaptureIntent` 零调用与 `privateLookupIn` 绕过、`clip.mp4` 上报链路、SystemHelper 采集项与明文上报、六个域名的实际用途
 - **libxposed API**（Apache-2.0）、**LSPosed** — 模块入口与作用域接口
 
 第三方组件：`Xposed API 82`、`libxposed API 102`（均为 Apache-2.0，编译期依赖）。
@@ -311,6 +312,14 @@ build.sh                           一键构建
 感谢以上作者与维护者。
 
 ## 更新日志
+
+### 1.1.2（对比 1.1.1）
+
+| 组件 | 1.1.1 | 1.1.2 |
+|---|---|---|
+| 安全中心 | XSOF 按 `Ra.k` 的 27 个方法拦截 | 新增「行为库写入拦截」子项（默认开）：按 8 张表名拦 `SQLiteDatabase` 写入 |
+| 系统安全组件 | 只拦 `detection-aigc` 上传 | 新增「静默录屏拦截」子项（默认开）：`MediaProjection#createVirtualDisplay` 不再建立 |
+| 其余组件 | — | 不变 |
 
 ### 1.1.1（对比 1.1.0）
 

@@ -85,6 +85,7 @@ public class MainActivity extends Activity {
                     new Item("AI 通话预警云检测", "detection-aigc.engine.miui.com", Config.K_GUARD_AIGC, true),
                     new Item("反诈配置拉取", "fraud-detection.engine.miui.com", Config.K_GUARD_FRAUD, true),
                     new Item("云查上传（Flamingo）", "virus-engine.sec.miui.com；关闭后不再上传应用清单，本地病毒库照常", Config.K_GP_CLOUDSCAN, false),
+                    new Item("静默录屏拦截", "阻止 createVirtualDisplay 整屏录制，不影响正常截屏", Config.K_GP_SCREENGUARD, true),
             }),
             new Group("安全中心", "com.miui.securitycenter", Config.K_G_SECCENTER, new Item[]{
                     new Item("XSOF 行为查询拦截", "第三方查不到截图 / 通话 / 屏幕共享记录", Config.K_XSOF, true),
@@ -96,6 +97,7 @@ public class MainActivity extends Activity {
                     new Item("志愿者传感器上报", "OAID + 经纬度 + 时间；非志愿者无影响", Config.K_SC_VOLUNTEER, true),
                     new Item("地震/报警/EPS 定位", "关闭后地震预警、紧急报警定位可能失效", Config.K_SC_LOCATION, false),
                     new Item("ADB 授权验证", "srv.sec.miui.com/data/adb；关闭后 ADB 安装授权可能失败", Config.K_SC_ADB, false),
+                    new Item("行为库写入拦截", "拦截 screenshot / screen_share / voip_record 等 8 张表的写入", Config.K_SC_DBGUARD, true),
             }),
             new Group("小米统计", "com.miui.analytics", Config.K_G_ANALYTICS, new Item[]{
                     new Item("拦截上报", "tracking / om.tracking / sdkconfig", Config.K_ANALYTICS, true),
