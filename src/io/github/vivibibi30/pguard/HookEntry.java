@@ -101,18 +101,6 @@ public class HookEntry extends XposedModule {
             return;
         }
 
-        if ("com.miui.analytics".equals(pkg)) {
-            if (!Config.on(Config.K_ANALYTICS, true)) return;
-            log("attach analytics");
-            hookAnalyticsMethods(cl);
-            List<Rule> r = new ArrayList<>();
-            r.add(new Rule("miui.com"));
-            r.add(new Rule("xiaomi.com"));
-            r.add(new Rule("xiaomi.net"));
-            guard(pkg, cl, "analytics", r, Config.strict());
-            return;
-        }
-
         if ("com.xiaomi.aiasst.vision".equals(pkg)) {
             if (!Config.on(Config.K_AIASST, false)) return;
             log("attach aiasst.vision");
@@ -169,19 +157,6 @@ public class HookEntry extends XposedModule {
     }
 
     /* ---------------- 方法层 ---------------- */
-
-    private void hookAnalyticsMethods(ClassLoader cl) {
-        hookMethodReturn(cl, "com.miui.analytics.onetrack.p.u", "w",
-                new Class<?>[]{long.class, long.class}, null);
-        hookMethodReturn(cl, "com.miui.analytics.c.f.k", "y",
-                new Class<?>[]{long.class, long.class}, null);
-        hookMethodReturn(cl, "com.miui.analytics.onetrack.q.c", "a",
-                new Class<?>[]{android.content.Context.class}, Integer.valueOf(0));
-        hookMethodReturn(cl, "com.miui.analytics.onetrack.q.c", "b",
-                new Class<?>[]{android.content.Context.class}, "NONE");
-        hookMethodReturn(cl, "com.miui.analytics.onetrack.q.c", "c",
-                new Class<?>[0], Boolean.FALSE);
-    }
 
     private void hookMrm(ClassLoader cl) {
         try {

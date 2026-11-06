@@ -88,10 +88,6 @@ public class MainActivity extends Activity {
                     new Item("XSOF 行为查询拦截", "第三方查不到截图 / 通话 / 屏幕共享记录", Config.K_XSOF, true),
                     new Item("反诈配置拉取", "fraud-detection.engine.miui.com", Config.K_SECCENTER, true),
             }),
-            new Group("小米统计", "com.miui.analytics", Config.K_G_ANALYTICS, new Item[]{
-                    new Item("拦截 onetrack / mistat", "方法层置空 + 域名层拦截", Config.K_ANALYTICS, true),
-                    new Item("严格模式", "该进程所有外网请求一并拦截", Config.K_STRICT, false),
-            }),
             new Group("应用安装器", "com.miui.packageinstaller", Config.K_G_PKG, new Item[]{
                     new Item("AVL 上报", "…/avl/upload", Config.K_PKG_AVL, true),
                     new Item("安装活跃统计", "…/statistics/appactive", Config.K_PKG_STAT, true),
@@ -248,6 +244,7 @@ public class MainActivity extends Activity {
                     Toast.LENGTH_LONG).show();
             return;
         }
+        android.util.Log.i("PrivacyGuard", "requestScope(" + pkg + ") sending");
         try {
             xposed.requestScope(Collections.singletonList(pkg),
                     new XposedService.OnScopeEventListener() {
@@ -259,6 +256,7 @@ public class MainActivity extends Activity {
 
                         @Override
                         public void onScopeRequestFailed(String message) {
+                            android.util.Log.w("PrivacyGuard", "requestScope(" + pkg + ") failed: " + message);
                             ui.post(() -> Toast.makeText(MainActivity.this,
                                     "未加入作用域：" + message, Toast.LENGTH_LONG).show());
                         }

@@ -71,19 +71,23 @@
 | `/info/layout` | 返回 `AdModel`（广告位配置） | 拦（归入广告组） |
 | `/interceptcheck` | 游戏安装安全拦截（功能） | **不拦** |
 
-## 小米统计 · `com.miui.analytics`
+## 小米统计 · `com.miui.analytics`（分组已移除）
 
-方法层拦截点（与 HyperCeiler 公开规则同目标，独立实现）：
+原实现按公开资料硬编码了 5 个方法：`onetrack.p.u#w(long,long)`、`c.f.k#y(long,long)`、
+`onetrack.q.c#a(Context)/#b(Context)/#c()`。对原始 APK（6.19.0，1.4 MB）反编译核对后发现全部对不上：
 
-```java
-onetrack.p.u#w(long, long)   → null
-c.f.k#y(long, long)          → null
-onetrack.q.c#a(Context)      → 0
-onetrack.q.c#b(Context)      → "NONE"
-onetrack.q.c#c()             → false
-```
+| 目标 | 6.19.0 实际情况 |
+|---|---|
+| `com.miui.analytics.c.f.k` | 类不存在 |
+| `com.miui.analytics.onetrack.p.u#w` | 类在，无 `w` 方法（实际为 `s`/`t`/`v`/`a`/`u`） |
+| `com.miui.analytics.onetrack.q.c#a/#b/#c` | 类在，签名是 `(String,long)`、`(boolean,String,IOException,String)`、`(String,int,String)` |
 
-`setResult` 前会读取方法实际返回类型：`void → null`、`boolean → false`、`long/int → 0`、引用类型 → 原值或 `null`。这样可以避免向基本类型方法塞 `null` 导致目标进程拆箱崩溃。
+真实位置是 `com.miui.analytics.d.f.n#y(long,long)`（返回应用使用记录的 JSONObject）和
+`com.miui.analytics.onetrack.q.c` 的 `f`/`g`/`h`/`i`/`j`/`k`/`l`/`m`（自带 HttpURLConnection 发送）。
+
+由于该类名随版本变化、本机又用模块把 AnalyticsCore 替换成了空壳，1.0.1 起直接移除「小米统计」分组，
+不再提供无效开关。
+
 
 ## 观察到的历史失效点
 

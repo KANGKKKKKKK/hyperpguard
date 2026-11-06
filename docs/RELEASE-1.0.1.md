@@ -13,7 +13,7 @@
 | 网络出口 | Hook `URL#openConnection`、`InetAddress#getByName`、`Socket` 构造与 `connect`，规则为「域名后缀 + 可选精确路径」 | 命中即抛异常，连接不建立 |
 | 对外接口 | XSOF 的 Provider 三入口（`query` / `call` / `insert`）、AIDL 7 个方法、风险评分 | 第三方查不到截图 / 通话 / 屏幕共享记录 |
 | 本地存储 | XSOF 写库的 27 个方法 | 不再产生新的行为记录 |
-| 方法层 | SystemHelper 发送与入队、analytics 的 onetrack / mistat、trustservice 的 MRM 服务 | 直接返回空值，不进队列、不建连接 |
+| 方法层 | SystemHelper 发送与入队、trustservice 的 MRM 服务 | 直接返回空值，不进队列、不建连接 |
 
 方法层与网络层互不依赖：类名变化时域名规则仍然生效，域名更换时方法层仍然生效，日志能分辨是哪一层命中。
 
@@ -24,7 +24,6 @@
 | SystemHelper | `com.mobiletools.systemhelper` | 运营商遥测：设备 / SIM / 基站 / 应用列表 |
 | 系统安全组件 | `com.miui.guardprovider` | 应用列表云查、AI 通话预警云检测、反诈配置拉取 |
 | 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、反诈配置拉取 |
-| 小米统计 | `com.miui.analytics` | onetrack / mistat 上报 |
 | 应用安装器 | `com.miui.packageinstaller` | AVL 上报、活跃统计、安装页广告位 |
 | 应用商店 | `com.xiaomi.market` | 广告配置下发 |
 | 小米服务框架 | `com.xiaomi.xmsf` | 广告接口 |

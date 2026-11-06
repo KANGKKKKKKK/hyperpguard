@@ -10,7 +10,6 @@
 | guardprovider | `flash.sec.miui.com` | 应用特征上传接口 |
 | guardprovider | `detection-aigc.engine.miui.com` | AI 通话预警云检测 |
 | guardprovider | `fraud-detection.engine.miui.com` | 反诈配置拉取 |
-| analytics | `*.miui.com` `*.xiaomi.com` `*.xiaomi.net` | 纯统计进程，另有方法层双保险 |
 | securitycenter | `fraud-detection.engine.miui.com` | 反诈配置 |
 | securitycenter | `flash.sec.miui.com` + `/detect/` | 检测接口 |
 | packageinstaller | `api.installer.xiaomi.com` + `/avl/upload` | 上传接口 |
@@ -25,7 +24,6 @@
 |---|---|---|
 | trustservice | `deviceapi.micloud.xiaomi.net` + MRM 屏蔽 | 远程认证、设备证书、查找设备 |
 | 翻译组件 | `xiaomixiaoai.com` + `/speech/` | 语音识别；文字翻译不受影响 |
-| analytics | 严格模式（全断外网） | 该进程所有网络功能 |
 
 ## 明确不拦
 
