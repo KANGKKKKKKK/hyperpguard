@@ -300,11 +300,11 @@ build.sh                           一键构建
 
 以下项目的公开资料提供了识别目标与验证思路。本项目代码独立编写，未复制、未反编译复用其实现。
 
-- **HyperCeiler**（GPL-3.0，Sevtinge）— analytics 目标方法、`flash.sec.miui.com/detect/app`、安装器 `/avl/upload`、MRM 拦截思路
-- **XSOF Privacy**（yunyizea）— 8 类行为记录的拦截范围、`(null, 1017)` 拒绝语义、按组组织 hook
+- **[HyperCeiler](https://github.com/Sevtinge/HyperCeiler)**（GPL-3.0，作者 [Sevtinge](https://github.com/Sevtinge)）— analytics 目标方法、`flash.sec.miui.com/detect/app`、安装器 `/avl/upload`、MRM 拦截思路
+- **[XSOF Privacy](https://modules.lsposed.org/module/io.github.yunyizea.xsofprivacy)**（作者 yunyizea）— 8 类行为记录的拦截范围、`(null, 1017)` 拒绝语义、按组组织 hook
 - **Hyper 隐私卫士**（`io.github.hyperprivacyguard`）— SystemHelper 采集入口特征、guardprovider 应用列表采集
-- **HyperOS4-XSOF-Analysis**（FAQQAQ）— 7 个组件的静态逆向记录：整域范围、`om.tracking.miui.com/track/mt`、区域与备份域、DoH 重试、`framework.sec.miui.com`、`virus-engine.sec.miui.com`、地震/报警/EPS 族、`typdm.tydevice.com` 明文上报、analytics 6.33.0 的 `a.b.a.*` 结构
-- **OSAKOo**（酷安）— [HyperOS 行为数据库与静默录屏的复核](https://www.coolapk.com/feed/74882729?s=MzNlYzk4NWUxNWZhMjRnNmFlZTFjMDJ6a1664)：`fraud_detection_data.db` 八张表与 `screenshort_time` 拼写、`createScreenCaptureIntent` 零调用与 `privateLookupIn` 绕过、`clip.mp4` 上报链路、SystemHelper 采集项与明文上报、六个域名的实际用途
+- **[HyperOS4-XSOF-Analysis](https://github.com/FAQQAQ/HyperOS4-XSOF-Analysis)**（作者 [FAQQAQ](https://github.com/FAQQAQ)）— 7 个组件的静态逆向记录：整域范围、`om.tracking.miui.com/track/mt`、区域与备份域、DoH 重试、`framework.sec.miui.com`、`virus-engine.sec.miui.com`、地震/报警/EPS 族、`typdm.tydevice.com` 明文上报、analytics 6.33.0 的 `a.b.a.*` 结构
+- **[OSAKOo](https://www.coolapk.com/feed/74882729?s=MzNlYzk4NWUxNWZhMjRnNmFlZTFjMDJ6a1664)**（酷安）— [HyperOS 行为数据库与静默录屏的复核](https://www.coolapk.com/feed/74882729?s=MzNlYzk4NWUxNWZhMjRnNmFlZTFjMDJ6a1664)：`fraud_detection_data.db` 八张表与 `screenshort_time` 拼写、`createScreenCaptureIntent` 零调用与 `privateLookupIn` 绕过、`clip.mp4` 上报链路、SystemHelper 采集项与明文上报、六个域名的实际用途
 - **libxposed API**（Apache-2.0）、**LSPosed** — 模块入口与作用域接口
 
 第三方组件：`Xposed API 82`、`libxposed API 102`（均为 Apache-2.0，编译期依赖）。
@@ -312,6 +312,14 @@ build.sh                           一键构建
 感谢以上作者与维护者。
 
 ## 更新日志
+
+### 1.2.2（对比 1.2.1）
+
+| 项 | 1.2.1 | 1.2.2 |
+|---|---|---|
+| 免责声明 | 八条 | 新增「版权与来源」一条（应用内可查看），版本 1.9 |
+| 界面截图 | 1.0.1 时期 | 更新为 1.2.1 界面 |
+| 其余 | — | 不变 |
 
 ### 1.2.1（对比 1.2.0）
 

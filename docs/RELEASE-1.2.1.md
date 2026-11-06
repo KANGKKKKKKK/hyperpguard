@@ -18,11 +18,11 @@
 
 ## 参考与致谢
 
-- **HyperCeiler**（GPL-3.0，Sevtinge）
-- **XSOF Privacy**（yunyizea）
+- **[HyperCeiler](https://github.com/Sevtinge/HyperCeiler)**（GPL-3.0，作者 Sevtinge）
+- **[XSOF Privacy](https://modules.lsposed.org/module/io.github.yunyizea.xsofprivacy)**（作者 yunyizea）
 - **Hyper 隐私卫士**（`io.github.hyperprivacyguard`）
-- **HyperOS4-XSOF-Analysis**（FAQQAQ）
-- **OSAKOo**（酷安）
+- **[HyperOS4-XSOF-Analysis](https://github.com/FAQQAQ/HyperOS4-XSOF-Analysis)**（作者 FAQQAQ）
+- **[酷安 @OSAKOo](https://www.coolapk.com/feed/74882729?s=MzNlYzk4NWUxNWZhMjRnNmFlZTFjMDJ6a1664)**
 - **libxposed API**（Apache-2.0）、**LSPosed**
 
 代码独立编写，未复制、未反编译复用上述项目的实现。
