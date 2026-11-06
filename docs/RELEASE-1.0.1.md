@@ -37,6 +37,14 @@
 | 权限 | KernelSU / Magisk / APatch 任一 |
 | 已验证组件 | 系统安全组件 2.5.6、安全中心 12.8.6、SystemHelper 3.0.1、应用安装器 |
 
+## 界面预览
+
+| 总开关 / 需要 root 的功能 | 分组卡片与子项 |
+|---|---|
+| ![主界面](https://raw.githubusercontent.com/vivibibi30/pguard/main/docs/images/ui-main.png) | ![分组卡片](https://raw.githubusercontent.com/vivibibi30/pguard/main/docs/images/ui-cards.png) |
+
+---
+
 ## 安装
 
 1. 安装本页附件 `PrivacyGuard-1.0.1.apk`
@@ -68,6 +76,12 @@ sha256sum PrivacyGuard-1.0.1.apk
 - 方法层依赖系统组件的混淆类名，组件升级后可能 `hook miss`；此时域名层仍然工作
 - 使用 native 网络栈（Cronet 等）的请求不受 Java 层 hook 影响
 - 拦截范围限于已识别的域名与路径，不代表覆盖 HyperOS 全部联网行为
+
+## 免责声明
+
+仅供在本人拥有完全控制权的设备上学习研究使用，不做商业分发，不得移除声明后转载。模块自身不联网、不收集任何数据；可能影响依赖同一接口的系统功能（设备证书、查找设备、病毒库更新、语音识别），默认关闭的项目请自行评估。
+
+完整条款见仓库根目录 [DISCLAIMER.txt](https://github.com/vivibibi30/pguard/blob/main/DISCLAIMER.txt)。
 
 ## 参考与致谢
 
