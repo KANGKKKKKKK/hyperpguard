@@ -30,7 +30,7 @@ assignees: ''
 
 <!--
 在模块内点「查看记录」→「分享」，或：
-  su -c "logcat -d | grep PrivacyGuard"
+  su -c "logcat -d | grep HyperPGuard"
 粘贴相关部分，注意脱敏（电话号码、应用列表等）
 -->
 
