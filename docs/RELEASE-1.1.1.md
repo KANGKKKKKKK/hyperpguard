@@ -50,7 +50,7 @@ SHA256    775afa86b48fac52cecff19df1c9186d0c964bb18dbf2db391f7d09c4a7148c4
 ## 参考与致谢
 
 - [HyperCeiler](https://github.com/Sevtinge/HyperCeiler)（GPL-3.0，Sevtinge）
-- [XSOF Privacy](https://modules.lsposed.org/module/io.github.yunyizea.xsofprivacy)（yunyizea）
+- [XSOF Privacy](https://github.com/yunyizea/xsof-privacy)（yunyizea）
 - Hyper 隐私卫士（`io.github.hyperprivacyguard`）
 - [HyperOS4-XSOF-Analysis](https://github.com/FAQQAQ/HyperOS4-XSOF-Analysis)（FAQQAQ）
 - [libxposed API](https://github.com/libxposed/api)（Apache-2.0）、LSPosed

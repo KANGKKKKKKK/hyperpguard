@@ -57,7 +57,7 @@ Android 10 – Android 16 的 MIUI / HyperOS，LSPosed 2.2.x（libxposed API 100
 
 ## 致谢
 
-[HyperCeiler](https://github.com/ReChronoRain/HyperCeiler) · [XSOF Privacy](https://modules.lsposed.org/module/io.github.yunyizea.xsofprivacy) · [HyperOS4-XSOF-Analysis](https://github.com/FAQQAQ/HyperOS4-XSOF-Analysis) · [酷安 @OSAKOo](https://www.coolapk.com/feed/74882729?s=MzNlYzk4NWUxNWZhMjRnNmFlZTFjMDJ6a1664) · [libxposed API](https://github.com/libxposed/api) · LSPosed
+[HyperCeiler](https://github.com/ReChronoRain/HyperCeiler) · [XSOF Privacy](https://github.com/yunyizea/xsof-privacy) · [HyperOS4-XSOF-Analysis](https://github.com/FAQQAQ/HyperOS4-XSOF-Analysis) · [酷安 @OSAKOo](https://www.coolapk.com/feed/74882729?s=MzNlYzk4NWUxNWZhMjRnNmFlZTFjMDJ6a1664) · [libxposed API](https://github.com/libxposed/api) · LSPosed
 
 ## 免责声明
 
