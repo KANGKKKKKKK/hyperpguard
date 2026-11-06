@@ -71,6 +71,7 @@ public class HookEntry extends XposedModule {
         if ("com.mobiletools.systemhelper".equals(pkg)) {
             if (!Config.on(Config.K_G_SYSHELPER, true)) return;
             log("attach systemhelper");
+            hookPrivacyApis(cl, false, false, true, false, false);
             hookMethodReturn(cl, "c.d.a.b.f", "a",
                     new Class<?>[]{String.class, byte[].class, byte[].class}, Boolean.FALSE);
             hookMethodReturn(cl, "c.d.a.b.e", "a", new Class<?>[]{String.class}, null);
@@ -88,6 +89,7 @@ public class HookEntry extends XposedModule {
             if (Config.on(Config.K_GP_CLOUDSCAN, false)) r.add(new Rule("virus-engine.sec.miui.com"));
             if (r.isEmpty()) return;
             log("attach guardprovider, rules=" + r.size());
+            hookPrivacyApis(cl, true, false, true, false, false);
             guard(pkg, cl, "guardprovider", r, false);
             return;
         }
@@ -109,6 +111,7 @@ public class HookEntry extends XposedModule {
             if (!Config.on(Config.K_ANALYTICS, true)) return;
             log("attach analytics");
             hookAnalyticsMethods(cl);
+            hookPrivacyApis(cl, true, true, true, false, true);
             List<Rule> r = new ArrayList<>();
             // 统计进程整域拦截：tracking(.miui.com) / 区域与 om.tracking / sdkconfig 全覆盖
             r.add(new Rule("miui.com"));
@@ -140,6 +143,7 @@ public class HookEntry extends XposedModule {
         if ("com.miui.securitycenter".equals(pkg)) {
             if (!Config.on(Config.K_G_SECCENTER, true)) return;
             log("attach securitycenter");
+            hookPrivacyApis(cl, false, false, true, false, false);
             if (Config.on(Config.K_XSOF, true)) hookXsof(cl);
             List<Rule> r = new ArrayList<>();
             r.add(new Rule("fraud-detection.engine.miui.com"));
@@ -179,6 +183,7 @@ public class HookEntry extends XposedModule {
         if ("com.xiaomi.registration".equals(pkg)) {
             if (!Config.on(Config.K_G_REGISTRATION, true)) return;
             log("attach registration");
+            hookPrivacyApis(cl, false, false, true, true, false);
             List<Rule> r = new ArrayList<>();
             if (Config.on(Config.K_REG_ZZHC, false)) {
                 // 设备注册：IMEI/IMSI/ICCID/型号/网络，JSON 仅 Base64
@@ -303,6 +308,76 @@ public class HookEntry extends XposedModule {
             log("analytics scan scanned=" + scanned + " hooked=" + hooked);
         } catch (Throwable t) {
             log("analytics scan fail: " + t);
+        }
+    }
+
+    /**
+     * 隐私 API 层：从「数据来源」截断，而不是只截网络出口。
+     * 全部按框架公开签名挂，版本无关；挂不上只记 miss。
+     */
+    private void hookPrivacyApis(ClassLoader cl, boolean appList, boolean usage,
+                                 boolean ids, boolean sms, boolean xmsf) {
+        if (appList) {
+            hookMethodReturn(cl, "android.app.ApplicationPackageManager",
+                    "getInstalledPackages", new Class<?>[]{int.class}, new ArrayList<Object>());
+            hookMethodReturn(cl, "android.app.ApplicationPackageManager",
+                    "getInstalledApplications", new Class<?>[]{int.class}, new ArrayList<Object>());
+        }
+        if (usage) {
+            hookMethodReturn(cl, "android.app.usage.UsageStatsManager",
+                    "queryEvents", new Class<?>[]{long.class, long.class}, null);
+            hookMethodReturn(cl, "android.app.usage.UsageStatsManager",
+                    "queryUsageStats", new Class<?>[]{int.class, long.class, long.class},
+                    new ArrayList<Object>());
+        }
+        if (ids) {
+            hookMethodReturn(cl, "android.telephony.TelephonyManager", "getDeviceId",
+                    new Class<?>[0], null);
+            hookMethodReturn(cl, "android.telephony.TelephonyManager", "getImei",
+                    new Class<?>[0], null);
+            hookMethodReturn(cl, "android.telephony.TelephonyManager", "getMeid",
+                    new Class<?>[0], null);
+            hookMethodReturn(cl, "android.telephony.TelephonyManager", "getSubscriberId",
+                    new Class<?>[0], null);
+            hookMethodReturn(cl, "android.telephony.TelephonyManager", "getSimSerialNumber",
+                    new Class<?>[0], null);
+        }
+        if (sms) {
+            hookMethodReturn(cl, "android.telephony.SmsManager", "sendTextMessage",
+                    new Class<?>[]{String.class, String.class, String.class, String.class,
+                            android.app.PendingIntent.class}, null);
+            hookMethodReturn(cl, "android.telephony.SmsManager", "sendMultipartTextMessage",
+                    new Class<?>[]{String.class, String.class, java.util.List.class,
+                            java.util.List.class, java.util.List.class}, null);
+            hookMethodReturn(cl, "android.telephony.SmsManager", "sendDataMessage",
+                    new Class<?>[]{String.class, String.class, short.class, byte[].class,
+                            android.app.PendingIntent.class}, null);
+        }
+        if (xmsf) {
+            hookXmsfBroadcast(cl, "android.content.ContextWrapper");
+            hookXmsfBroadcast(cl, "android.content.ContextImpl");
+        }
+    }
+
+    /** analytics 把材料广播给 XMSF 代发，这里在发出侧掐掉 */
+    private void hookXmsfBroadcast(ClassLoader cl, String cls) {
+        try {
+            Class<?> c = Class.forName(cls, false, cl);
+            Method m = c.getDeclaredMethod("sendBroadcast", android.content.Intent.class);
+            hook(m).intercept(chain -> {
+                Object a = chain.getArg(0);
+                if (a instanceof android.content.Intent) {
+                    String act = ((android.content.Intent) a).getAction();
+                    if ("com.xiaomi.xmsf.push.XMSF_UPLOAD_ACTIVE".equals(act)) {
+                        log("block XMSF upload broadcast");
+                        return null;
+                    }
+                }
+                return chain.proceed();
+            });
+            log("hook ok " + cls + "#sendBroadcast(XMSF 过滤)");
+        } catch (Throwable t) {
+            log("hook miss " + cls + "#sendBroadcast -> " + t);
         }
     }
 

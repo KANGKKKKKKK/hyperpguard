@@ -112,6 +112,34 @@
 这段是跨进程交接，只拦 analytics 自身 UID 挡不住；要覆盖需要在 XMSF 侧加规则，但那会波及推送，默认不做。
 
 
+## 隐私 API 层（1.0.1）
+
+网络层只能拦「已经决定要发出去」的数据，采集端仍然会把应用列表、使用记录、设备标识塞进包体。
+因此对目标进程内的框架 API 再挂一层：
+
+| API | 返回 | 挂载包 |
+|---|---|---|
+| `ApplicationPackageManager#getInstalledPackages/getInstalledApplications` | 空 List | analytics、guardprovider |
+| `UsageStatsManager#queryEvents/queryUsageStats` | `null` / 空 List | analytics |
+| `TelephonyManager#getDeviceId/getImei/getMeid/getSubscriberId/getSimSerialNumber` | `null` | analytics、guardprovider、securitycenter、systemhelper、registration |
+| `SmsManager#sendTextMessage/sendMultipartTextMessage/sendDataMessage` | 不发送 | registration |
+| `Context#sendBroadcast`（`XMSF_UPLOAD_ACTIVE`） | 丢弃 | analytics |
+
+真机验证（重启安全中心后）：
+
+```
+I PrivacyGuard: attach securitycenter
+I PrivacyGuard: hook ok android.telephony.TelephonyManager#getDeviceId
+I PrivacyGuard: hook ok android.telephony.TelephonyManager#getImei
+I PrivacyGuard: hook ok android.telephony.TelephonyManager#getMeid
+I PrivacyGuard: hook ok android.telephony.TelephonyManager#getSubscriberId
+I PrivacyGuard: hook ok android.telephony.TelephonyManager#getSimSerialNumber
+I PrivacyGuard: xsof provider hooked
+I PrivacyGuard: xsof aidl hooked=7
+I PrivacyGuard: xsof db write hooked=27
+I PrivacyGuard: xsof score hooked=1
+```
+
 ## 组门 fallback 陷阱（1.0.1 修）
 
 hook 侧 `Config.on(key, fallback)` 直接返回 fallback（读不到 UI 的 SharedPreferences），因此

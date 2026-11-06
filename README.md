@@ -31,6 +31,18 @@
 
 结果是：第三方应用查不到行为记录，本地也不产生新记录。
 
+### 隐私 API 层
+
+不只拦网络出口，直接在数据来源处截断（框架公开签名，与组件版本无关）：
+
+| 目标 | 处理 | 作用范围 |
+|---|---|---|
+| `ApplicationPackageManager#getInstalledPackages/getInstalledApplications` | 返回空列表 | 小米统计、系统安全组件 |
+| `UsageStatsManager#queryEvents/queryUsageStats` | 返回 `null` / 空列表 | 小米统计 |
+| `TelephonyManager#getDeviceId/getImei/getMeid/getSubscriberId/getSimSerialNumber` | 返回 `null` | 小米统计、系统安全组件、安全中心、SystemHelper、运营商服务 |
+| `SmsManager#sendTextMessage/sendMultipartTextMessage/sendDataMessage` | 不发送 | 运营商服务（短信注册兜底） |
+| `Context#sendBroadcast`（action = `com.xiaomi.xmsf.push.XMSF_UPLOAD_ACTIVE`） | 丢弃 | 小米统计交给 XMSF 代发的材料 |
+
 ### 方法层
 
 | 目标 | Hook 点 | 效果 |
@@ -348,6 +360,7 @@ build.sh                           一键构建
 - 新增运营商服务分组：`typdm.tydevice.com`（明文 HTTP 上传 IMEI/MAC）默认拦，`zzhc.vnet.cn`（设备注册）默认关
 - 新增默认关闭的子项：防窥分类上报、地震/报警/EPS 定位、ADB 授权验证、Flamingo 云查上传、设备证书/密钥上报；志愿者传感器上报默认拦
 - 修复：组门用 `Config.on(key, false)` 判断，而 hook 侧恒返回 fallback，导致 SystemHelper / 安全中心 / MiTrustService / 安装器 / 商店 / XMSF 六段 hook 从未安装
+- 新增隐私 API 层：应用列表、使用记录、设备标识、短信发送、XMSF 代发广播，直接在数据来源处截断
 - 修复：应用重装导致 uid 变化后 KernelSU 授权失效
 
 ### 1.0.0
