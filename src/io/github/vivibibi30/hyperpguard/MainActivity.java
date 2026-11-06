@@ -50,6 +50,14 @@ public class MainActivity extends Activity {
     private static final int LINE = 0xFFEFEFF0;
     private static final int ACCENT = 0xFF3478F6;
 
+    private static final String URL_REPO = "https://github.com/vivibibi30/hyperpguard";
+    private static final String URL_ISSUES = URL_REPO + "/issues";
+    private static final String URL_RELEASES = URL_REPO + "/releases";
+    private static final String URL_MODULE =
+            "https://modules.lsposed.org/module/io.github.vivibibi30.hyperpguard";
+    private static final String API_LATEST =
+            "https://api.github.com/repos/vivibibi30/hyperpguard/releases/latest";
+
     private static final class Item {
         final String name, desc, key;
         final boolean def;
@@ -232,6 +240,31 @@ public class MainActivity extends Activity {
         disclaimer.setBackground(null);
         disclaimer.setTextColor(SUB);
         disclaimer.setOnClickListener(v -> showDisclaimer());
+        // 关于
+        LinearLayout about = card();
+        TextView aboutHead = new TextView(this);
+        aboutHead.setText("关于");
+        aboutHead.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        aboutHead.setTextColor(SUB);
+        aboutHead.setPadding(0, dp(12), 0, 0);
+        about.addView(aboutHead);
+        about.addView(linkRow("GitHub 仓库", "vivibibi30/hyperpguard", URL_REPO));
+        about.addView(line());
+        about.addView(linkRow("LSPosed 模块页", "modules.lsposed.org", URL_MODULE));
+        about.addView(line());
+        about.addView(linkRow("问题反馈", "Issues", URL_ISSUES));
+        about.addView(line());
+        Button checkUpdateBtn = new Button(this);
+        checkUpdateBtn.setText("检查更新");
+        checkUpdateBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        checkUpdateBtn.setBackground(null);
+        checkUpdateBtn.setTextColor(ACCENT);
+        checkUpdateBtn.setAllCaps(false);
+        checkUpdateBtn.setPadding(0, dp(10), 0, dp(10));
+        checkUpdateBtn.setOnClickListener(v -> checkUpdate());
+        about.addView(checkUpdateBtn);
+        root.addView(about);
+
         root.addView(disclaimer);
 
         XposedServiceHelper.registerListener(new XposedServiceHelper.OnServiceListener() {
@@ -803,6 +836,115 @@ public class MainActivity extends Activity {
         i.putExtra(Intent.EXTRA_SUBJECT, "HyperPGuard 拦截日志");
         i.putExtra(Intent.EXTRA_TEXT, log);
         startActivity(Intent.createChooser(i, "分享日志"));
+    }
+
+    /* ---------------- 关于 / 更新 ---------------- */
+
+    private ViewGroup linkRow(String label, String value, final String url) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, dp(12), 0, dp(12));
+        row.setClickable(true);
+        TextView name = new TextView(this);
+        name.setText(label);
+        name.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        name.setTextColor(TEXT);
+        name.setLayoutParams(new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.addView(name);
+        TextView link = new TextView(this);
+        link.setText(value);
+        link.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        link.setTextColor(ACCENT);
+        row.addView(link);
+        row.setOnClickListener(v -> openUrl(url));
+        return row;
+    }
+
+    private void openUrl(String url) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)));
+        } catch (Throwable t) {
+            Toast.makeText(this, "没有可打开链接的应用", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /** 只在用户点击时请求一次 GitHub API 取最新 tag，不做后台轮询 */
+    private void checkUpdate() {
+        Toast.makeText(this, "正在检查更新…", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            String tag = null, err = null;
+            java.net.HttpURLConnection c = null;
+            try {
+                c = (java.net.HttpURLConnection) new java.net.URL(API_LATEST).openConnection();
+                c.setConnectTimeout(8000);
+                c.setReadTimeout(8000);
+                c.setRequestProperty("Accept", "application/vnd.github+json");
+                c.setRequestProperty("User-Agent", "HyperPGuard/" + Config.VERSION);
+                int code = c.getResponseCode();
+                if (code == 200) {
+                    BufferedReader br = new BufferedReader(
+                            new InputStreamReader(c.getInputStream(), "UTF-8"));
+                    StringBuilder sb = new StringBuilder();
+                    String ln;
+                    while ((ln = br.readLine()) != null) sb.append(ln);
+                    br.close();
+                    tag = new org.json.JSONObject(sb.toString()).optString("tag_name", "");
+                } else {
+                    err = "HTTP " + code;
+                }
+            } catch (Throwable t) {
+                err = t.getClass().getSimpleName();
+            } finally {
+                if (c != null) c.disconnect();
+            }
+            final String fTag = tag, fErr = err;
+            ui.post(() -> showUpdateResult(fTag, fErr));
+        }, "hyperpguard-check-update").start();
+    }
+
+    private void showUpdateResult(String tag, String err) {
+        if (err != null) {
+            Toast.makeText(this, "检查失败：" + err, Toast.LENGTH_LONG).show();
+            return;
+        }
+        String v = tag == null ? "" : tag.trim().replaceAll("^[vV]", "");
+        if (v.length() == 0) {
+            Toast.makeText(this, "没拿到版本号，稍后再试", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (compareVersion(v, Config.VERSION) > 0) {
+            new AlertDialog.Builder(this)
+                    .setTitle("发现新版本 v" + v)
+                    .setMessage("当前 v" + Config.VERSION + "，最新 v" + v + "。")
+                    .setPositiveButton("打开发布页", (d, w) -> openUrl(URL_RELEASES))
+                    .setNegativeButton("稍后", null)
+                    .show();
+        } else {
+            Toast.makeText(this, "已是最新版本（v" + Config.VERSION + "）",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private static int compareVersion(String a, String b) {
+        String[] x = a.split("\\.");
+        String[] y = b.split("\\.");
+        int n = Math.max(x.length, y.length);
+        for (int i = 0; i < n; i++) {
+            int xi = i < x.length ? versionPart(x[i]) : 0;
+            int yi = i < y.length ? versionPart(y[i]) : 0;
+            if (xi != yi) return xi > yi ? 1 : -1;
+        }
+        return 0;
+    }
+
+    private static int versionPart(String s) {
+        try {
+            return Integer.parseInt(s.replaceAll("[^0-9].*$", ""));
+        } catch (Throwable t) {
+            return 0;
+        }
     }
 
     /* ---------------- 免责声明 ---------------- */
