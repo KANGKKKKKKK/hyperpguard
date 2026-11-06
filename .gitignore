@@ -1,0 +1,21 @@
+# 构建产物
+build/
+*.apk
+*.idsig
+*.ap_
+*.dex
+PrivacyGuard.apk
+
+# 签名与本地环境
+debug.keystore
+*.jks
+*.keystore
+android-stub.jar
+.KEEP.txt
+
+# IDE / 系统
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+.gradle/

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">隐私上报拦截</string>
+    <string-array name="xposed_scope">
+        <item>com.mobiletools.systemhelper</item>
+        <item>com.miui.guardprovider</item>
+        <item>com.xiaomi.trustservice</item>
+        <item>com.miui.analytics</item>
+        <item>com.xiaomi.aiasst.vision</item>
+        <item>com.miui.securitycenter</item>
+        <item>com.miui.packageinstaller</item>
+        <item>com.xiaomi.market</item>
+        <item>com.xiaomi.xmsf</item>
+        <item>com.miui.miservice</item>
+    </string-array>
+</resources>

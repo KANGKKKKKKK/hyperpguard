@@ -1,0 +1,76 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Prepare Android build-tools
+        run: |
+          set -e
+          curl -sSL --max-time 300 -o /tmp/bt.zip \
+            https://dl.google.com/android/repository/build-tools_r34-linux.zip
+          unzip -tq /tmp/bt.zip > /dev/null
+          rm -rf /tmp/bt && mkdir -p /tmp/bt
+          unzip -q /tmp/bt.zip -d /tmp/bt
+          D8BIN=$(find /tmp/bt -type f -name d8 | head -1)
+          BT=$(dirname "$D8BIN")
+          test -x "$BT/aapt2"
+          test -x "$BT/zipalign"
+          echo "D8=$BT/d8" >> "$GITHUB_ENV"
+          echo "AAPT2=$BT/aapt2" >> "$GITHUB_ENV"
+          echo "ZIPALIGN=$BT/zipalign" >> "$GITHUB_ENV"
+          echo "APKSIGNER=$BT/apksigner" >> "$GITHUB_ENV"
+          echo "build-tools dir: $BT"
+          ls "$BT" | head -20
+
+      - name: Prepare android.jar
+        run: |
+          set -e
+          AJ=""
+          for u in \
+            "https://dl.google.com/android/repository/platform-34-ext7_r03.zip" \
+            "https://dl.google.com/android/repository/platform-34_r03.zip" \
+            "https://dl.google.com/android/repository/platform-34-ext7_r02.zip"; do
+            echo "try $u"
+            if curl -sSL --max-time 240 -o /tmp/p.zip "$u" && unzip -tq /tmp/p.zip >/dev/null 2>&1; then
+              rm -rf /tmp/sdk && mkdir -p /tmp/sdk
+              unzip -q /tmp/p.zip -d /tmp/sdk
+              AJ=$(find /tmp/sdk -name android.jar | head -1)
+              [ -n "$AJ" ] && break
+            fi
+          done
+          if [ -z "$AJ" ]; then
+            echo "platform 下载失败，回退到 Maven stub"
+            curl -sSL --max-time 180 -o /tmp/android-stub.jar \
+              "https://repo1.maven.org/maven2/com/google/android/android/4.1.1.4/android-4.1.1.4.jar"
+            AJ=/tmp/android-stub.jar
+          fi
+          echo "ANDROID_JAR=$AJ" >> "$GITHUB_ENV"
+          echo "android.jar: $AJ"
+
+      - name: Build
+        run: sh build.sh
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PrivacyGuard-apk
+          path: PrivacyGuard.apk
+          if-no-files-found: error

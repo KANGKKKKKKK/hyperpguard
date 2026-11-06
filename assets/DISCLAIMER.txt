@@ -1,0 +1,72 @@
+隐私上报拦截（PrivacyGuard）免责声明
+版本 1.0.0
+========================================
+
+一、用途定位
+本模块是一款个人隐私保护工具，仅用于在用户本人拥有完全控制权的 Android
+设备上，限制预装系统组件向厂商、运营商或第三方服务器发送设备标识、应用
+使用记录、位置等数据。它不提供任何入侵、破解他人系统或获取他人数据的能
+力。
+
+二、合规依据
+1)《中华人民共和国个人信息保护法》第七十二条：自然人因个人或者家庭事务
+   处理个人信息的，不适用本法。本模块处理的均为使用者本人设备上、本人产
+   生的数据。
+2)《计算机软件保护条例》第十七条：为了学习和研究软件内含的设计思想和原
+   理而使用软件的，可以不经软件著作权人许可。本模块的分析与实现基于该条
+   款进行的技术研究。
+3)《中华人民共和国网络安全法》第二十七条所禁止的是侵入他人网络、干扰他
+   人网络正常功能的行为。本模块作用范围仅限使用者本人设备的本地进程与网
+   络请求，不涉及他人网络与系统。
+
+三、风险自负
+1) 使用本模块需要 root 与 LSPosed 环境。解锁、root、刷写模块均可能导致设
+   备失去保修、无法通过安全校验、或出现系统异常。上述后果由使用者自行承
+   担。
+2) 本模块通过拦截网络请求实现目的，可能导致被拦截组件的相关功能减弱或失
+   效，包括但不限于：云端病毒查杀准确性下降、远程认证/查找设备不可用、应
+   用商店与安装器广告位显示异常、翻译类应用的语音识别不可用。
+3) 不同 Android 版本、不同 MIUI/HyperOS 版本、不同机型上，目标组件可能
+   发生变更，导致拦截失效。本模块不保证在任何版本上均有效。
+4) 使用者在启用或关闭任一规则前，应自行评估对设备功能的影响。
+
+四、不收集任何数据
+本模块自身不联网、不收集、不上传任何用户信息。模块内所有开关配置保存在
+设备本地（应用私有目录），日志仅通过系统 logcat 在本地读取，分享行为完
+全由使用者主动触发。
+
+五、禁止用途
+1) 不得将本模块用于商业销售、付费分发、或以任何形式捆绑获利。
+2) 不得将本模块用于侵入、干扰他人设备或网络，或用于规避法律法规要求的
+   安全监管措施。
+3) 不得移除本声明后再次分发。
+
+六、无担保
+本模块按“现状”提供，不对适销性、特定用途适用性、无中断或无错误作出任何
+明示或暗示的担保。因使用或无法使用本模块造成的任何直接或间接损失，作者
+不承担责任。
+
+七、分发条款
+允许在保留本声明完整内容的前提下免费分享。任何修改版本须同样开源并保留
+本声明。
+
+----------------------------------------
+English Summary
+----------------------------------------
+PrivacyGuard is a personal privacy tool for Android devices you own and fully
+control. It blocks preinstalled system components from transmitting device and
+usage data to vendor or carrier servers.
+
+- Personal use only. Commercial use, resale, or paid distribution is prohibited.
+- No data collection: this module has no network permission and uploads nothing.
+- Use at your own risk. Rooting and system modification may void warranties,
+  break device integrity checks, or degrade security features (cloud scanning,
+  remote authentication, etc.).
+- Provided "as is" without warranty of any kind.
+- Redistribution must include this notice verbatim.
+
+This tool operates solely on the local device of its user and does not access,
+interfere with, or compromise any third party's network or system.
+
+========================================
+生成日期：2026-11-06
