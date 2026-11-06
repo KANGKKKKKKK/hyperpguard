@@ -9,9 +9,9 @@ set -e
 
 TOKEN=${GITHUB_TOKEN:?请提供 GITHUB_TOKEN（带 repo 权限的 PAT）}
 REPO=${REPO:-vivibibi30/pguard}
-TAG=${TAG:-v1.0.1}
-NAME=${NAME:-PrivacyGuard 1.0.1}
-BODY=${BODY:-docs/RELEASE-1.0.1.md}
+TAG=${TAG:-v1.1.0}
+NAME=${NAME:-PrivacyGuard 1.1.0}
+BODY=${BODY:-docs/RELEASE-1.1.0.md}
 APK=${1:-PrivacyGuard.apk}
 API=https://api.github.com
 AUTH="Authorization: Bearer $TOKEN"
@@ -80,4 +80,4 @@ d = json.load(open('/tmp/pg_asset.json'))
 print("附件：", d["browser_download_url"])
 print("大小：", d["size"], "字节")
 PY
-echo "完成：https://github.com/vivibibi30/pguard/releases/tag/v1.0.1"
+echo "完成：https://github.com/vivibibi30/pguard/releases/tag/v1.1.0"

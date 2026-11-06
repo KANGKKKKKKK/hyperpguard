@@ -118,7 +118,7 @@
 
 ## 安装
 
-1. 安装 `PrivacyGuard-1.0.1.apk`
+1. 安装 `PrivacyGuard-1.1.0.apk`
 2. 打开 LSPosed → 模块，启用「隐私上报拦截」
 3. 首次打开模块会自动向 LSPosed 请求全部作用域，允许即可；也可在 LSPosed 里手动勾选：
 
@@ -305,7 +305,7 @@ build.sh                           一键构建
 
 | 参考点 | 本项目对应实现 |
 |---|---|
-| `rules/analytics/FuckMiuiUpload` 的 analytics 目标方法 | 未采用：该组规则针对特定版本的混淆类名（`c.f.k#y`、`onetrack.p.u#w`），在 6.19.0 上类名与方法签名均已变化，无法通用；「小米统计」分组已从模块移除 |
+| `rules/analytics/FuckMiuiUpload` 的 analytics 目标方法 | 采用思路但不用固定类名：旧名保留做兼容，实际以 `(long,long) -> JSONObject` 签名扫描覆盖各版本 |
 | `rules/guardprovider/DisableUploadAppListNew` 指向的 `flash.sec.miui.com/detect/app` | guardprovider 域名规则 |
 | `rules/packageinstaller/DisableAppInfoUpload` 涉及的 `/avl/upload`、`/info/layout` 路径 | 安装器路径规则（`/interceptcheck` 判断为功能接口，未采纳） |
 | `rules/trustservice/DisableMrm` 的 MRM 拦截思路 | 改在 `ServiceManager` 层屏蔽，不依赖混淆类名 |
@@ -331,6 +331,24 @@ build.sh                           一键构建
 | guardprovider 应用列表与 APK 特征采集入口 | 未实现具体方法 hook，由 `flash.sec.miui.com` 域名层覆盖 |
 | `AiGuardService` 生命周期拦截思路 | 未采纳（该功能可在系统设置中关闭） |
 
+### HyperOS4-XSOF-Analysis · 作者 FAQQAQ
+
+<https://github.com/FAQQAQ/HyperOS4-XSOF-Analysis>
+
+7 个 HyperOS 组件的静态逆向记录，本版大量拦截范围来自这份报告，特别感谢作者把证据强度（确认发送实现 / 保留实现 / 未闭环）写清楚。
+
+| 参考点 | 本项目对应实现 |
+|---|---|
+| `om.tracking.miui.com/track/mt`、区域与备份域（`tracking.india/rus/eu/intl`、`pn-*-bak.onetrack.mi.com`） | 「小米统计」整域规则（含 `onetrack.mi.com`） |
+| 6.33.0 国际版 DoH + IP 缓存重试（`dns.google`、bootstrap `8.8.4.4`/`8.8.8.8`） | 「阻断 DoH 旁路」子项 |
+| analytics 6.33.0 的 `a.b.a.*` 结构与使用记录采集 | 签名扫描方法层（不硬编码类名） |
+| `framework.sec.miui.com`（XSOF 合作方鉴权）、`virus-engine.sec.miui.com`（云查/风险配置）、`data.sec.miui.com`（月报） | 安全中心 / 系统安全组件中默认关闭的子项 |
+| 地震/志愿者/报警/EPS 族（`api.sec.miui.com`、`srv.sec.miui.com`、`gateway-papa`、`eps.caict.ac.cn`） | 「地震/报警/EPS 定位」与「志愿者传感器上报」子项 |
+| `flash.sec.miui.com/user/cat`（防窥应用分类上传包名数组） | 「防窥分类上报」子项 |
+| `com.xiaomi.registration`：`zzhc.vnet.cn`、`typdm.tydevice.com` 明文 CTEI、`sms:10659401` | 新增运营商服务分组，短信从 `SmsManager` 侧拦 |
+| analytics 交 XMSF 代发（`XMSFUploadReceiver`） | `Context#sendBroadcast` 按 action 丢弃 |
+| `find.api.micloud.xiaomi.net`（设备证书/密钥） | MiTrustService 的「设备证书/密钥上报」子项 |
+
 ### 第三方组件
 
 | 组件 | 许可 | 用途 |
@@ -342,26 +360,25 @@ build.sh                           一键构建
 
 ## 更新日志
 
+### 1.1.0
+
+- 新增**隐私 API 层**：应用列表、使用记录、设备标识、短信发送、XMSF 代发广播，全部在数据来源处截断
+- 「小米统计」改为整域拦截（`miui.com` / `xiaomi.com` / `xiaomi.net` / `onetrack.mi.com` / `pubsub.googleapis.com`），并新增「阻断 DoH 旁路」（`dns.google`、`8.8.8.8` / `8.8.4.4`）
+- analytics 方法层：`d.f.n#y(long,long)`（6.19.0 实测）+ `(long,long) -> JSONObject` 签名扫描，覆盖 6.33.0 的 `a.b.a.*` 改名
+- 新增**运营商服务**分组：`typdm.tydevice.com` 明文 HTTP 上传 IMEI/MAC 默认拦，`zzhc.vnet.cn` 设备注册默认关
+- 安全中心新增子项：防窥分类上报、地震/报警/EPS 定位、ADB 授权验证、Flamingo 云查上传、设备证书/密钥上报（均默认关闭）；志愿者传感器上报默认拦
+- 修复：组门 `Config.on(key, false)` 恒返回 fallback，导致 SystemHelper / 安全中心 / MiTrustService / 安装器 / 商店 / XMSF 六段 hook 从未安装
+- 版本号 1.1.0 / versionCode 3
+
 ### 1.0.1
 
 - 迁移到 libxposed 新 API（`XposedModule` / `onPackageReady`），模块 API 102
-- 作用域改为走官方接口：`getScope()` 读、`requestScope()` / `removeScope()` 写，
-  弃用直接改 `modules_config.db` 的做法
-- 组开关状态实时取自 LSPosed 真实作用域，绑定服务与回到界面各同步一次；
-  首次打开且作用域为空时自动请求一次全部已安装的目标应用
-- 应用总开关关闭时，其下子项置灰且不可操作；打开后恢复
-- 「重启」「查看记录」需要 root 的提示写进设置卡片，应用启动不再自动 `su`
-- 构建：固定签名 `debug.keystore` 并校验证书指纹；META-INF 打进 APK 根目录
-- 「小米统计」改为整域拦截（`miui.com` / `xiaomi.com` / `xiaomi.net`），覆盖 `tracking`、`om.tracking`、区域与备份域、`sdkconfig` 等新版通道
-- 「小米统计」新增「阻断 DoH 旁路」：拦 `dns.google` 与 `8.8.8.8` / `8.8.4.4`，对应 6.33.0 国际版的 DoH + IP 缓存重试
-- analytics 方法层补 `d.f.n#y(long,long)`（6.19.0 实测），并对 `(long,long) -> JSONObject` 签名做全量扫描，覆盖 6.33.0 的 `a.b.a.*` 改名
-- 安全中心新增三个默认关闭的子项：病毒库云查（`virus-engine.sec.miui.com`）、XSOF 合作方鉴权（`framework.sec.miui.com`）、月报与配置上报（`data.sec.miui.com`）
-- 移除「服务与反馈」（`com.miui.miservice`）占位：无卡片、无规则，留着只会出现勾不上的推荐项
-- 新增运营商服务分组：`typdm.tydevice.com`（明文 HTTP 上传 IMEI/MAC）默认拦，`zzhc.vnet.cn`（设备注册）默认关
-- 新增默认关闭的子项：防窥分类上报、地震/报警/EPS 定位、ADB 授权验证、Flamingo 云查上传、设备证书/密钥上报；志愿者传感器上报默认拦
-- 修复：组门用 `Config.on(key, false)` 判断，而 hook 侧恒返回 fallback，导致 SystemHelper / 安全中心 / MiTrustService / 安装器 / 商店 / XMSF 六段 hook 从未安装
-- 新增隐私 API 层：应用列表、使用记录、设备标识、短信发送、XMSF 代发广播，直接在数据来源处截断
-- 修复：应用重装导致 uid 变化后 KernelSU 授权失效
+- 作用域改为官方接口：`getScope()` 读、`requestScope()` / `removeScope()` 写，弃用改 `modules_config.db`
+- 组开关状态实时取自 LSPosed 真实作用域，绑定服务与回到界面各同步一次
+- 应用总开关关闭时，其下子项置灰且不可操作
+- 「重启」「查看记录」的 root 提示写进设置卡片，启动不再自动 `su`
+- 构建：固定签名 `debug.keystore` 并校验指纹；`META-INF` 打进 APK 根目录；CI 使用 build-tools 35
+- 移除「服务与反馈」（`com.miui.miservice`）占位
 
 ### 1.0.0
 
