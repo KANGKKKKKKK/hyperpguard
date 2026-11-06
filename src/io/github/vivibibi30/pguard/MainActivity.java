@@ -516,7 +516,7 @@ public class MainActivity extends Activity {
         t1.setTextColor(TEXT);
 
         TextView t2 = new TextView(this);
-        t2.setText(isInstalled(g.pkg) ? g.pkg : g.pkg + "（未安装，可忽略）");
+        t2.setText(g.pkg);
         t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
         t2.setTextColor(SUB);
         t2.setPadding(0, dp(2), 0, 0);
