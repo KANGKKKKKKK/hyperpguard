@@ -92,7 +92,7 @@
 
 ## 安装
 
-1. 安装 `PrivacyGuard-1.0.1.apk`（**覆盖安装**）
+1. 安装 `PrivacyGuard-1.0.1.apk`
 2. 打开 LSPosed → 模块，启用「隐私上报拦截」
 3. 首次打开模块会自动向 LSPosed 请求全部作用域，允许即可；也可在 LSPosed 里手动勾选：
 
@@ -107,21 +107,6 @@
 4. 重启手机，或在模块里对每个应用点一次「重启」
 
 没勾选作用域的应用不会注入，等于没装。
-
-### 更新纪律（重要）
-
-**只覆盖安装，永远不要卸载。**
-
-```sh
-adb install -r PrivacyGuard.apk
-# 手机上：
-su -c 'pm install -r /sdcard/Download/PrivacyGuard-1.0.1.apk'
-```
-
-卸载重装会让 Android 重新分配 uid，而 KernelSU / Magisk 的 root 授权是按 uid 记录的，
-换 uid 就必须重新授权；覆盖安装保留 uid 与数据，授权不受影响。仓库内的
-`debug.keystore` 是固定签名，`build.sh` 会校验证书指纹，指纹不符直接退出——
-换签名等于装不上，等于只能卸载，等于丢 root 授权。
 
 ---
 
@@ -219,7 +204,7 @@ su -c 'pm install -r /sdcard/Download/PrivacyGuard-1.0.1.apk'
 
 ## 构建
 
-需要 JDK 11+、`android.jar`、`d8`、`aapt2`、`zipalign`、`apksigner`。
+需要 JDK 11+、build-tools 35 及以上（`d8` / `aapt2` / `zipalign` / `apksigner`），以及一份 `android.jar`。
 
 ```sh
 export ANDROID_JAR=/path/to/platforms/android-35/android.jar
@@ -231,37 +216,6 @@ sh build.sh
 ```
 
 打包顺序：`javac → d8 → aapt2 link → 追加 classes.dex → 追加 META-INF → zipalign → apksigner`。
-
-### 两个必须知道的坑
-
-**1. META-INF 必须在 APK 根目录**
-
-libxposed 新 API 的模块声明是三个文件：
-
-```
-META-INF/xposed/java_init.list     入口类名
-META-INF/xposed/module.prop        minApiVersion / targetApiVersion / staticScope
-META-INF/xposed/scope.list         推荐作用域
-```
-
-**不能放进 `assets/`**。aapt2 会把 `assets/` 原样打成 `assets/META-INF/`，LSPosed 在 APK 根目录
-找不到就判定「不是模块」，日志里一条记录都没有。`build.sh` 单独把 `META-INF` zip 进根目录。
-
-**2. `IXposedService$Stub` 不在 service 包里**
-
-`io.github.libxposed:service` 的 classes.jar 不含 AIDL 编译产物，直接打进 dex 会在运行时抛：
-
-```
-NoClassDefFoundError: Lio/github/libxposed/service/IXposedService$Stub;
-```
-
-必须从 `io.github.libxposed:interface` 的 classes.jar 补齐，两个 jar 解压合并后作为
-`libs/libxposed-service.jar` 一起交给 d8。Maven 坐标：
-
-```
-https://repo1.maven.org/maven2/io/github/libxposed/service/102.0.0/service-102.0.0.aar
-https://repo1.maven.org/maven2/io/github/libxposed/interface/102.0.0/interface-102.0.0.aar
-```
 
 `aapt2 link` 需要一份带资源表的 jar。CI 用完整平台包；本地如果 `android.jar` 资源表被裁剪过，
 放一份 `android-stub.jar` 在仓库根目录，脚本会自动优先使用它（也可以用 `AAPT2_INCLUDE` 指定）。
@@ -374,7 +328,7 @@ build.sh                           一键构建
 - 应用总开关关闭时，其下子项置灰且不可操作；打开后恢复
 - 「重启」「查看记录」需要 root 的提示写进设置卡片，应用启动不再自动 `su`
 - 构建：固定签名 `debug.keystore` 并校验证书指纹；META-INF 打进 APK 根目录
-- 修复：卸载重装导致 uid 变化后 KernelSU 授权失效（覆盖安装即可保留）
+- 修复：应用重装导致 uid 变化后 KernelSU 授权失效
 
 ### 1.0.0
 
