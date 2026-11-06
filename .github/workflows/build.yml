@@ -102,7 +102,7 @@ jobs:
 
       # 同步到 LSPosed 分发仓库（tag 必须是 versionCode-versionName）
       - name: Publish to LSPosed repo
-        if: startsWith(github.ref, 'refs/tags/') && !startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ secrets.LSPOSED_TOKEN }}
         run: |
