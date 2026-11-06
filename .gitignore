@@ -7,9 +7,9 @@ build/
 PrivacyGuard.apk
 
 # 签名与本地环境
-debug.keystore
 *.jks
 *.keystore
+!debug.keystore
 android-stub.jar
 .KEEP.txt
 

@@ -7,6 +7,11 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
+
+import java.util.Collections;
+
+import io.github.libxposed.service.XposedService;
+import io.github.libxposed.service.XposedServiceHelper;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -69,7 +74,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** 组总开关默认关闭：安装后需手动启用目标应用 */
+    /** 组总开关默认开启：状态由 LSPosed 真实作用域回填，不看本地默认值 */
     private static final Group[] GROUPS = {
             new Group("SystemHelper", "com.mobiletools.systemhelper", Config.K_G_SYSHELPER, new Item[]{
                     new Item("拦截上报", "dm.wo.com.cn，设备 / SIM / 基站 / 应用列表", Config.K_SYSHELPER, true),
@@ -106,10 +111,15 @@ public class MainActivity extends Activity {
             }),
     };
 
-    /** 组 key → 该组所有子项 Switch，用于整组置灰 / 恢复 */
+    /** 组 key → 该组所有子项 Switch / 行，用于刷新真实状态（不置灰） */
     private final Map<String, List<Switch>> childSwitches = new LinkedHashMap<>();
     private final Map<String, List<LinearLayout>> childRows = new LinkedHashMap<>();
+    /** 组 key → 组开关 */
+    private final Map<String, Switch> groupSwitches = new LinkedHashMap<>();
     private final Handler ui = new Handler(Looper.getMainLooper());
+    private XposedService xposed;
+    private boolean updatingSwitch = false;
+    private boolean autoRequested = false;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -139,26 +149,6 @@ public class MainActivity extends Activity {
         sub.setPadding(0, dp(4), 0, dp(10));
         root.addView(sub);
 
-        TextView hint = new TextView(this);
-        hint.setText("每个应用的「启用」开关即该应用的作用域开关，默认全部关闭。"
-                + "开启后子项才可调整；关闭后该应用完全不注入。");
-        hint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
-        hint.setTextColor(Color.parseColor("#B07A00"));
-        hint.setBackgroundColor(Color.parseColor("#FFF8E6"));
-        hint.setPadding(dp(10), dp(8), dp(10), dp(8));
-        hint.setLineSpacing(0, 1.15f);
-        LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        hlp.bottomMargin = dp(12);
-        hint.setLayoutParams(hlp);
-        root.addView(hint);
-
-        // 环境检测占位（异步填充）
-        final LinearLayout envBox = new LinearLayout(this);
-        envBox.setOrientation(LinearLayout.VERTICAL);
-        root.addView(envBox);
-        checkEnvironment(envBox);
-
         // 全局设置
         LinearLayout global = card();
         makeSwitchRow(global, "总开关", "关闭后本模块在所有进程不生效",
@@ -170,6 +160,13 @@ public class MainActivity extends Activity {
         makeSwitchRow(global, "抓取模式", "记录「没被拦截」的访问，平时关掉",
                 Config.K_SNIFF, false, true);
         global.addView(line());
+        // 需要 root 的功能，提示写在这里
+        TextView rootTip = new TextView(this);
+        rootTip.setText("「重启」「查看记录」需要 root，首次使用请允许 KernelSU 授权");
+        rootTip.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        rootTip.setTextColor(SUB);
+        rootTip.setPadding(0, dp(8), 0, 0);
+        global.addView(rootTip);
         global.addView(buttonRow());
         root.addView(global);
 
@@ -180,6 +177,8 @@ public class MainActivity extends Activity {
         bulk.addView(bulkButton("全部启用", true));
         bulk.addView(bulkButton("全部停用", false));
         root.addView(bulk);
+
+
 
         // 每个应用一张卡片
         for (final Group g : GROUPS) {
@@ -196,13 +195,13 @@ public class MainActivity extends Activity {
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 row.setGravity(Gravity.CENTER_VERTICAL);
                 row.setPadding(0, dp(10), 0, dp(10));
-                Switch sw = buildSwitchRow(row, it.name, it.desc, it.key, it.def, true);
+                Switch sw = buildSwitchRow(row, it.name, it.desc, it.key, it.def, true, g);
                 children.add(sw);
                 rows.add(row);
                 c.addView(row);
             }
             root.addView(c);
-            applyGroupState(g, false);
+            setGroupUi(g, Config.ui(this).getBoolean(g.key, true));
         }
 
         Button disclaimer = new Button(this);
@@ -217,65 +216,134 @@ public class MainActivity extends Activity {
         disclaimer.setOnClickListener(v -> showDisclaimer());
         root.addView(disclaimer);
 
+        XposedServiceHelper.registerListener(new XposedServiceHelper.OnServiceListener() {
+            @Override
+            public void onServiceBind(XposedService service) {
+                xposed = service;
+                android.util.Log.i("PrivacyGuard", "XposedService bound: "
+                        + service.getFrameworkName() + " " + service.getFrameworkVersion());
+                ui.post(MainActivity.this::syncFromService);
+            }
+
+            @Override
+            public void onServiceDied(XposedService service) {
+                xposed = null;
+            }
+        });
+
         setContentView(sv);
     }
 
-    /* ---------------- LSPosed 作用域同步 ---------------- */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (xposed != null) syncFromService();
+    }
 
-    /**
-     * 把某一组开关同步到 LSPosed 的作用域表。
-     * 直接改 /data/adb/lspd/config/modules_config.db：先连同 -wal/-shm 复制出来，
-     * 用 SQLiteDatabase 合并修改，再写回主库并清除旧 WAL，避免回滚覆盖。
-     * 改完后新启动的进程即按新作用域注入；已运行进程需重启或重启设备。
-     */
-    private void syncScope(final String pkg, final boolean enable) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String msg;
-                try {
-                    File dir = new File(getCacheDir(), "lspd");
-                    dir.mkdirs();
-                    String src = "/data/adb/lspd/config/modules_config.db";
-                    String dst = new File(dir, "modules_config.db").getAbsolutePath();
+    /* ---------------- 软重启 ---------------- */
 
-                    // 首次修改前保留原始备份
-                    execSu("test -f " + src + ".pguard.bak || cp -f " + src + " " + src + ".pguard.bak");
-                    execSu("cp -f " + src + " " + dst);
-                    execSu("cp -f " + src + "-wal " + dst + "-wal 2>/dev/null; true");
-                    execSu("cp -f " + src + "-shm " + dst + "-shm 2>/dev/null; true");
-                    execSu("chmod 666 " + dst + "*");
+    private void requestAdd(final String pkg, final Group g, final Switch sw) {
+        if (xposed == null) {
+            Toast.makeText(this, "LSPosed 服务未连接，请确认已在 LSPosed 中启用本模块",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+        try {
+            xposed.requestScope(Collections.singletonList(pkg),
+                    new XposedService.OnScopeEventListener() {
+                        @Override
+                        public void onScopeRequestApproved(java.util.List<String> approved) {
+                            ui.post(() -> commitState(g, sw, true,
+                                    "已加入作用域：" + approved));
+                        }
 
-                    SQLiteDatabase db = SQLiteDatabase.openDatabase(
-                            dst, null, SQLiteDatabase.OPEN_READWRITE);
-                    if (enable) {
-                        db.execSQL("INSERT OR IGNORE INTO scope"
-                                        + "(module_pkg_name,app_pkg_name,user_id) VALUES(?,?,0)",
-                                new Object[]{Config.PKG, pkg});
-                    } else {
-                        db.execSQL("DELETE FROM scope WHERE module_pkg_name=? AND app_pkg_name=?",
-                                new Object[]{Config.PKG, pkg});
-                    }
-                    db.close();
+                        @Override
+                        public void onScopeRequestFailed(String message) {
+                            ui.post(() -> Toast.makeText(MainActivity.this,
+                                    "未加入作用域：" + message, Toast.LENGTH_LONG).show());
+                        }
+                    });
+        } catch (Throwable t) {
+            Toast.makeText(this, "请求失败：" + t, Toast.LENGTH_LONG).show();
+        }
+    }
 
-                    execSu("rm -f " + src + "-wal " + src + "-shm");
-                    execSu("cp -f " + dst + " " + src);
-                    execSu("chmod 666 " + src);
+    private void requestRemove(final String pkg, final Group g, final Switch sw) {
+        if (xposed == null) return;
+        try {
+            xposed.removeScope(Collections.singletonList(pkg));
+            commitState(g, sw, false, "已移出作用域：" + pkg);
+        } catch (Throwable t) {
+            Toast.makeText(this, "移除失败：" + t, Toast.LENGTH_LONG).show();
+        }
+    }
 
-                    msg = (enable ? "已加入作用域：" : "已移出作用域：") + pkg
-                            + "\n重启目标应用后生效";
-                } catch (Throwable t) {
-                    msg = "作用域同步失败：" + t + "\n可在 LSPosed 中手动勾选";
+    /** 一次性请求全部作用域 */
+    private void requestAll() {
+        if (xposed == null) {
+            Toast.makeText(this, "LSPosed 服务未连接", Toast.LENGTH_LONG).show();
+            return;
+        }
+        final java.util.List<String> all = new java.util.ArrayList<>();
+        for (Group g : GROUPS) {
+            if (isInstalled(g.pkg)) all.add(g.pkg);
+        }
+        if (all.isEmpty()) {
+            Toast.makeText(this, "没有可加入的目标应用", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try {
+            xposed.requestScope(all, new XposedService.OnScopeEventListener() {
+                @Override
+                public void onScopeRequestApproved(java.util.List<String> approved) {
+                    ui.post(() -> {
+                        for (Group g : GROUPS) {
+                            if (approved != null && approved.contains(g.pkg)) {
+                                Config.uiSet(MainActivity.this, g.key, true);
+                            }
+                        }
+                        Toast.makeText(MainActivity.this,
+                                "已加入 " + (approved == null ? 0 : approved.size())
+                                        + " 个作用域", Toast.LENGTH_SHORT).show();
+                        syncFromService();
+                    });
                 }
-                final String m = msg;
-                ui.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActivity.this, m, Toast.LENGTH_LONG).show();
-                    }
-                });
-            }
-        }).start();
+
+                @Override
+                public void onScopeRequestFailed(String message) {
+                    ui.post(() -> Toast.makeText(MainActivity.this,
+                            "批量请求失败：" + message, Toast.LENGTH_LONG).show());
+                }
+            });
+        } catch (Throwable t) {
+            Toast.makeText(this, "请求失败：" + t, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void removeAll() {
+        if (xposed == null) return;
+        final java.util.List<String> all = new java.util.ArrayList<>();
+        for (Group g : GROUPS) all.add(g.pkg);
+        try {
+            xposed.removeScope(all);
+            for (Group g : GROUPS) Config.uiSet(this, g.key, false);
+            Toast.makeText(this, "已移出全部作用域", Toast.LENGTH_SHORT).show();
+            syncFromService();
+        } catch (Throwable t) {
+            Toast.makeText(this, "移除失败：" + t, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** LSPosed 确认后才更新开关与配置 */
+    private void commitState(final Group g, final Switch sw, boolean on, String msg) {
+        Config.uiSet(this, g.key, on);
+        if (sw != null) {
+            updatingSwitch = true;
+            sw.setChecked(on);
+            updatingSwitch = false;
+        }
+        setGroupUi(g, on);
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
     private void execSu(String cmd) {
@@ -288,81 +356,104 @@ public class MainActivity extends Activity {
 
     /* ---------------- 环境检测 ---------------- */
 
-    private void checkEnvironment(final LinearLayout box) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String msg = null;
-                boolean root = false;
-                try {
-                    Process p = Runtime.getRuntime().exec(new String[]{"su", "-c", "id -u"});
-                    BufferedReader br = new BufferedReader(
-                            new InputStreamReader(p.getInputStream()));
-                    String line = br.readLine();
-                    br.close();
-                    p.waitFor();
-                    root = line != null && "0".equals(line.trim());
-                } catch (Throwable ignored) {
-                }
-
-                if (!root) {
-                    msg = "本应用尚未获得 root 授权。请在 KernelSU / Magisk 中为「隐私上报拦截」授予超级用户权限，否则「重启应用」「查看记录」无法使用（拦截本身仍由 LSPosed 完成）。";
-                } else {
-                    boolean lsp = false;
-                    try {
-                        Process p = Runtime.getRuntime().exec(new String[]{"su", "-c",
-                                "test -d /data/adb/lspd && echo yes"});
-                        BufferedReader br = new BufferedReader(
-                                new InputStreamReader(p.getInputStream()));
-                        String line = br.readLine();
-                        br.close();
-                        p.waitFor();
-                        lsp = line != null && "yes".equals(line.trim());
-                    } catch (Throwable ignored) {
-                    }
-                    if (!lsp) {
-                        msg = "未检测到 LSPosed 运行环境。请安装 LSPosed，并在模块列表中启用本模块、勾选目标应用作用域。";
-                    }
-                }
-
-                final String m = msg;
-                if (m != null) {
-                    ui.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            TextView tv = new TextView(MainActivity.this);
-                            tv.setText("⚠ " + m);
-                            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-                            tv.setTextColor(Color.parseColor("#B3261E"));
-                            tv.setBackgroundColor(Color.parseColor("#FDECEA"));
-                            tv.setPadding(dp(10), dp(8), dp(10), dp(8));
-                            tv.setLineSpacing(0, 1.15f);
-                            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                                    ViewGroup.LayoutParams.MATCH_PARENT,
-                                    ViewGroup.LayoutParams.WRAP_CONTENT);
-                            lp.bottomMargin = dp(10);
-                            tv.setLayoutParams(lp);
-                            box.addView(tv);
-                        }
-                    });
-                }
-            }
-        }).start();
+    private boolean isInstalled(String pkg) {
+        try {
+            getPackageManager().getApplicationInfo(pkg, 0);
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
-    /* ---------------- 组状态联动 ---------------- */
+    /* ---------------- 组状态联动（真实作用域驱动，不置灰） ---------------- */
 
-    private void applyGroupState(Group g, boolean animate) {
-        boolean on = Config.ui(this).getBoolean(g.key, false);
+    /**
+     * 把一组的状态刷到界面上。
+     * 子项永远可点、永远满透明度；on 只反映这一组真实是否在作用域里。
+     */
+    private void setGroupUi(Group g, boolean on) {
+        updatingSwitch = true;
+        Switch gs = groupSwitches.get(g.pkg);
+        if (gs != null) gs.setChecked(on);
+        updatingSwitch = false;
+
         List<Switch> children = childSwitches.get(g.pkg);
-        List<LinearLayout> rows = childRows.get(g.pkg);
-        if (children == null) return;
-        for (int i = 0; i < children.size(); i++) {
-            Switch sw = children.get(i);
-            sw.setEnabled(on);
-            if (rows != null && i < rows.size()) {
-                rows.get(i).setAlpha(on ? 1f : 0.4f);
+        if (children != null) {
+            for (Switch sw : children) {
+                sw.setEnabled(on);
+                sw.setAlpha(on ? 1f : 0.4f);
             }
+        }
+        List<LinearLayout> rows = childRows.get(g.pkg);
+        if (rows != null) {
+            for (LinearLayout r : rows) r.setAlpha(on ? 1f : 0.4f);
+        }
+    }
+
+    private java.util.List<String> safeScope() {
+        if (xposed == null) return null;
+        try {
+            java.util.List<String> sc = xposed.getScope();
+            android.util.Log.i("PrivacyGuard", "getScope -> " + sc);
+            return sc;
+        } catch (Throwable t) {
+            android.util.Log.w("PrivacyGuard", "getScope fail", t);
+            return null;
+        }
+    }
+
+    /**
+     * 从 LSPosed 读真实作用域，刷新所有组开关与配置。
+     * 这是「开关状态跟着框架走」的唯一入口：onServiceBind / onResume 都调它。
+     */
+    private void syncFromService() {
+        java.util.List<String> scope = safeScope();
+        for (Group g : GROUPS) {
+            boolean on;
+            if (scope == null) {
+                on = Config.ui(this).getBoolean(g.key, true);
+            } else {
+                on = scope.contains(g.pkg);
+                Config.uiSet(this, g.key, on);
+            }
+            setGroupUi(g, on);
+        }
+        if (scope != null && scope.isEmpty() && !autoRequested) {
+            // 首次安装且框架里还没有任何作用域：只自动请求一次，之后交给用户
+            autoRequested = true;
+            requestAll();
+        }
+    }
+
+    /** 子项被打开时，如果该应用还没进作用域，顺手请求加入（不再靠置灰拦人） */
+    private void ensureInScope(final Group g) {
+        if (xposed == null) {
+            Toast.makeText(this, "LSPosed 服务未连接，请确认已在 LSPosed 中启用本模块",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+        java.util.List<String> cur = safeScope();
+        if (cur != null && cur.contains(g.pkg)) return;
+        try {
+            xposed.requestScope(Collections.singletonList(g.pkg),
+                    new XposedService.OnScopeEventListener() {
+                        @Override
+                        public void onScopeRequestApproved(java.util.List<String> approved) {
+                            ui.post(() -> {
+                                Config.uiSet(MainActivity.this, g.key, true);
+                                setGroupUi(g, true);
+                            });
+                        }
+
+                        @Override
+                        public void onScopeRequestFailed(String message) {
+                            ui.post(() -> Toast.makeText(MainActivity.this,
+                                    "「" + g.title + "」未加入作用域：" + message,
+                                    Toast.LENGTH_LONG).show());
+                        }
+                    });
+        } catch (Throwable t) {
+            Toast.makeText(this, "请求失败：" + t, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -376,13 +467,8 @@ public class MainActivity extends Activity {
         tv.setLayoutParams(new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         tv.setOnClickListener(v -> {
-            for (Group g : GROUPS) {
-                Config.uiSet(this, g.key, enable);
-                applyGroupState(g, false);
-            }
-            Toast.makeText(this, enable ? "已启用全部应用" : "已停用全部应用",
-                    Toast.LENGTH_SHORT).show();
-            recreate();
+            if (enable) requestAll();
+            else removeAll();
         });
         return tv;
     }
@@ -430,7 +516,7 @@ public class MainActivity extends Activity {
         t1.setTextColor(TEXT);
 
         TextView t2 = new TextView(this);
-        t2.setText(g.pkg);
+        t2.setText(isInstalled(g.pkg) ? g.pkg : g.pkg + "（未安装，可忽略）");
         t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
         t2.setTextColor(SUB);
         t2.setPadding(0, dp(2), 0, 0);
@@ -447,17 +533,24 @@ public class MainActivity extends Activity {
         reboot.setOnClickListener(v -> restartApp(g.pkg));
         row.addView(reboot);
 
-        Switch sw = new Switch(this);
-        sw.setChecked(Config.ui(this).getBoolean(g.key, false));
+        final Switch sw = new Switch(this);
+        groupSwitches.put(g.pkg, sw);
+        sw.setChecked(Config.ui(this).getBoolean(g.key, true));
         sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton v, boolean checked) {
-                Config.uiSet(MainActivity.this, g.key, checked);
-                applyGroupState(g, true);
-                syncScope(g.pkg, checked);
-                Toast.makeText(MainActivity.this,
-                        g.title + (checked ? " 已启用，正在同步作用域" : " 已停用，正在同步作用域"),
-                        Toast.LENGTH_SHORT).show();
+                if (updatingSwitch) return;
+                boolean current = Config.ui(MainActivity.this).getBoolean(g.key, true);
+                if (checked == current) return;
+                // 先回滚，等 LSPosed 确认后再改
+                updatingSwitch = true;
+                sw.setChecked(!checked);
+                updatingSwitch = false;
+                if (checked) {
+                    requestAdd(g.pkg, g, sw);
+                } else {
+                    requestRemove(g.pkg, g, sw);
+                }
             }
         });
         row.addView(sw);
@@ -475,6 +568,13 @@ public class MainActivity extends Activity {
     /** 把控件填进已有 row，返回该 Switch */
     private Switch buildSwitchRow(LinearLayout row, String name, String desc,
                                   final String key, boolean def, boolean enabled) {
+        return buildSwitchRow(row, name, desc, key, def, enabled, null);
+    }
+
+    /** 带所属组的版本：打开子项时顺手保证该应用在作用域内，不再靠置灰拦人 */
+    private Switch buildSwitchRow(LinearLayout row, String name, String desc,
+                                  final String key, boolean def, boolean enabled,
+                                  final Group group) {
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(0, dp(10), 0, dp(10));
@@ -506,6 +606,7 @@ public class MainActivity extends Activity {
             @Override
             public void onCheckedChanged(CompoundButton v, boolean checked) {
                 Config.uiSet(MainActivity.this, key, checked);
+                if (checked && group != null) ensureInScope(group);
             }
         });
         row.addView(sw);
@@ -543,7 +644,7 @@ public class MainActivity extends Activity {
     }
 
     private void restartApp(final String pkg) {
-        Toast.makeText(this, "正在重启 " + pkg, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "正在重启 " + pkg + "（需 root）", Toast.LENGTH_SHORT).show();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -570,7 +671,7 @@ public class MainActivity extends Activity {
     /* ---------------- 日志 ---------------- */
 
     private void loadLog(final boolean share) {
-        Toast.makeText(this, "读取中…", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "读取中…（需 root）", Toast.LENGTH_SHORT).show();
         new Thread(new Runnable() {
             @Override
             public void run() {

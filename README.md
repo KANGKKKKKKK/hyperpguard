@@ -61,7 +61,7 @@
 | 小米可信服务 | `com.xiaomi.trustservice` | MRM 远程认证链 | 关 |
 | 翻译组件 | `com.xiaomi.aiasst.vision` | 语音识别上传（`/speech/`） | 关 |
 
-默认关闭的三项会影响设备证书、查找设备、翻译与语音识别功能，需要时再单独开启。
+默认关闭的两项（小米可信服务、翻译组件）会影响设备证书、查找设备与语音识别，需要时再单独开启。
 
 ---
 
@@ -70,7 +70,7 @@
 | 项目 | 环境 |
 |---|---|
 | 系统 | Android 16 / HyperOS |
-| 框架 | LSPosed（传统 Xposed API 82） |
+| 框架 | LSPosed 2.2.1（libxposed API 102） |
 | 安全中心 | 12.8.6 |
 | 系统安全组件 | 2.5.6 |
 | SystemHelper | 3.0.1 |
@@ -84,17 +84,17 @@
 
 - Android 10 及以上（minSdk 29）
 - Root：KernelSU / Magisk / APatch
-- LSPosed（传统 Xposed API 82）
+- LSPosed（支持 libxposed API 100+，实测 2.2.1）
 
-本模块不使用 DexKit 或任何 DEX 扫描，体积约 30 KB，进程启动时开销可忽略。
+本模块不使用 DexKit 或任何 DEX 扫描，APK 约 49 KB（含 libxposed service 与 AIDL），进程启动时开销可忽略。
 
 ---
 
 ## 安装
 
-1. 安装 `PrivacyGuard-1.0.0.apk`
+1. 安装 `PrivacyGuard-1.0.1.apk`（**覆盖安装**）
 2. 打开 LSPosed → 模块，启用「隐私上报拦截」
-3. 勾选作用域（安装时会自动推荐）：
+3. 首次打开模块会自动向 LSPosed 请求全部作用域，允许即可；也可在 LSPosed 里手动勾选：
 
    ```
    com.mobiletools.systemhelper    com.miui.guardprovider
@@ -108,6 +108,21 @@
 
 没勾选作用域的应用不会注入，等于没装。
 
+### 更新纪律（重要）
+
+**只覆盖安装，永远不要卸载。**
+
+```sh
+adb install -r PrivacyGuard.apk
+# 手机上：
+su -c 'pm install -r /sdcard/Download/PrivacyGuard-1.0.1.apk'
+```
+
+卸载重装会让 Android 重新分配 uid，而 KernelSU / Magisk 的 root 授权是按 uid 记录的，
+换 uid 就必须重新授权；覆盖安装保留 uid 与数据，授权不受影响。仓库内的
+`debug.keystore` 是固定签名，`build.sh` 会校验证书指纹，指纹不符直接退出——
+换签名等于装不上，等于只能卸载，等于丢 root 授权。
+
 ---
 
 ## 使用
@@ -120,16 +135,20 @@
 
 ### 作用域联动
 
-每个应用卡片右上角的「启用」开关**直接控制 LSPosed 作用域**：
+每个应用卡片右上角的「启用」开关**直接控制 LSPosed 作用域**，走的是 libxposed 官方接口：
 
-- 打开 → 把该包名写入 LSPosed 的 `scope` 表
-- 关闭 → 从 `scope` 表移除该包名
-- 首次修改前自动备份为 `modules_config.db.pguard.bak`
-- 修改后自动停止目标应用，使其按新作用域重新注入
+| 动作 | 接口 |
+|---|---|
+| 读当前作用域 | `XposedService#getScope()` |
+| 加入作用域 | `XposedService#requestScope(list, callback)` |
+| 移出作用域 | `XposedService#removeScope(list)` |
 
-LSPosed 管理器界面存在缓存，切换后需重新打开管理器才能看到最新状态；界面未刷新不代表配置未生效，可通过目标应用的 `attach` 日志判断。
+界面上的组开关状态不是本地默认值，而是每次绑定服务、每次回到界面时用 `getScope()` 回填的真实结果；
+切换时先回弹，等 `onScopeRequestApproved` 回调成功才真正落地。
+应用总开关关闭时，其下子项变灰且不可操作；重新打开后恢复。
 
-详见 [DISCLAIMER.txt](DISCLAIMER.txt) 第五条。
+旧版本采用的「直接改 `modules_config.db`」已废弃：LSPosed 有内存缓存，改库不但不刷新界面，
+还容易被覆盖回旧值。
 
 ### 重启
 
@@ -203,14 +222,49 @@ LSPosed 管理器界面存在缓存，切换后需重新打开管理器才能看
 需要 JDK 11+、`android.jar`、`d8`、`aapt2`、`zipalign`、`apksigner`。
 
 ```sh
-export ANDROID_JAR=/path/to/android.jar     # 平台 android.jar
-export D8=/path/to/d8                        # build-tools 中的 d8
-export AAPT2=/usr/bin/aapt2
-export KEYSTORE=/path/to/debug.keystore      # 缺省用 ./debug.keystore
+export ANDROID_JAR=/path/to/platforms/android-35/android.jar
+export D8=/path/to/build-tools/35.0.0/d8
+export AAPT2=/path/to/build-tools/35.0.0/aapt2
+export ZIPALIGN=/path/to/build-tools/35.0.0/zipalign
+export APKSIGNER=/path/to/build-tools/35.0.0/apksigner
 sh build.sh
 ```
 
-`aapt2 link` 需要一份可解析的资源表。如果手头的 `android.jar` 资源表被裁剪过（部分发行版会裁剪），用完整平台包替代即可。
+打包顺序：`javac → d8 → aapt2 link → 追加 classes.dex → 追加 META-INF → zipalign → apksigner`。
+
+### 两个必须知道的坑
+
+**1. META-INF 必须在 APK 根目录**
+
+libxposed 新 API 的模块声明是三个文件：
+
+```
+META-INF/xposed/java_init.list     入口类名
+META-INF/xposed/module.prop        minApiVersion / targetApiVersion / staticScope
+META-INF/xposed/scope.list         推荐作用域
+```
+
+**不能放进 `assets/`**。aapt2 会把 `assets/` 原样打成 `assets/META-INF/`，LSPosed 在 APK 根目录
+找不到就判定「不是模块」，日志里一条记录都没有。`build.sh` 单独把 `META-INF` zip 进根目录。
+
+**2. `IXposedService$Stub` 不在 service 包里**
+
+`io.github.libxposed:service` 的 classes.jar 不含 AIDL 编译产物，直接打进 dex 会在运行时抛：
+
+```
+NoClassDefFoundError: Lio/github/libxposed/service/IXposedService$Stub;
+```
+
+必须从 `io.github.libxposed:interface` 的 classes.jar 补齐，两个 jar 解压合并后作为
+`libs/libxposed-service.jar` 一起交给 d8。Maven 坐标：
+
+```
+https://repo1.maven.org/maven2/io/github/libxposed/service/102.0.0/service-102.0.0.aar
+https://repo1.maven.org/maven2/io/github/libxposed/interface/102.0.0/interface-102.0.0.aar
+```
+
+`aapt2 link` 需要一份带资源表的 jar。CI 用完整平台包；本地如果 `android.jar` 资源表被裁剪过，
+放一份 `android-stub.jar` 在仓库根目录，脚本会自动优先使用它（也可以用 `AAPT2_INCLUDE` 指定）。
 
 CI：`.github/workflows/build.yml` 在每次推送到 `main` 时自动构建，产物以 artifact 形式提供。
 
@@ -220,16 +274,19 @@ CI：`.github/workflows/build.yml` 在每次推送到 `main` 时自动构建，�
 
 | 文件 | 职责 |
 |---|---|
-| `HookEntry.java` | 入口，按包名分发，安装网络层与各方法层 hook |
-| `Config.java` | 开关常量与跨进程读取（XSharedPreferences） |
-| `MainActivity.java` | 分组开关面板、重启、抓取模式、日志查看与分享 |
+| `HookEntry.java` | 入口，继承 `XposedModule`，在 `onPackageReady` 按包名分发 |
+| `Config.java` | 开关常量；hook 侧当前按默认值执行（细粒度开关待接 RemotePreferences） |
+| `MainActivity.java` | 分组开关面板、作用域联动、重启、日志查看与分享 |
 | `assets/DISCLAIMER.txt` | 免责声明，应用内可查看 |
 
 ```
 src/io/github/vivibibi30/pguard/   源码
 res/values/                        app_name 与 xposed_scope 数组
-assets/                            xposed_init、免责声明
-libs/                              Xposed API 82（编译用）
+assets/                            免责声明
+META-INF/xposed/                   模块声明（必须打到 APK 根）
+libs/libxposed-api.jar             libxposed API（compileOnly，不打进 dex）
+libs/libxposed-service.jar         service + interface 合并版（必须打进 dex）
+libs/api-82.jar                    传统 Xposed API（编译兼容用）
 docs/                              技术笔记与规则说明
 build.sh                           一键构建
 ```
@@ -301,8 +358,29 @@ build.sh                           一键构建
 | 组件 | 许可 | 用途 |
 |---|---|---|
 | [Xposed API 82](https://api.xposed.info/) | Apache-2.0 | 编译期依赖，`libs/api-82.jar`，不打包进模块 |
+| [libxposed API 102](https://github.com/libxposed/api) | Apache-2.0 | 模块入口与作用域接口，`libs/libxposed-api.jar`（compileOnly）+ `libs/libxposed-service.jar`（打包） |
 
-本项目不包含 DexKit、dexlib2 或任何 DEX 解析库，因此 APK 体积保持在约 30 KB。
+本项目不包含 DexKit、dexlib2 或任何 DEX 解析库，因此 APK 体积保持在约 49 KB。
+
+## 更新日志
+
+### 1.0.1
+
+- 迁移到 libxposed 新 API（`XposedModule` / `onPackageReady`），模块 API 102
+- 作用域改为走官方接口：`getScope()` 读、`requestScope()` / `removeScope()` 写，
+  弃用直接改 `modules_config.db` 的做法
+- 组开关状态实时取自 LSPosed 真实作用域，绑定服务与回到界面各同步一次；
+  首次打开且作用域为空时自动请求一次全部已安装的目标应用
+- 应用总开关关闭时，其下子项置灰且不可操作；打开后恢复
+- 「重启」「查看记录」需要 root 的提示写进设置卡片，应用启动不再自动 `su`
+- 构建：固定签名 `debug.keystore` 并校验证书指纹；META-INF 打进 APK 根目录
+- 修复：卸载重装导致 uid 变化后 KernelSU 授权失效（覆盖安装即可保留）
+
+### 1.0.0
+
+- 首个版本：四环节拦截、按应用分组、传统 Xposed API 82
+
+---
 
 ## 许可
 
@@ -320,6 +398,6 @@ installer stats, ads, and XSOF behaviour queries.
 
 Interception happens at four stages — collection entry, local storage, IPC
 interfaces, and network egress — with per-app switches. Requires root + LSPosed.
-No DEX scanning; ~30 KB.
+No DEX scanning; ~49 KB. Requires libxposed API 100+ (tested on LSPosed 2.2.1).
 
 Personal use only. See [DISCLAIMER.txt](DISCLAIMER.txt).

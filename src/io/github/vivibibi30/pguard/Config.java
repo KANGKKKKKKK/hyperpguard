@@ -3,28 +3,22 @@ package io.github.vivibibi30.pguard;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import java.io.File;
-
-import de.robv.android.xposed.XSharedPreferences;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
-
 /**
- * 配置读写：UI 写 SharedPreferences，hook 侧用 XSharedPreferences 读。
- * 读不到配置时按拦截处理（fail-closed）。
+ * 配置。
+ *
+ * UI 侧通过普通 SharedPreferences 读写；hook 侧在新 API 下无法直接读应用私有目录，
+ * 因此使用各规则的默认值（与 UI 的默认值一致）。细粒度开关由「应用是否在作用域内」
+ * 加默认规则共同决定。
  */
 public final class Config {
 
     public static final String PKG = "io.github.vivibibi30.pguard";
     public static final String PREFS = "pg";
-    public static final String VERSION = "1.0.0";
+    public static final String VERSION = "1.0.1";
 
+    /* 全局 */
     public static final String K_MASTER = "master";
-
-    /* 路径规则总开关（控制带 path 的精确规则是否生效） */
     public static final String K_PATH = "block_path_markers";
-
-    /* 抓取模式：记录未拦截的访问 */
     public static final String K_SNIFF = "sniff_all";
 
     /* 分组总开关 */
@@ -46,28 +40,28 @@ public final class Config {
     public static final String K_GUARD_AIGC = "block_guard_aigc";
     public static final String K_GUARD_FRAUD = "block_guard_fraud";
 
-    /* trustservice（默认关：会影响设备证书/查找设备） */
+    /* trustservice */
     public static final String K_TRUST = "block_trustservice";
 
-    /* analytics（默认关） */
+    /* analytics */
     public static final String K_ANALYTICS = "block_analytics";
     public static final String K_STRICT = "strict_all";
 
-    /* 翻译 / AI 通话识别后端（默认关） */
+    /* 翻译组件 */
     public static final String K_AIASST = "block_aiasst";
 
-    /* securitycenter */
+    /* 安全中心 */
     public static final String K_SECCENTER = "block_securitycenter";
     public static final String K_XSOF = "block_xsof";
 
     /* 安装器 */
     public static final String K_PKG_AVL = "block_packageinstaller_avl";
     public static final String K_PKG_STAT = "block_packageinstaller_stat";
+    public static final String K_AD_PKG = "block_ad_pkg";
 
-    /* 广告（域名均为实测确认） */
+    /* 广告 */
     public static final String K_AD_MARKET = "block_ad_market";
     public static final String K_AD_XMSF = "block_ad_xmsf";
-    public static final String K_AD_PKG = "block_ad_pkg";
 
     private Config() {
     }
@@ -84,54 +78,15 @@ public final class Config {
 
     /* ---------------- Hook 侧 ---------------- */
 
-    private static XSharedPreferences prefs;
-
-    private static XSharedPreferences prefs() {
-        if (prefs == null) {
-            try {
-                prefs = new XSharedPreferences(PKG, PREFS);
-            } catch (Throwable t) {
-                prefs = null;
-            }
-        }
-        return prefs;
+    public static boolean masterOn() {
+        return true;
     }
 
-    private static Boolean read(String key) {
-        try {
-            XSharedPreferences p = prefs();
-            if (p == null) return null;
-            File f = p.getFile();
-            if (f == null || !f.exists()) return null;
-            return p.getBoolean(key, true);
-        } catch (Throwable t) {
-            return null;
-        }
+    public static boolean on(String key, boolean fallback) {
+        return fallback;
     }
 
-    public static boolean masterOn(XC_LoadPackage.LoadPackageParam lp) {
-        Boolean v = read(K_MASTER);
-        return v == null || v;
-    }
-
-    /**
-     * 读开关。注意：读不到配置时返回调用方给的 fallback，
-     * 但 UI 侧已经为每项设置了显式默认值，所以这里以 UI 的默认值为准。
-     */
-    public static boolean on(XC_LoadPackage.LoadPackageParam lp, String key, boolean fallback) {
-        Boolean v = read(key);
-        return v == null ? fallback : v;
-    }
-
-    public static boolean strict(XC_LoadPackage.LoadPackageParam lp) {
-        Boolean v = read(K_STRICT);
-        return v != null && v;
-    }
-
-    public static void log(String s) {
-        try {
-            XposedBridge.log("[PrivacyGuard] " + s);
-        } catch (Throwable ignored) {
-        }
+    public static boolean strict() {
+        return false;
     }
 }

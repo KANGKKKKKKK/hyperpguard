@@ -93,3 +93,17 @@ onetrack.q.c#c()             → false
 | 病毒库更新失败 | 规则写了 `sec.miui.com` 通配 | 收窄为 `flash.sec.miui.com` |
 | 安装流程异常 | 拦了 `/interceptcheck` | 移除该路径 |
 | 方法层静默失效 | 混淆类名随版本变化 | 保留域名层作兜底，并输出 `hook miss` 日志 |
+
+## libxposed 新 API 迁移结论（1.0.1）
+
+真机实测环境：HyperOS / Android 16，LSPosed 2.2.1，模块 API 102。
+
+| 现象 | 结论 |
+|---|---|
+| LSPosed 判定「不是模块」，日志无任何记录 | `META-INF/xposed/*` 被打进了 `assets/META-INF/`；必须放在 APK 根目录 |
+| 启动即 `NoClassDefFoundError: IXposedService$Stub` | `io.github.libxposed:service` 不含 AIDL 产物，需从 `:interface` 的 classes.jar 合并后再 d8 |
+| 组开关状态与实际不符 | `getScope()` 读取真实作用域后回填；本地 SharedPreferences 只做兜底 |
+| 直接改 `modules_config.db` 后界面不变 | LSPosed 有内存缓存，改库不刷新且会被覆盖，改用 `requestScope()` / `removeScope()` |
+| `staticScope=true` 时能否动态改作用域 | 可以。`requestScope()` 实测可把作用域从 3 个扩到 8 个，`getScope()` 立即反映 |
+| 覆盖安装后 KernelSU 授权失效 | 卸载重装会重新分配 uid，而 KernelSU 按 uid 记录授权；保持固定签名 + `pm install -r` 即可保留 |
+| `pm install` 读 `/sdcard` 报 `Can't open file` | `system_server` 无 fuse 读权限，先 `cp` 到 `/data/local/tmp` 再装 |
