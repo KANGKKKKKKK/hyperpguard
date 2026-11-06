@@ -52,7 +52,9 @@ case "$code" in
   422)
     REL_ID=$(curl -sS -H "$AUTH" "$API/repos/$REPO/releases/tags/$TAG" \
       | python3 -c 'import json,sys;print(json.load(sys.stdin)["id"])')
-    echo "     release 已存在，复用 id=$REL_ID"
+    echo "     release 已存在（id=$REL_ID），更新正文"
+    curl -sS -o /dev/null -H "$AUTH" -H "Accept: application/vnd.github+json" \
+      -X PATCH "$API/repos/$REPO/releases/$REL_ID" -d @/tmp/pg_release.json
     ;;
   *)
     echo "建 release 失败 HTTP $code" >&2

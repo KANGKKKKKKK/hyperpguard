@@ -2,6 +2,8 @@
 
 面向 MIUI / HyperOS 的隐私上报拦截模块（LSPosed / Xposed）。
 
+[![Build APK](https://github.com/vivibibi30/pguard/actions/workflows/build.yml/badge.svg)](https://github.com/vivibibi30/pguard/actions/workflows/build.yml)
+
 预装系统组件会持续采集设备标识、应用使用记录、位置、通话行为等信息，并通过网络或跨进程接口提供给厂商、运营商或第三方。本模块在**采集入口、本地存储、对外接口、网络出口**四个环节同时设防，按应用分组独立开关。
 
 > 仅供个人在自有设备上学习研究使用。使用前请阅读 [DISCLAIMER.txt](DISCLAIMER.txt)。
@@ -84,7 +86,7 @@
 | 安全中心 | 12.8.6 |
 | 系统安全组件 | 2.5.6 |
 | SystemHelper | 3.0.1 |
-| 应用安装器 | 通过 |
+| 应用安装器 | 正常拦截 `/avl/upload`、`/info/layout` |
 
 其他机型与系统版本需自行检查日志中的 `hook miss` 与抓取模式记录。本模块不按版本号限制加载，类名或签名变化时方法层会自动跳过，网络层不受影响。
 
@@ -114,9 +116,7 @@
    com.xiaomi.aiasst.vision
    ```
 
-4. 重启手机，或在模块里对每个应用点一次「重启」
-
-没勾选作用域的应用不会注入，等于没装。
+4. 在模块里对目标应用点一次「重启」，让它重新加载即可生效
 
 ---
 
@@ -190,7 +190,7 @@
 
 ## 如何确认生效
 
-1. 启用模块并重启手机
+1. 启用模块，并对目标应用点一次「重启」
 2. 打开任意一个受保护的应用，触发一次它的上报行为（例如打开安全中心、安装一个应用）
 3. 在模块里点「查看记录」，应看到：
 
@@ -245,7 +245,7 @@ CI：`.github/workflows/build.yml` 在每次推送到 `main` 时自动构建，�
 
 ```
 src/io/github/vivibibi30/pguard/   源码
-res/values/                        app_name 与 xposed_scope 数组
+res/values/                        app_name 等字符串资源
 assets/                            免责声明
 META-INF/xposed/                   模块声明（必须打到 APK 根）
 libs/libxposed-api.jar             libxposed API（compileOnly，不打进 dex）
