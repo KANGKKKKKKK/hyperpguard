@@ -15,7 +15,7 @@
 | 本地存储 | XSOF 写库的 27 个方法 | 不再产生新的行为记录 |
 | 方法层 | SystemHelper 发送与入队、trustservice 的 MRM 服务 | 直接返回空值，不进队列、不建连接 |
 
-方法层与网络层互不依赖：类名变化时域名规则仍然生效，域名更换时方法层仍然生效，日志能分辨是哪一层命中。
+四层同时生效，任一层失效时其余层仍然工作。
 
 ## 覆盖组件
 
@@ -109,7 +109,12 @@ sha256sum PrivacyGuard.apk                        # 与下载页显示的 sha256
 
 ## 参考与致谢
 
-拦截目标与识别方式参考了 HyperCeiler（GPL-3.0，Sevtinge）、XSOF Privacy（yunyizea）、Hyper 隐私卫士等项目的公开资料，全部代码为独立编写，未复制、未反编译复用其实现。模块入口与作用域基于 [libxposed API](https://github.com/libxposed/api)（Apache-2.0）。
+- **HyperCeiler**（GPL-3.0，Sevtinge）
+- **XSOF Privacy**（yunyizea）
+- **Hyper 隐私卫士**（`io.github.hyperprivacyguard`）
+- **libxposed API**（Apache-2.0）、**LSPosed**
+
+代码独立编写，未复制、未反编译复用上述项目的实现。
 
 ## 免责声明
 

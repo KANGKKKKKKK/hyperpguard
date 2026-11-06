@@ -54,7 +54,7 @@
 | analytics | `onetrack.p.u#w` / `c.f.k#y` / `onetrack.q.c#a,b,c`（旧版） | 存在才挂，版本不符仅记 `hook miss` |
 | analytics | 扫描所有 `(long, long) -> JSONObject` 方法（6.33.0 起包名变成 `a.b.a.*`） | 命中即置空，日志输出 `analytics scan scanned=N hooked=N` |
 
-方法层与网络层互不依赖：类名变化时域名规则仍在工作，域名更换时方法层仍在工作，日志中可分辨是哪一层在起作用。
+四层同时生效，任一层失效时其余层仍然工作。
 
 ### 广告
 
@@ -76,10 +76,10 @@
 
 | 组件 | 包名 | 拦截内容 | 默认 |
 |---|---|---|---|
-| SystemHelper | `com.mobiletools.systemhelper` | 运营商遥测：设备 / SIM / 基站 / 应用列表 | 开 |
+| SystemHelper | `com.mobiletools.systemhelper` | 运营商遥测；默认整进程断网（无用户功能） | 开 |
 | 系统安全组件 | `com.miui.guardprovider` | 应用列表云查、AI 通话预警云检测、反诈配置拉取；Flamingo 云查上传默认关闭 | 开 |
 | 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、反诈配置拉取、志愿者传感器上报；云查 / 合作方鉴权 / 月报 / 防窥分类 / 地震报警定位 / ADB 验证默认关闭 | 开 |
-| 小米统计 | `com.miui.analytics` | tracking / om.tracking / sdkconfig 整域，含 DoH 旁路 | 开 |
+| 小米统计 | `com.miui.analytics` | 整域 + DoH 旁路；默认整进程断网 | 开 |
 | 应用安装器 | `com.miui.packageinstaller` | AVL 上报、活跃统计、安装页广告位 | 开 |
 | 应用商店 | `com.xiaomi.market` | 广告配置下发 | 开 |
 | 小米服务框架 | `com.xiaomi.xmsf` | 广告接口 | 开 |
@@ -276,6 +276,7 @@ build.sh                           一键构建
 - 方法层依赖当前版本的类名与签名，系统组件升级后可能 `hook miss`；此时网络层仍然工作
 - 使用 native 网络栈（如 Cronet）的请求不受 Java 层 hook 影响
 - analytics 会把材料通过 XMSF 广播交出去，这一段属于跨进程交接，只拦 analytics 自身 UID 覆盖不到
+- 域名名单可能漏项：地址可由配置下发；SystemHelper 与小米统计为整进程断网，其余组件依赖隐私 API 层与方法层
 - 若某个域名同时承担上报与功能，本模块按路径拆分处理；未拆分的条目默认关闭
 - 本地数据库不再增长不能单独证明不存在其他采集或上传途径
 - 模块不修改系统 APK，不删除已有数据，停用后行为立即恢复
@@ -297,92 +298,49 @@ build.sh                           一键构建
 
 ## 参考来源
 
-本项目的拦截目标与识别方式查阅了以下项目的公开资料。**全部代码为独立编写，未复制、未反编译复用上述项目的实现。**
+以下项目的公开资料提供了识别目标与验证思路。本项目代码独立编写，未复制、未反编译复用其实现。
 
-### HyperCeiler · GPL-3.0
+- **HyperCeiler**（GPL-3.0，Sevtinge）— analytics 目标方法、`flash.sec.miui.com/detect/app`、安装器 `/avl/upload`、MRM 拦截思路
+- **XSOF Privacy**（yunyizea）— 8 类行为记录的拦截范围、`(null, 1017)` 拒绝语义、按组组织 hook
+- **Hyper 隐私卫士**（`io.github.hyperprivacyguard`）— SystemHelper 采集入口特征、guardprovider 应用列表采集
+- **HyperOS4-XSOF-Analysis**（FAQQAQ）— 7 个组件的静态逆向记录：整域范围、`om.tracking.miui.com/track/mt`、区域与备份域、DoH 重试、`framework.sec.miui.com`、`virus-engine.sec.miui.com`、地震/报警/EPS 族、`typdm.tydevice.com` 明文上报、analytics 6.33.0 的 `a.b.a.*` 结构
+- **libxposed API**（Apache-2.0）、**LSPosed** — 模块入口与作用域接口
 
-<https://github.com/Sevtinge/HyperCeiler> · 作者 Sevtinge
+第三方组件：`Xposed API 82`、`libxposed API 102`（均为 Apache-2.0，编译期依赖）。
 
-| 参考点 | 本项目对应实现 |
-|---|---|
-| `rules/analytics/FuckMiuiUpload` 的 analytics 目标方法 | 采用思路但不用固定类名：旧名保留做兼容，实际以 `(long,long) -> JSONObject` 签名扫描覆盖各版本 |
-| `rules/guardprovider/DisableUploadAppListNew` 指向的 `flash.sec.miui.com/detect/app` | guardprovider 域名规则 |
-| `rules/packageinstaller/DisableAppInfoUpload` 涉及的 `/avl/upload`、`/info/layout` 路径 | 安装器路径规则（`/interceptcheck` 判断为功能接口，未采纳） |
-| `rules/trustservice/DisableMrm` 的 MRM 拦截思路 | 改在 `ServiceManager` 层屏蔽，不依赖混淆类名 |
-
-### XSOF Privacy · 未声明许可
-
-<https://modules.lsposed.org/module/io.github.yunyizea.xsofprivacy> · 作者 yunyizea
-
-| 参考点 | 本项目对应实现 |
-|---|---|
-| 8 类行为记录（`airplane_mode` / `call_forwarding` / `fraud_phone` / `fraud_url` / `install_app` / `screen_share` / `screenshot` / `voip_record`）的拦截范围 | `Ra.k` 的 27 个写入方法 hook |
-| 对外查询拒绝语义 `(null, 1017)`、不返回伪造的“零风险”评分 | AIDL 回调 `G2(null, 1017)` |
-| 按功能分组组织 hook、逐组报告状态的思路 | 四层结构 + `xsof ... hooked=N` 日志 |
-| 仅作用于目标进程、不修改系统 APK、不删除已有数据的边界 | 同 |
-
-### Hyper 隐私卫士 · 未声明许可
-
-包名 `io.github.hyperprivacyguard`，未附带项目地址或作者信息，仅在 APK 内分发 DexKit 与 Kotlin 的第三方许可证。
-
-| 参考点 | 本项目对应实现 |
-|---|---|
-| SystemHelper 采集入口特征（`getCurDeviceInfo`、`listenNetworkState`、`HistoryPostThread`） | 未实现；本机 SystemHelper 已停用，仅参考其识别方式 |
-| guardprovider 应用列表与 APK 特征采集入口 | 未实现具体方法 hook，由 `flash.sec.miui.com` 域名层覆盖 |
-| `AiGuardService` 生命周期拦截思路 | 未采纳（该功能可在系统设置中关闭） |
-
-### HyperOS4-XSOF-Analysis · 作者 FAQQAQ
-
-<https://github.com/FAQQAQ/HyperOS4-XSOF-Analysis>
-
-7 个 HyperOS 组件的静态逆向记录，本版大量拦截范围来自这份报告，特别感谢作者把证据强度（确认发送实现 / 保留实现 / 未闭环）写清楚。
-
-| 参考点 | 本项目对应实现 |
-|---|---|
-| `om.tracking.miui.com/track/mt`、区域与备份域（`tracking.india/rus/eu/intl`、`pn-*-bak.onetrack.mi.com`） | 「小米统计」整域规则（含 `onetrack.mi.com`） |
-| 6.33.0 国际版 DoH + IP 缓存重试（`dns.google`、bootstrap `8.8.4.4`/`8.8.8.8`） | 「阻断 DoH 旁路」子项 |
-| analytics 6.33.0 的 `a.b.a.*` 结构与使用记录采集 | 签名扫描方法层（不硬编码类名） |
-| `framework.sec.miui.com`（XSOF 合作方鉴权）、`virus-engine.sec.miui.com`（云查/风险配置）、`data.sec.miui.com`（月报） | 安全中心 / 系统安全组件中默认关闭的子项 |
-| 地震/志愿者/报警/EPS 族（`api.sec.miui.com`、`srv.sec.miui.com`、`gateway-papa`、`eps.caict.ac.cn`） | 「地震/报警/EPS 定位」与「志愿者传感器上报」子项 |
-| `flash.sec.miui.com/user/cat`（防窥应用分类上传包名数组） | 「防窥分类上报」子项 |
-| `com.xiaomi.registration`：`zzhc.vnet.cn`、`typdm.tydevice.com` 明文 CTEI、`sms:10659401` | 新增运营商服务分组，短信从 `SmsManager` 侧拦 |
-| analytics 交 XMSF 代发（`XMSFUploadReceiver`） | `Context#sendBroadcast` 按 action 丢弃 |
-| `find.api.micloud.xiaomi.net`（设备证书/密钥） | MiTrustService 的「设备证书/密钥上报」子项 |
-
-### 第三方组件
-
-| 组件 | 许可 | 用途 |
-|---|---|---|
-| [Xposed API 82](https://api.xposed.info/) | Apache-2.0 | 编译期依赖，`libs/api-82.jar`，不打包进模块 |
-| [libxposed API 102](https://github.com/libxposed/api) | Apache-2.0 | 模块入口与作用域接口，`libs/libxposed-api.jar`（compileOnly）+ `libs/libxposed-service.jar`（打包） |
-
-本项目不包含 DexKit、dexlib2 或任何 DEX 解析库，因此 APK 体积保持在约 49 KB。
+感谢以上作者与维护者。
 
 ## 更新日志
 
-### 1.1.0
+### 1.1.1（对比 1.1.0）
 
-- 新增**隐私 API 层**：应用列表、使用记录、设备标识、短信发送、XMSF 代发广播，全部在数据来源处截断
-- 「小米统计」改为整域拦截（`miui.com` / `xiaomi.com` / `xiaomi.net` / `onetrack.mi.com` / `pubsub.googleapis.com`），并新增「阻断 DoH 旁路」（`dns.google`、`8.8.8.8` / `8.8.4.4`）
-- analytics 方法层：`d.f.n#y(long,long)`（6.19.0 实测）+ `(long,long) -> JSONObject` 签名扫描，覆盖 6.33.0 的 `a.b.a.*` 改名
-- 新增**运营商服务**分组：`typdm.tydevice.com` 明文 HTTP 上传 IMEI/MAC 默认拦，`zzhc.vnet.cn` 设备注册默认关
-- 安全中心新增子项：防窥分类上报、地震/报警/EPS 定位、ADB 授权验证、Flamingo 云查上传、设备证书/密钥上报（均默认关闭）；志愿者传感器上报默认拦
-- 修复：组门 `Config.on(key, false)` 恒返回 fallback，导致 SystemHelper / 安全中心 / MiTrustService / 安装器 / 商店 / XMSF 六段 hook 从未安装
-- 版本号 1.1.0 / versionCode 3
+| 组件 | 1.1.0 | 1.1.1 |
+|---|---|---|
+| SystemHelper | 拦截 `dm.wo.com.cn` 等规则 | 新增「全断网」子项（默认开），该进程所有非本机请求全部拦截 |
+| 小米统计 | 整域拦截 + DoH 旁路 | 新增「全断网」子项（默认开） |
+| 其余组件 | — | 不变 |
 
-### 1.0.1
+### 1.1.0（对比 1.0.1）
 
-- 迁移到 libxposed 新 API（`XposedModule` / `onPackageReady`），模块 API 102
-- 作用域改为官方接口：`getScope()` 读、`requestScope()` / `removeScope()` 写，弃用改 `modules_config.db`
-- 组开关状态实时取自 LSPosed 真实作用域，绑定服务与回到界面各同步一次
-- 应用总开关关闭时，其下子项置灰且不可操作
-- 「重启」「查看记录」的 root 提示写进设置卡片，启动不再自动 `su`
-- 构建：固定签名 `debug.keystore` 并校验指纹；`META-INF` 打进 APK 根目录；CI 使用 build-tools 35
-- 移除「服务与反馈」（`com.miui.miservice`）占位
+| 项 | 1.0.1 | 1.1.0 |
+|---|---|---|
+| 拦截层次 | 网络 + 方法 + XSOF | 增加隐私 API 层（应用列表 / 使用记录 / 设备标识 / 短信 / XMSF 代发广播） |
+| 小米统计 | 仅域名 | 整域 + 备份域 + DoH + 签名扫描方法层 |
+| 运营商服务 | 无 | 新分组：明文 CTEI 默认拦、设备注册默认关 |
+| 安全中心 | 3 个子项 | 8 个子项，其中 5 个默认关闭 |
+| 其余 | — | 修复组门 fallback 导致六段 hook 未安装 |
+
+### 1.0.1（对比 1.0.0）
+
+- 迁移到 libxposed API 102（`XposedModule` / `onPackageReady`）
+- 作用域改为 `getScope` / `requestScope` / `removeScope`，不再改 `modules_config.db`
+- 组开关按真实作用域回填；组关闭时子项置灰不可操作
+- 「重启」「查看记录」的 root 提示移入设置卡片，启动不再自动 `su`
+- 构建：固定签名并校验指纹，`META-INF` 打进 APK 根目录，CI 使用 build-tools 35
 
 ### 1.0.0
 
-- 首个版本：四环节拦截、按应用分组、传统 Xposed API 82
+首个版本：四环节拦截、按应用分组、传统 Xposed API 82。
 
 ---
 

@@ -78,6 +78,7 @@ public class MainActivity extends Activity {
     private static final Group[] GROUPS = {
             new Group("SystemHelper", "com.mobiletools.systemhelper", Config.K_G_SYSHELPER, new Item[]{
                     new Item("拦截上报", "dm.wo.com.cn，设备 / SIM / 基站 / 应用列表", Config.K_SYSHELPER, true),
+                    new Item("全断网（推荐）", "该进程所有外网请求一并拦截，只留本机回环；它没有用户功能", Config.K_SYSHELPER_ALLNET, true),
             }),
             new Group("系统安全组件", "com.miui.guardprovider", Config.K_G_GUARD, new Item[]{
                     new Item("应用列表云查", "仅拦 flash.sec.miui.com，不动病毒库", Config.K_GUARD_APPLIST, true),
@@ -99,6 +100,7 @@ public class MainActivity extends Activity {
             new Group("小米统计", "com.miui.analytics", Config.K_G_ANALYTICS, new Item[]{
                     new Item("拦截上报", "tracking / om.tracking / sdkconfig", Config.K_ANALYTICS, true),
                     new Item("阻断 DoH 旁路", "dns.google 与 8.8.8.8，防解析绕过域名规则", Config.K_ANALYTICS_DOH, true),
+                    new Item("全断网（推荐）", "该进程所有外网请求一并拦截；云端换域名也不用管", Config.K_ANALYTICS_ALLNET, true),
             }),
             new Group("应用安装器", "com.miui.packageinstaller", Config.K_G_PKG, new Item[]{
                     new Item("AVL 上报", "…/avl/upload", Config.K_PKG_AVL, true),

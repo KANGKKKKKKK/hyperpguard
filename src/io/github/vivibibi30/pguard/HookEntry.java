@@ -77,7 +77,8 @@ public class HookEntry extends XposedModule {
             hookMethodReturn(cl, "c.d.a.b.e", "a", new Class<?>[]{String.class}, null);
             List<Rule> r = new ArrayList<>();
             r.add(new Rule("dm.wo.com.cn"));
-            guard(pkg, cl, "systemhelper", r, false);
+            // 只上报设备/SIM/基站/应用列表，无用户功能：整进程断网
+            guard(pkg, cl, "systemhelper", r, Config.on(Config.K_SYSHELPER_ALLNET, true));
             return;
         }
 
@@ -127,7 +128,8 @@ public class HookEntry extends XposedModule {
                 r.add(new Rule("8.8.8.8"));
                 r.add(new Rule("8.8.4.4"));
             }
-            guard(pkg, cl, "analytics", r, Config.strict());
+            // 纯统计进程：整进程断网，不依赖域名名单随云端变化
+            guard(pkg, cl, "analytics", r, Config.on(Config.K_ANALYTICS_ALLNET, true));
             return;
         }
 

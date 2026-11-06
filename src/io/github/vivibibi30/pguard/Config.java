@@ -14,7 +14,7 @@ public final class Config {
 
     public static final String PKG = "io.github.vivibibi30.pguard";
     public static final String PREFS = "pg";
-    public static final String VERSION = "1.1.0";
+    public static final String VERSION = "1.1.1";
 
     /* 全局 */
     public static final String K_MASTER = "master";
@@ -47,6 +47,8 @@ public final class Config {
     public static final String K_ANALYTICS = "block_analytics";
     public static final String K_STRICT = "strict_all";
     public static final String K_ANALYTICS_DOH = "block_analytics_doh";
+    public static final String K_ANALYTICS_ALLNET = "analytics_all_net";
+    public static final String K_SYSHELPER_ALLNET = "syshelper_all_net";
 
     /* 翻译组件 */
     public static final String K_AIASST = "block_aiasst";

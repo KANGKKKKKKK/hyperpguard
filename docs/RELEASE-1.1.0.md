@@ -4,7 +4,7 @@
 
 面向 MIUI / HyperOS 的隐私上报拦截模块（LSPosed）。预装系统组件会持续采集设备标识、应用使用记录、位置、通话行为等信息，并交给厂商、运营商或第三方。本模块在**采集入口、本地存储、对外接口、网络出口**四个环节设防，按应用分组独立开关。
 
-1.1.0 的重点是把拦截从「只堵网络出口」推进到「从数据来源截断」，并按「隐私优先、功能类默认关闭」重排了全部开关。
+本版增加隐私 API 层，并按「隐私优先、功能类默认关闭」重排开关。
 
 ---
 
@@ -17,7 +17,7 @@
 | 方法层 | 反射定位方法后直接返回 | SystemHelper 发送与入队、XSOF 写库与评分、analytics 使用记录聚合 |
 | 跨进程接口 | XSOF Provider / AIDL 全入口拦截 | 第三方查不到截图、通话、屏幕共享记录 |
 
-数据来源被截断后，即使组件换了上传域名，也拿不到可发的原始数据；网络层则负责兜住已经组好包的情况。
+四层同时生效，任一层失效时其余层仍然工作。
 
 ## 隐私 API 层（1.1.0 新增）
 
@@ -107,16 +107,15 @@ sha256sum PrivacyGuard-1.1.0.apk
 
 ## 参考与致谢
 
-本项目能识别这些通道，很大一部分来自社区公开的逆向资料。**代码全部独立编写，未复制、未反编译复用下列项目的实现**，但识别目标、验证思路与边界判断来自它们：
+以下项目的公开资料提供了识别目标与验证思路；本项目代码独立编写，未复制、未反编译复用其实现。
 
-- **[HyperCeiler](https://github.com/Sevtinge/HyperCeiler)**（GPL-3.0，作者 Sevtinge）—— analytics 目标方法、`flash.sec.miui.com/detect/app`、安装器 `/avl/upload`、MRM 拦截思路
-- **[XSOF Privacy](https://modules.lsposed.org/module/io.github.yunyizea.xsofprivacy)**（作者 yunyizea）—— 8 类行为记录的拦截范围、`(null, 1017)` 拒绝语义、按组组织 hook 的做法
-- **Hyper 隐私卫士**（`io.github.hyperprivacyguard`）—— SystemHelper 采集入口特征、guardprovider 应用列表采集的识别方式
-- **[HyperOS4-XSOF-Analysis](https://github.com/FAQQAQ/HyperOS4-XSOF-Analysis)**（作者 FAQQAQ）—— 7 个组件的静态逆向记录，本版的整域范围、`om.tracking.miui.com/track/mt`、区域/备份域、DoH + IP 缓存重试、`framework.sec.miui.com`、`virus-engine.sec.miui.com`、地震/报警/EPS 族、`typdm.tydevice.com` 明文 CTEP 上报、analytics 6.33.0 的 `a.b.a.*` 结构，均来自这份报告。特别感谢作者把证据与边界写清楚（哪些是"确认发送实现"、哪些只是"保留实现"），本版据此区分「默认拦」与「默认关闭」
-- **[libxposed API](https://github.com/libxposed/api)**（Apache-2.0）—— 模块入口与作用域接口
-- **LSPosed** —— 框架与调试支持
+- **HyperCeiler**（GPL-3.0，Sevtinge）
+- **XSOF Privacy**（yunyizea）
+- **Hyper 隐私卫士**（`io.github.hyperprivacyguard`）
+- **HyperOS4-XSOF-Analysis**（FAQQAQ）：整域范围、`om.tracking`、区域/备份域、DoH、`framework.sec`、`virus-engine`、地震/报警/EPS、`typdm.tydevice.com`、`a.b.a.*` 结构
+- **libxposed API**（Apache-2.0）、**LSPosed**
 
-若有遗漏或希望调整署名方式，提 Issue 即可。
+感谢以上作者与维护者。
 
 ## 免责声明
 
