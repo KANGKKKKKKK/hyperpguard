@@ -106,22 +106,13 @@
 
 ## 构建
 
-需要 JDK 11+、build-tools 35 及以上（`d8` / `aapt2` / `zipalign` / `apksigner`），以及一份 `android.jar`。
+需要 JDK 17 与 build-tools 35 及以上，SDK 路径用环境变量指定：
 
 ```sh
-export ANDROID_JAR=/path/to/platforms/android-35/android.jar
-export D8=/path/to/build-tools/35.0.0/d8
-export AAPT2=/path/to/build-tools/35.0.0/aapt2
-export ZIPALIGN=/path/to/build-tools/35.0.0/zipalign
-export APKSIGNER=/path/to/build-tools/35.0.0/apksigner
+export ANDROID_JAR=/path/to/android.jar D8=/path/to/d8 AAPT2=/path/to/aapt2
+export ZIPALIGN=/path/to/zipalign APKSIGNER=/path/to/apksigner
 sh build.sh
 ```
-
-打包顺序：`javac → d8 → aapt2 link → 追加 classes.dex → 追加 META-INF → zipalign → apksigner`。
-
-`aapt2 link` 需要一份带资源表的 jar。CI 用完整平台包；本地如果 `android.jar` 资源表被裁剪过，放一份 `android-stub.jar` 在仓库根目录，脚本会自动优先使用它（也可以用 `AAPT2_INCLUDE` 指定）。
-
-CI：`.github/workflows/build.yml` 在推送到 `main` 或 `v*` / `<versionCode>-<versionName>` tag 时构建，推 tag 时会同时发布到 [LSPosed 分发仓库](https://github.com/Xposed-Modules-Repo/io.github.vivibibi30.hyperpguard)。
 
 ## 源码结构
 
@@ -146,8 +137,7 @@ META-INF/xposed/      模块声明（必须打到 APK 根）
 libs/libxposed-api.jar       libxposed API（compileOnly，不打进 dex）
 libs/libxposed-service.jar   service + interface 合并版（必须打进 dex）
 libs/api-82.jar              传统 Xposed API（编译兼容用）
-docs/                 技术笔记、规则说明、发布说明、截图
-scripts/              发布脚本
+docs/                 技术笔记、规则说明、截图
 build.sh              一键构建
 ```
 
