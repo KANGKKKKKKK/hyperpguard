@@ -92,26 +92,28 @@ public final class Config {
     public static void uiSet(Context ctx, String key, boolean v) {
         SharedPreferences sp = ui(ctx);
         sp.edit().putBoolean(key, v).apply();
-        syncToFile(sp);
+        syncToGlobal(sp);
     }
 
-    private static void syncToFile(final SharedPreferences sp) {
+    /** 打开界面时主动重建一次配置文件，防止被清理工具删掉后开关回落到默认值 */
+    public static void syncNow(Context ctx) {
+        syncToGlobal(ui(ctx));
+    }
+
+    private static void syncToGlobal(final SharedPreferences sp) {
         final StringBuilder sb = new StringBuilder();
         for (java.util.Map.Entry<String, ?> e : sp.getAll().entrySet()) {
-            sb.append(e.getKey()).append('=').append(e.getValue()).append('\n');
+            if (sb.length() > 0) sb.append('|');
+            sb.append(e.getKey()).append('=').append(e.getValue());
         }
         final String dump = sb.toString();
         new Thread(() -> {
             Process p = null;
             try {
                 p = Runtime.getRuntime().exec(new String[]{"su", "-c",
-                        "cat > " + CONF_FILE + " && chmod 644 " + CONF_FILE});
-                java.io.OutputStream os = p.getOutputStream();
-                os.write(dump.getBytes("UTF-8"));
-                os.flush();
-                os.close();
+                        "settings put global " + GLOBAL_KEY + " '" + dump + "'"});
                 p.waitFor();
-                Logs.i("config synced: " + CONF_FILE);
+                Logs.i("config synced to Settings.Global");
             } catch (Throwable t) {
                 Logs.i("config sync fail: " + t);
             } finally {
@@ -126,7 +128,10 @@ public final class Config {
         return on(K_MASTER, true);
     }
 
-    /** 目标进程读不到我们的私有配置，由 UI 侧通过 su 落一份到这里供 hook 读取 */
+    /** 开关存放在 Settings.Global，目标进程无需文件、无需权限即可读到 */
+    public static final String GLOBAL_KEY = "hyperpguard_conf";
+
+    /** 兼容旧版本留下的文件，只读不写 */
     public static final String CONF_FILE = "/data/local/tmp/hyperpguard.conf";
 
     /** hook 侧读到的开关，进程内缓存一份，读不到就用各规则的默认值 */
@@ -138,7 +143,20 @@ public final class Config {
      * 没有 Context、provider 不存在、被拦截，都只是回退到默认值，不影响拦截本身。
      */
     public static void load(android.content.Context ctx) {
-        if (ctx == null || !REMOTE.isEmpty()) return;
+        if (!REMOTE.isEmpty()) return;
+        if (ctx != null) {
+            try {
+                String v = android.provider.Settings.Global.getString(
+                        ctx.getContentResolver(), GLOBAL_KEY);
+                if (v != null && !v.isEmpty()) parse(v);
+            } catch (Throwable t) {
+                Logs.i("config settings fail: " + t);
+            }
+        }
+        if (!REMOTE.isEmpty()) {
+            Logs.i("config loaded: " + REMOTE.size() + " (settings)");
+            return;
+        }
         android.database.Cursor c = null;
         try {
             c = ctx.getContentResolver().query(ConfigProvider.URI, null, null, null, null);
@@ -154,7 +172,16 @@ public final class Config {
             if (c != null) try { c.close(); } catch (Throwable ignored) { }
         }
         if (REMOTE.isEmpty()) loadFromFile();
-        Logs.i("config loaded: " + REMOTE.size());
+        Logs.i(REMOTE.isEmpty() ? "config loaded: 0 (use built-in defaults)"
+                : "config loaded: " + REMOTE.size() + " (file)");
+    }
+
+    private static void parse(String v) {
+        for (String kv : v.split("\\|")) {
+            int i = kv.indexOf('=');
+            if (i <= 0) continue;
+            REMOTE.put(kv.substring(0, i).trim(), "true".equals(kv.substring(i + 1).trim()));
+        }
     }
 
     /** 普通应用进程查 provider 会被 AMS 以「包名与 uid 不符」拒绝，改读这份文件 */
@@ -173,6 +200,10 @@ public final class Config {
         } finally {
             if (br != null) try { br.close(); } catch (Throwable ignored) { }
         }
+    }
+
+    public static int size() {
+        return REMOTE.size();
     }
 
     public static boolean on(String key, boolean fallback) {

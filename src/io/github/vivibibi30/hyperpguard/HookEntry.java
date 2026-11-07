@@ -32,12 +32,63 @@ public class HookEntry extends XposedModule {
         final String pkg = param.getPackageName();
         final ClassLoader cl = param.getClassLoader();
         if (pkg == null || cl == null) return;
-        Config.load(activityThreadContext());
+        android.app.Application app = currentApplication();
+        if (app != null) {
+            Config.load(app.getApplicationContext());
+            Logs.i("app ctx config: " + Config.size());
+        } else {
+            Config.load(activityThreadContext());
+        }
         if (!Config.masterOn()) return;
         try {
             dispatch(pkg, cl);
         } catch (Throwable t) {
             Logs.i("dispatch fail " + pkg + ": " + t);
+        }
+    }
+
+    /** 进程已创建 Application 时直接取；早期返回 null */
+    private android.app.Application currentApplication() {
+        try {
+            Class<?> at = Class.forName("android.app.ActivityThread");
+            Object thread = at.getMethod("currentActivityThread").invoke(null);
+            if (thread == null) return null;
+            java.lang.reflect.Field f = at.getDeclaredField("mInitialApplication");
+            f.setAccessible(true);
+            Object app = f.get(thread);
+            return app instanceof android.app.Application ? (android.app.Application) app : null;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /**
+     * 系统 Context 的包名是 android，普通应用拿它查 provider 会被 AMS 拒。
+     * LoadedApk#makeApplication 返回时 Application 已 attach，可用它自己的 Context 再读一次。
+     */
+    private void hookMakeApplication(final String pkg, final ClassLoader cl) {
+        try {
+            Class<?> loadedApk = Class.forName("android.app.LoadedApk", false, cl);
+            for (java.lang.reflect.Method m : loadedApk.getDeclaredMethods()) {
+                if (!m.getName().equals("makeApplication")) continue;
+                if (m.getReturnType() != android.app.Application.class) continue;
+                hook(m).intercept(chain -> {
+                    Object r = chain.proceed();
+                    try {
+                        android.app.Application app = (android.app.Application) r;
+                        Config.load(app.getApplicationContext());
+                        Logs.i("app ctx config: " + Config.size());
+                    } catch (Throwable t) {
+                        Logs.i("app ctx config fail: " + t);
+                    }
+                    return r;
+                });
+                Logs.i("makeApplication hooked: " + pkg);
+                return;
+            }
+            Logs.i("makeApplication not found: " + pkg);
+        } catch (Throwable t) {
+            Logs.i("makeApplication hook fail: " + t);
         }
     }
 

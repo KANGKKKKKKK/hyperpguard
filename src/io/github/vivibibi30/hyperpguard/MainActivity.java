@@ -267,6 +267,9 @@ public class MainActivity extends Activity {
 
         root.addView(disclaimer);
 
+        // 每次打开界面刷一次配置，文件被删了也能自动重建
+        Config.syncNow(this);
+
         XposedServiceHelper.registerListener(new XposedServiceHelper.OnServiceListener() {
             @Override
             public void onServiceBind(XposedService service) {
