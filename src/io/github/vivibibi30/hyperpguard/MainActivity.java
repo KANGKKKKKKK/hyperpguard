@@ -1082,9 +1082,9 @@ public class MainActivity extends Activity {
         }
         Intent i = new Intent(Intent.ACTION_SEND);
         i.setType("text/plain");
-        i.putExtra(Intent.EXTRA_SUBJECT, "HyperPGuard 拦截日志");
+        i.putExtra(Intent.EXTRA_SUBJECT, "运行日志");
         i.putExtra(Intent.EXTRA_TEXT, log);
-        startActivity(Intent.createChooser(i, "分享日志"));
+        startActivity(Intent.createChooser(i, "分享运行日志"));
     }
 
     /* ---------------- 关于 / 更新 ---------------- */
