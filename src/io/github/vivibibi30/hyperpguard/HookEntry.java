@@ -34,7 +34,6 @@ public class HookEntry extends XposedModule {
         if (pkg == null || cl == null) return;
         Config.load(activityThreadContext());
         if (!Config.masterOn()) return;
-
         try {
             dispatch(pkg, cl);
         } catch (Throwable t) {

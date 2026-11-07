@@ -90,7 +90,34 @@ public final class Config {
     }
 
     public static void uiSet(Context ctx, String key, boolean v) {
-        ui(ctx).edit().putBoolean(key, v).apply();
+        SharedPreferences sp = ui(ctx);
+        sp.edit().putBoolean(key, v).apply();
+        syncToFile(sp);
+    }
+
+    private static void syncToFile(final SharedPreferences sp) {
+        final StringBuilder sb = new StringBuilder();
+        for (java.util.Map.Entry<String, ?> e : sp.getAll().entrySet()) {
+            sb.append(e.getKey()).append('=').append(e.getValue()).append('\n');
+        }
+        final String dump = sb.toString();
+        new Thread(() -> {
+            Process p = null;
+            try {
+                p = Runtime.getRuntime().exec(new String[]{"su", "-c",
+                        "cat > " + CONF_FILE + " && chmod 644 " + CONF_FILE});
+                java.io.OutputStream os = p.getOutputStream();
+                os.write(dump.getBytes("UTF-8"));
+                os.flush();
+                os.close();
+                p.waitFor();
+                Logs.i("config synced: " + CONF_FILE);
+            } catch (Throwable t) {
+                Logs.i("config sync fail: " + t);
+            } finally {
+                if (p != null) try { p.destroy(); } catch (Throwable ignored) { }
+            }
+        }, "hyperpguard-config-sync").start();
     }
 
     /* ---------------- Hook 侧 ---------------- */
@@ -98,6 +125,9 @@ public final class Config {
     public static boolean masterOn() {
         return on(K_MASTER, true);
     }
+
+    /** 目标进程读不到我们的私有配置，由 UI 侧通过 su 落一份到这里供 hook 读取 */
+    public static final String CONF_FILE = "/data/local/tmp/hyperpguard.conf";
 
     /** hook 侧读到的开关，进程内缓存一份，读不到就用各规则的默认值 */
     private static final java.util.Map<String, Boolean> REMOTE =
@@ -118,11 +148,30 @@ public final class Config {
                 if (k == null) continue;
                 REMOTE.put(k, "true".equals(c.getString(1)));
             }
-            Logs.i("config loaded: " + REMOTE.size());
         } catch (Throwable t) {
-            Logs.i("config load skipped: " + t);
+            Logs.i("config query skipped: " + t);
         } finally {
             if (c != null) try { c.close(); } catch (Throwable ignored) { }
+        }
+        if (REMOTE.isEmpty()) loadFromFile();
+        Logs.i("config loaded: " + REMOTE.size());
+    }
+
+    /** 普通应用进程查 provider 会被 AMS 以「包名与 uid 不符」拒绝，改读这份文件 */
+    private static void loadFromFile() {
+        java.io.BufferedReader br = null;
+        try {
+            br = new java.io.BufferedReader(new java.io.FileReader(CONF_FILE));
+            String line;
+            while ((line = br.readLine()) != null) {
+                int i = line.indexOf('=');
+                if (i <= 0) continue;
+                REMOTE.put(line.substring(0, i).trim(), "true".equals(line.substring(i + 1).trim()));
+            }
+        } catch (Throwable t) {
+            Logs.i("config file skip: " + t);
+        } finally {
+            if (br != null) try { br.close(); } catch (Throwable ignored) { }
         }
     }
 
