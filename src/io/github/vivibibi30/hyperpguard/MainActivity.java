@@ -875,12 +875,23 @@ public class MainActivity extends Activity {
                     }
                 } catch (Throwable ignored) {
                 }
+                boolean master = Config.get(MainActivity.this, Config.K_MASTER, true);
+                sb.append("\n总开关：").append(master ? "已开启" : "已关闭（所有进程都会跳过安装）");
                 sb.append("\n本地开关 ").append(local).append(" 项，系统设置 ").append(remote).append(" 项\n");
-                sb.append("\n已注入进程：\n");
+
+                sb.append("\nLSPosed 加载记录：\n");
+                String lsp = execShell(
+                        "f=$(ls -t /data/adb/lspd/log/modules_*.log 2>/dev/null | head -1); "
+                                + "[ -n \"$f\" ] && tail -n 4000 \"$f\""
+                                + " | grep -oE '\\([a-z0-9_.]+\\)\\[io\\.github\\.vivibibi30\\.hyperpguard'"
+                                + " | sed 's/^(//; s/).*//' | sort -u");
+                sb.append(lsp.trim().isEmpty() ? "（日志里没有本模块的加载记录）" : lsp.trim());
+
+                sb.append("\n最近 attach 日志：\n");
                 String attach = execShell(
-                        "logcat -d -v time | grep -F 'HyperPGuard: attach' | tail -n 30");
+                        "logcat -d -b all -v time | grep -F 'HyperPGuard: attach' | tail -n 15");
                 sb.append(attach.trim().isEmpty()
-                        ? "（无记录：目标应用还没重启过，或该应用未加入作用域）"
+                        ? "（logcat 缓冲里没有，长时间运行后会被冲掉）"
                         : attach.trim());
 
                 final String body = sb.toString();
