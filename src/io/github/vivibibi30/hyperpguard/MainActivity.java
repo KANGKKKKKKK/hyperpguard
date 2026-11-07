@@ -170,6 +170,7 @@ public class MainActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private XposedService xposed;
     private boolean updatingSwitch = false;
+    private int bindRetry = 0;
     private boolean autoRequested = false;
 
     @Override
@@ -312,23 +313,40 @@ public class MainActivity extends Activity {
 
         root.addView(disclaimer);
 
-        XposedServiceHelper.registerListener(new XposedServiceHelper.OnServiceListener() {
-            @Override
-            public void onServiceBind(XposedService service) {
-                xposed = service;
-                android.util.Log.i("HyperPGuard", "XposedService bound: "
-                        + service.getFrameworkName() + " " + service.getFrameworkVersion());
-                ui.post(MainActivity.this::syncFromService);
-            }
-
-            @Override
-            public void onServiceDied(XposedService service) {
-                xposed = null;
-            }
-        });
+        bindServiceHelper();
 
         setContentView(sv);
     }
+
+    /** LSPosed 服务断开后重连：覆盖安装模块时服务端会重启一次 */
+    private void bindServiceHelper() {
+        try {
+            XposedServiceHelper.registerListener(serviceListener);
+        } catch (Throwable t) {
+            android.util.Log.w("HyperPGuard", "registerListener fail", t);
+        }
+    }
+
+    private final XposedServiceHelper.OnServiceListener serviceListener =
+            new XposedServiceHelper.OnServiceListener() {
+                @Override
+                public void onServiceBind(XposedService service) {
+                    xposed = service;
+                    bindRetry = 0;
+                    android.util.Log.i("HyperPGuard", "XposedService bound: "
+                            + service.getFrameworkName() + " " + service.getFrameworkVersion());
+                    ui.post(MainActivity.this::syncFromService);
+                }
+
+                @Override
+                public void onServiceDied(XposedService service) {
+                    xposed = null;
+                    android.util.Log.w("HyperPGuard", "XposedService died");
+                    if (bindRetry++ < 5) {
+                        ui.postDelayed(MainActivity.this::bindServiceHelper, 1500);
+                    }
+                }
+            };
 
     @Override
     protected void onResume() {
@@ -851,7 +869,8 @@ public class MainActivity extends Activity {
             public void run() {
                 StringBuilder sb = new StringBuilder();
                 sb.append("模块版本：").append(Config.VERSION).append('\n');
-                sb.append("LSPosed：").append(xposed == null ? "未连接"
+                sb.append("LSPosed：").append(xposed == null
+                        ? "未连接（重开本界面会自动重连；已注入进程仍以下面的日志为准）"
                         : (xposed.getFrameworkName() + " " + xposed.getFrameworkVersion())).append('\n');
 
                 java.util.List<String> scope = safeScope();
