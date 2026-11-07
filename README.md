@@ -180,17 +180,16 @@ build.sh              一键构建
 
 - 系统诊断卡片的说明改为适用于任意设备：只写触发来源，不写单台设备的记录状态
 
-### 1.3.1
-
-- SystemHelper 卡片补一行：权限在开机激活阶段确认，本模块只拦上报，不回收已授予的权限
-- 系统安全组件卡片补一行：AI 反诈逻辑在 `AiGuardService` 内、用于通话场景，与 SystemHelper 不是同一条链路
-
 ### 1.3.2
 
 - 新增 `com.miui.misightservice` 覆盖：日志上传、售后检测、客服诊断三条规则，默认开
 - 触发条件是用户主动反馈或售后远程诊断；本地数据库里的记录不等于已经上传
 
 
+### 1.3.1
+
+- SystemHelper 卡片补一行：权限在开机激活阶段确认，本模块只拦上报，不回收已授予的权限
+- 系统安全组件卡片补一行：AI 反诈逻辑在 `AiGuardService` 内、用于通话场景，与 SystemHelper 不是同一条链路
 
 更早版本见 [docs/CHANGELOG.md](docs/CHANGELOG.md) 或 Releases 页。
 
