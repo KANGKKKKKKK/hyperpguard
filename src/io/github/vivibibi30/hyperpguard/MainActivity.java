@@ -112,6 +112,7 @@ public class MainActivity extends Activity {
                     new Item("地震/报警/EPS 定位", "关闭后地震预警、紧急报警定位可能失效", Config.K_SC_LOCATION, false),
                     new Item("ADB 授权验证", "srv.sec.miui.com/data/adb；关闭后 ADB 安装授权可能失败", Config.K_SC_ADB, false),
                     new Item("行为库写入拦截", "拦截 screenshot / screen_share / voip_record 等 8 张表的写入", Config.K_SC_DBGUARD, true),
+                    new Item("设备标识拦截", "IMSI / ICCID / 手机号 / IMEI；打开后剩余流量、套餐查询会失效", Config.K_SC_IDS, false),
                     new Item("定位（GPS）", "只对本应用：位置查询返回空", Config.K_LOC_SC, false),
                     new Item("通讯录 / 通话 / 短信读取", "只对本应用：查询返回空；来电识别会受影响", Config.K_SOCIAL_SC, false),
             }),

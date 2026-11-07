@@ -3,6 +3,7 @@ package io.github.vivibibi30.hyperpguard;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
+import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModule;
 
 /** 隐私 API 层：在数据来源处截断。 */
@@ -49,15 +50,10 @@ final class PrivacyApis {
                     new ArrayList<Object>());
         }
         if (ids) {
-            String[] aosp = {"getDeviceId", "getImei", "getMeid",
-                    "getSubscriberId", "getSimSerialNumber", "getDeviceIdForSlot",
-                    "getImeiForSlot", "getMeidForSlot", "getSubscriberIdForSlot",
-                    "getSimSerialNumberForSlot"};
-            // AOSP：连同带 slot 参数的重载一起拦
-            int n = Hooks.retAllByName(m, cl, "android.telephony.TelephonyManager", aosp, null);
-            // 小米私有类：registration / systemhelper 等组件走这里，AOSP 那层拦不住
-            n += Hooks.retAllByName(m, cl, "miui.telephony.TelephonyManager", aosp, null);
-            n += Hooks.retAllByName(m, cl, "miui.telephony.TelephonyManagerEx", aosp, null);
+            // IMEI / MEID / DeviceId 返回 null；IMSI / ICCID 保留运营商字段
+            int n = hookTelephonyIds(cl, "android.telephony.TelephonyManager");
+            n += hookTelephonyIds(cl, "miui.telephony.TelephonyManager");
+            n += hookTelephonyIds(cl, "miui.telephony.TelephonyManagerEx");
             Logs.i("telephony ids hooked=" + n);
 
             // MAC：给固定值而不是 null，避免调用方判空崩溃
@@ -178,6 +174,96 @@ final class PrivacyApis {
         } catch (Throwable t) {
             Logs.i("cell miss: " + t);
         }
+    }
+
+    /**
+     * IMSI / ICCID 不返回 null：安全中心靠 IMSI 前 5 位的 MCC+MNC 识别运营商，
+     * 返回 null 会让剩余流量、套餐、营业厅入口一起失效。
+     * 这里保留真实运营商前缀，MSIN 与 ICCID 用固定假值。
+     */
+    private int hookTelephonyIds(ClassLoader cl, String cls) {
+        int n = 0;
+        try {
+            Class<?> c = Class.forName(cls, false, cl);
+            for (Method method : c.getDeclaredMethods()) {
+                String name = method.getName();
+                try {
+                    if (name.contains("getSubscriberId")) {
+                        m.hook(method).intercept(chain -> imsi(chain));
+                    } else if (name.contains("getSimSerialNumber")) {
+                        m.hook(method).intercept(chain -> ICCID);
+                    } else if (name.contains("getDeviceId") || name.contains("getImei")
+                            || name.contains("getMeid")) {
+                        m.hook(method).intercept(chain -> null);
+                    } else {
+                        continue;
+                    }
+                    n++;
+                } catch (Throwable ignored) {
+                }
+            }
+        } catch (Throwable t) {
+            Logs.i("telephony ids miss " + cls + " -> " + t);
+        }
+        return n;
+    }
+
+    private static final String ICCID = "8986000000000000000";
+
+    /** 真实 MCC+MNC（5–6 位）+ 固定 MSIN，凑满 15 位 */
+    private Object imsi(XposedInterface.Chain chain) {
+        String op = operatorPrefix(chain);
+        String s = op + "1234567890";
+        return s.length() > 15 ? s.substring(0, 15) : s;
+    }
+
+    /** 优先取 SIM 的 MCC+MNC，其次网络的；都取不到时按 46000 兜底 */
+    private String operatorPrefix(XposedInterface.Chain chain) {
+        Object self = null;
+        try {
+            self = chain.getThisObject();
+        } catch (Throwable ignored) {
+        }
+        if (self != null) {
+            Object slot = null;
+            try {
+                if (chain.getArgs().size() == 1) slot = chain.getArg(0);
+            } catch (Throwable ignored) {
+            }
+            for (String name : new String[]{"getSimOperator", "getNetworkOperator"}) {
+                String v = callOperator(self, name, slot);
+                if (isMccMnc(v)) return v;
+            }
+        }
+        return "46000";
+    }
+
+    private static String callOperator(Object self, String name, Object slot) {
+        Class<?> c = self.getClass();
+        try {
+            Object v = c.getMethod(name).invoke(self);
+            if (v instanceof String && !((String) v).isEmpty()) return (String) v;
+        } catch (Throwable ignored) {
+        }
+        if (slot instanceof Integer) {
+            for (Class<?> t : new Class<?>[]{int.class, long.class}) {
+                try {
+                    Object arg = t == int.class ? slot : (Object) ((Integer) slot).longValue();
+                    Object v = c.getMethod(name, t).invoke(self, arg);
+                    if (v instanceof String) return (String) v;
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean isMccMnc(String v) {
+        if (v == null || v.length() < 5 || v.length() > 6) return false;
+        for (int i = 0; i < v.length(); i++) {
+            if (!Character.isDigit(v.charAt(i))) return false;
+        }
+        return true;
     }
 
     /** Wi-Fi 扫描与连接信息里的 SSID/BSSID */

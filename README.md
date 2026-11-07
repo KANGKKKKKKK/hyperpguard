@@ -63,7 +63,7 @@
 |---|---|---|
 | SystemHelper | `com.mobiletools.systemhelper` | 运营商遥测；默认整进程断网（无用户功能）；定位 / 基站 / Wi-Fi 扫描默认关 |
 | 系统安全组件 | `com.miui.guardprovider` | 应用列表云查、AI 通话预警云检测、反诈配置；静默录屏拦截默认开，Flamingo 云查上传默认关；定位 / Wi-Fi / 通讯录通话默认关 |
-| 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、行为库写入、反诈配置、志愿者传感器上报；云查 / 鉴权 / 月报 / 防窥分类 / 地震报警定位 / ADB 验证默认关；定位、通讯录 / 通话 / 短信默认关 |
+| 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、行为库写入、反诈配置、志愿者传感器上报；云查 / 鉴权 / 月报 / 防窥分类 / 地震报警定位 / ADB 验证 / 设备标识默认关；定位、通讯录 / 通话 / 短信默认关 |
 | 小米统计 | `com.miui.analytics` | 整域 + DoH 旁路；默认整进程断网 |
 | 应用安装器 | `com.miui.packageinstaller` | AVL 上报、活跃统计、安装页广告位 |
 | 应用商店 | `com.xiaomi.market` | 广告配置下发 |
@@ -160,6 +160,11 @@ build.sh              一键构建
 
 ## 更新日志
 
+### 1.3.0
+
+- 安全中心的设备标识改为单独开关，默认放行：拦截 IMSI / ICCID / 手机号会让剩余流量与套餐查询失效
+- IMSI 改为真实 MCC+MNC 前缀加固定 MSIN，ICCID 改为固定假值；IMEI / MEID / DeviceId 仍为空，其余组件拦截口径不变
+
 ### 1.2.15
 
 - 新增 `com.miui.dmregservice` 覆盖：`fxltsbl.com`，以及 App 清单、SIM 标识、基站、Wi-Fi 扫描的采集
@@ -182,9 +187,6 @@ build.sh              一键构建
 - 修复整进程断网的内网判断：`10.evil.com`、`192.168.evil.com` 这类域名此前会被当成内网放行
 - 私有网段补全：172.16/12（原来只有 172.16/16）、169.254/16、IPv6 回环与链路本地
 
-### 1.2.11
-
-- 设置页顶部加一行说明：开关打开 = 拦截该行为，关闭 = 放行
 
 
 更早版本见 [docs/CHANGELOG.md](docs/CHANGELOG.md) 或 Releases 页。
@@ -198,6 +200,9 @@ build.sh              一键构建
 - **Hyper 隐私卫士**（`io.github.hyperprivacyguard`）— SystemHelper 采集入口特征、guardprovider 应用列表采集
 - **[HyperOS4-XSOF-Analysis](https://github.com/FAQQAQ/HyperOS4-XSOF-Analysis)**（作者 [FAQQAQ](https://github.com/FAQQAQ)）— 7 个组件的静态逆向记录：整域范围、`om.tracking.miui.com/track/mt`、区域与备份域、DoH 重试、`framework.sec.miui.com`、`virus-engine.sec.miui.com`、地震/报警/EPS 族、`typdm.tydevice.com` 明文上报、analytics 6.33.0 的 `a.b.a.*` 结构
 - **[OSAKOo](https://www.coolapk.com/feed/74882729?s=MzNlYzk4NWUxNWZhMjRnNmFlZTFjMDJ6a1664)**（酷安）— `fraud_detection_data.db` 八张表与 `screenshort_time` 拼写、`createScreenCaptureIntent` 零调用与 `privateLookupIn` 绕过、`clip.mp4` 上报链路、SystemHelper 采集项与明文上报、六个域名的实际用途
+- **[Android OS Privacy Under the Loupe – A Tale from the East](https://ar5iv.labs.arxiv.org/html/2302.01890)**（ACM WiSec '23）— 四类敏感数据的分类，以及设备标识、位置、通讯录在预装组件里的采集面
+- **酷安 [RooyCo《真问题还在》](https://www.coolapk.com/feed/74911090)** — `com.miui.dmregservice` 的存在与采集字段（Wi-Fi 列表、蓝牙、BSSID、路由器 MAC）、`operator_service_improve_plan`、采集频率
+- **[frauddb](https://github.com/acnekot/frauddb)**（acnekot，MIT）— `fraud_detection_data.db` 八张表结构与库路径、`tel_number_md5` 算法
 - **libxposed API**（Apache-2.0）、**LSPosed** — 模块入口与作用域接口
 
 第三方组件：`Xposed API 82`、`libxposed API 102`（均为 Apache-2.0，编译期依赖）。

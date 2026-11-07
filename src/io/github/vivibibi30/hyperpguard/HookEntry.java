@@ -263,7 +263,9 @@ public class HookEntry extends XposedModule {
         if ("com.miui.securitycenter".equals(pkg)) {
             if (!Config.on(Config.K_G_SECCENTER, true)) return;
             Logs.i("attach securitycenter");
-            privacy.install(cl, pkg, false, false, true, false, false);
+            // 设备标识默认放行：安全中心要靠 IMSI / ICCID / 手机号查套餐与流量
+            privacy.install(cl, pkg, false, false,
+                    Config.on(Config.K_SC_IDS, false), false, false);
             if (Config.on(Config.K_XSOF, true)) xsof.install(cl);
             if (Config.on(Config.K_SC_DBGUARD, true)) {
                 CaptureHooks.dbWrites(this, cl);

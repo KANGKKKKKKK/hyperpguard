@@ -14,7 +14,7 @@ public final class Config {
 
     public static final String PKG = "io.github.vivibibi30.hyperpguard";
     public static final String PREFS = "pg";
-    public static final String VERSION = "1.2.15";
+    public static final String VERSION = "1.3.0";
 
     /* 全局 */
     public static final String K_MASTER = "master";
@@ -76,6 +76,8 @@ public final class Config {
     public static final String K_SC_LOCATION = "block_sc_location";
     public static final String K_SC_ADB = "block_sc_adb";
     public static final String K_SC_DBGUARD = "block_sc_dbguard";
+    /** 安全中心的设备标识默认放行：拦了 IMSI / ICCID / 手机号，套餐与流量查询会失效 */
+    public static final String K_SC_IDS = "block_sc_ids";
     public static final String K_GP_CLOUDSCAN = "block_gp_cloudscan";
     public static final String K_GP_SCREENGUARD = "block_gp_screenguard";
     public static final String K_TRUST_FIND = "block_trust_find";
