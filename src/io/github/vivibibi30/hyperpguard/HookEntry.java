@@ -158,7 +158,7 @@ public class HookEntry extends XposedModule {
         if ("com.mobiletools.systemhelper".equals(pkg)) {
             if (!Config.on(Config.K_G_SYSHELPER, true)) return;
             Logs.i("attach systemhelper");
-            privacy.install(cl, false, false, true, false, false);
+            privacy.install(cl, pkg, false, false, true, false, false);
             boolean upload = Hooks.ret(this, cl, "c.d.a.b.f", "a",
                     new Class<?>[]{String.class, byte[].class, byte[].class}, Boolean.FALSE);
             boolean write = Hooks.ret(this, cl, "c.d.a.b.e", "a", new Class<?>[]{String.class}, null);
@@ -182,31 +182,44 @@ public class HookEntry extends XposedModule {
             }
             Logs.i("systemhelper direct upload=" + upload + " write=" + write);
             List<NetGuard.Rule> r = new ArrayList<>();
-            r.add(new NetGuard.Rule("dm.wo.com.cn"));
+            if (Config.on(Config.K_SYSHELPER, true)) r.add(new NetGuard.Rule("dm.wo.com.cn"));
             net.install(cl, "systemhelper", r, Config.on(Config.K_SYSHELPER_ALLNET, true));
             return;
         }
 
         if ("com.miui.guardprovider".equals(pkg)) {
+            if (!Config.on(Config.K_G_GUARD, true)) return;
             List<NetGuard.Rule> r = new ArrayList<>();
             if (Config.on(Config.K_GUARD_APPLIST, true)) r.add(new NetGuard.Rule("flash.sec.miui.com"));
             if (Config.on(Config.K_GUARD_AIGC, true)) r.add(new NetGuard.Rule("detection-aigc.engine.miui.com"));
             if (Config.on(Config.K_GUARD_FRAUD, true)) r.add(new NetGuard.Rule("fraud-detection.engine.miui.com"));
             if (Config.on(Config.K_GP_CLOUDSCAN, false)) r.add(new NetGuard.Rule("virus-engine.sec.miui.com"));
-            if (r.isEmpty()) return;
             Logs.i("attach guardprovider, rules=" + r.size());
-            privacy.install(cl, true, false, true, false, false);
+            privacy.install(cl, pkg, true, false, true, false, false);
             if (Config.on(Config.K_GP_SCREENGUARD, true)) {
                 CaptureHooks.screenCapture(this, cl);
             }
-            net.install(cl, "guardprovider", r, false);
+            if (!r.isEmpty()) net.install(cl, "guardprovider", r, false);
+            return;
+        }
+
+        if ("com.miui.dmregservice".equals(pkg)) {
+            // 移动 DM 组件：App 清单、SIM 标识、基站、Wi-Fi/蓝牙扫描、BSSID
+            if (!Config.on(Config.K_G_DMREG, true)) return;
+            Logs.i("attach dmregservice");
+            privacy.install(cl, pkg, true, false, true, false, false);
+            if (Config.on(Config.K_DMREG, true)) {
+                List<NetGuard.Rule> r = new ArrayList<>();
+                r.add(new NetGuard.Rule("fxltsbl.com"));
+                net.install(cl, "dmregservice", r, false);
+            }
             return;
         }
 
         if ("com.xiaomi.trustservice".equals(pkg)) {
             if (!Config.on(Config.K_G_TRUST, true)) return;
             Logs.i("attach trustservice");
-            xsof.mrm(cl);
+            if (Config.on(Config.K_TRUST, false)) xsof.mrm(cl);
             List<NetGuard.Rule> r = new ArrayList<>();
             r.add(new NetGuard.Rule("deviceapi.micloud.xiaomi.net"));
             if (Config.on(Config.K_TRUST_FIND, false)) {
@@ -217,10 +230,11 @@ public class HookEntry extends XposedModule {
         }
 
         if ("com.miui.analytics".equals(pkg)) {
+            if (!Config.on(Config.K_G_ANALYTICS, true)) return;
             if (!Config.on(Config.K_ANALYTICS, true)) return;
             Logs.i("attach analytics");
             analytics.install(cl);
-            privacy.install(cl, true, true, true, false, true);
+            privacy.install(cl, pkg, true, true, true, false, true);
             List<NetGuard.Rule> r = new ArrayList<>();
             r.add(new NetGuard.Rule("miui.com"));
             r.add(new NetGuard.Rule("xiaomi.com"));
@@ -237,6 +251,7 @@ public class HookEntry extends XposedModule {
         }
 
         if ("com.xiaomi.aiasst.vision".equals(pkg)) {
+            if (!Config.on(Config.K_G_AIASST, true)) return;
             if (!Config.on(Config.K_AIASST, false)) return;
             Logs.i("attach aiasst.vision");
             List<NetGuard.Rule> r = new ArrayList<>();
@@ -248,13 +263,15 @@ public class HookEntry extends XposedModule {
         if ("com.miui.securitycenter".equals(pkg)) {
             if (!Config.on(Config.K_G_SECCENTER, true)) return;
             Logs.i("attach securitycenter");
-            privacy.install(cl, false, false, true, false, false);
+            privacy.install(cl, pkg, false, false, true, false, false);
             if (Config.on(Config.K_XSOF, true)) xsof.install(cl);
             if (Config.on(Config.K_SC_DBGUARD, true)) {
                 CaptureHooks.dbWrites(this, cl);
             }
             List<NetGuard.Rule> r = new ArrayList<>();
-            r.add(new NetGuard.Rule("fraud-detection.engine.miui.com"));
+            if (Config.on(Config.K_SECCENTER, true)) {
+                r.add(new NetGuard.Rule("fraud-detection.engine.miui.com"));
+            }
             r.add(new NetGuard.Rule("flash.sec.miui.com", "/detect/"));
             if (Config.on(Config.K_SC_VIRUS, false)) r.add(new NetGuard.Rule("virus-engine.sec.miui.com"));
             if (Config.on(Config.K_SC_FRAMEWORK, false)) r.add(new NetGuard.Rule("framework.sec.miui.com"));
@@ -278,7 +295,7 @@ public class HookEntry extends XposedModule {
         if ("com.xiaomi.registration".equals(pkg)) {
             if (!Config.on(Config.K_G_REGISTRATION, true)) return;
             Logs.i("attach registration");
-            privacy.install(cl, false, false, true, true, false);
+            privacy.install(cl, pkg, false, false, true, true, false);
             List<NetGuard.Rule> r = new ArrayList<>();
             if (Config.on(Config.K_REG_ZZHC, false)) r.add(new NetGuard.Rule("zzhc.vnet.cn"));
             if (Config.on(Config.K_REG_TYPDM, true)) r.add(new NetGuard.Rule("typdm.tydevice.com"));
@@ -308,17 +325,20 @@ public class HookEntry extends XposedModule {
 
         if ("com.xiaomi.market".equals(pkg)) {
             if (!Config.on(Config.K_G_AD_MARKET, true)) return;
+            Logs.i("attach market");
             List<NetGuard.Rule> r = new ArrayList<>();
-            r.add(new NetGuard.Rule("sdkconfig.ad.xiaomi.com"));
+            if (Config.on(Config.K_AD_MARKET, true)) r.add(new NetGuard.Rule("sdkconfig.ad.xiaomi.com"));
             net.install(cl, "market", r, false);
             return;
         }
 
         if ("com.xiaomi.xmsf".equals(pkg)) {
             if (!Config.on(Config.K_G_AD_XMSF, true)) return;
+            Logs.i("attach xmsf");
             List<NetGuard.Rule> r = new ArrayList<>();
-            r.add(new NetGuard.Rule("adv.sec.miui.com"));
+            if (Config.on(Config.K_AD_XMSF, true)) r.add(new NetGuard.Rule("adv.sec.miui.com"));
             net.install(cl, "xmsf", r, false);
+            return;
         }
     }
 }

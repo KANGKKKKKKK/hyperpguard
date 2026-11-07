@@ -14,7 +14,26 @@ final class PrivacyApis {
         this.m = m;
     }
 
-    void install(ClassLoader cl, boolean appList, boolean usage,
+    /**
+     * 敏感数据按应用独立：每个包只提供与它实际采集行为对应的能力，
+     * 每项一个开关，互不影响。
+     */
+    private static final java.util.Map<String, String[]> CAPS = new java.util.HashMap<>();
+
+    static {
+        CAPS.put("com.mobiletools.systemhelper", new String[]{
+                Config.K_LOC_SH, Config.K_CELL_SH, Config.K_WIFI_SH});
+        CAPS.put("com.xiaomi.registration", new String[]{
+                Config.K_LOC_REG, Config.K_CELL_REG});
+        CAPS.put("com.miui.guardprovider", new String[]{
+                Config.K_LOC_GP, Config.K_WIFI_GP, Config.K_SOCIAL_GP});
+        CAPS.put("com.miui.securitycenter", new String[]{
+                Config.K_LOC_SC, Config.K_SOCIAL_SC});
+        CAPS.put("com.miui.dmregservice", new String[]{
+                Config.K_CELL_DM, Config.K_WIFI_DM});
+    }
+
+    void install(ClassLoader cl, String pkg, boolean appList, boolean usage,
                  boolean ids, boolean sms, boolean xmsf) {
         if (appList) {
             Hooks.ret(m, cl, "android.app.ApplicationPackageManager",
@@ -61,11 +80,20 @@ final class PrivacyApis {
             hookAndroidId(cl);
         }
 
-        // 以下默认关闭，会影响功能（定位、信号、Wi-Fi 列表、通讯录）
-        if (Config.on(Config.K_LOC, false)) hookLocation(cl);
-        if (Config.on(Config.K_CELL, false)) hookCell(cl);
-        if (Config.on(Config.K_WIFI, false)) hookWifi(cl);
-        if (Config.on(Config.K_RESOLVER, false)) hookResolver(cl);
+        // 以下默认关闭；每项只对本应用生效
+        String[] caps = CAPS.get(pkg);
+        if (caps != null) {
+            int on = 0;
+            for (String k : caps) {
+                if (!Config.on(k, false)) continue;
+                on++;
+                if (k.startsWith("loc_")) hookLocation(cl);
+                else if (k.startsWith("cell_")) hookCell(cl);
+                else if (k.startsWith("wifi_")) hookWifi(cl);
+                else hookResolver(cl);
+            }
+            Logs.i("sensitive hooks=" + on + " pkg=" + pkg);
+        }
         if (sms) {
             Hooks.ret(m, cl, "android.telephony.SmsManager", "sendTextMessage",
                     new Class<?>[]{String.class, String.class, String.class, String.class,

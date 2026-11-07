@@ -7,7 +7,7 @@
 ![release](https://img.shields.io/github/v/release/vivibibi30/hyperpguard?label=release&color=green)
 ![android](https://img.shields.io/badge/Android-10--16-green)
 
-在采集入口、本地存储、对外接口、网络出口四层拦截 HyperOS / MIUI 预装组件的隐私上报
+在采集入口、本地存储、对外接口、网络出口四层拦截 HyperOS 预装组件的隐私上报
 
 </div>
 
@@ -17,7 +17,7 @@
 
 ## 当前支持的版本
 
-- Android 10 – Android 16 的 MIUI / HyperOS
+- Android 10 – Android 16 的 HyperOS
 - LSPosed 2.2.x（libxposed API 100+）
 - Root：KernelSU / Magisk / APatch（「重启」「查看记录」需要）
 
@@ -61,14 +61,15 @@
 
 | 组件 | 包名 | 拦截内容 |
 |---|---|---|
-| SystemHelper | `com.mobiletools.systemhelper` | 运营商遥测；默认整进程断网（无用户功能） |
-| 系统安全组件 | `com.miui.guardprovider` | 应用列表云查、AI 通话预警云检测、反诈配置；静默录屏拦截默认开，Flamingo 云查上传默认关 |
-| 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、行为库写入、反诈配置、志愿者传感器上报；云查 / 鉴权 / 月报 / 防窥分类 / 地震报警定位 / ADB 验证默认关 |
+| SystemHelper | `com.mobiletools.systemhelper` | 运营商遥测；默认整进程断网（无用户功能）；定位 / 基站 / Wi-Fi 扫描默认关 |
+| 系统安全组件 | `com.miui.guardprovider` | 应用列表云查、AI 通话预警云检测、反诈配置；静默录屏拦截默认开，Flamingo 云查上传默认关；定位 / Wi-Fi / 通讯录通话默认关 |
+| 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、行为库写入、反诈配置、志愿者传感器上报；云查 / 鉴权 / 月报 / 防窥分类 / 地震报警定位 / ADB 验证默认关；定位、通讯录 / 通话 / 短信默认关 |
 | 小米统计 | `com.miui.analytics` | 整域 + DoH 旁路；默认整进程断网 |
 | 应用安装器 | `com.miui.packageinstaller` | AVL 上报、活跃统计、安装页广告位 |
 | 应用商店 | `com.xiaomi.market` | 广告配置下发 |
 | 小米服务框架 | `com.xiaomi.xmsf` | 广告接口 |
-| 运营商服务 | `com.xiaomi.registration` | 明文 CTEI 上报（默认拦）、设备注册（默认关） |
+| 运营商服务 | `com.xiaomi.registration` | 明文 CTEI 上报（默认拦）、设备注册（默认关）；定位 / 基站默认关 |
+| 移动 DM | `com.miui.dmregservice` | `fxltsbl.com` 上报、App 清单、SIM 标识；基站 / Wi-Fi 扫描默认关 |
 | 小米可信服务 | `com.xiaomi.trustservice` | MRM 认证链、设备证书/密钥上报（均默认关） |
 | 翻译组件 | `com.xiaomi.aiasst.vision` | 语音识别上传（`/speech/`），默认关 |
 
@@ -159,6 +160,13 @@ build.sh              一键构建
 
 ## 更新日志
 
+### 1.2.15
+
+- 新增 `com.miui.dmregservice` 覆盖：`fxltsbl.com`，以及 App 清单、SIM 标识、基站、Wi-Fi 扫描的采集
+- 敏感数据改为按应用独立的开关：定位、基站、Wi-Fi 扫描、通讯录/通话/短信分别放在对应应用的卡片里
+- 新增「隐藏桌面图标」开关：桌面入口改为 activity-alias，隐藏后从 LSPosed 模块页进入
+- 「拦截记录」只列 `HyperPGuard` 的日志与拦截结果，不再混入其他进程含包名的日志
+
 ### 1.2.14
 
 - 设备标识补齐：Android ID、硬件序列号、手机号（此前只有 IMEI / MEID / IMSI / ICCID / MAC）
@@ -177,10 +185,6 @@ build.sh              一键构建
 ### 1.2.11
 
 - 设置页顶部加一行说明：开关打开 = 拦截该行为，关闭 = 放行
-
-### 1.2.10
-
-- 应用图标换成白底蓝色禁止上传符号
 
 
 更早版本见 [docs/CHANGELOG.md](docs/CHANGELOG.md) 或 Releases 页。
@@ -217,6 +221,6 @@ GPL-3.0，见 [LICENSE](LICENSE)。
 
 ## English
 
-HyperPGuard is an LSPosed module for MIUI / HyperOS that blocks telemetry from preinstalled system components — carrier telemetry, cloud app scanning, installer stats, ads, XSOF behaviour queries and silent screen recording — at four stages: data source, local storage, IPC interfaces and network egress. Per-app switches, feature-affecting rules default off. Requires Android 10+, LSPosed 2.2.x and root for restart/log features.
+HyperPGuard is an LSPosed module for HyperOS that blocks telemetry from preinstalled system components — carrier telemetry, cloud app scanning, installer stats, ads, XSOF behaviour queries and silent screen recording — at four stages: data source, local storage, IPC interfaces and network egress. Per-app switches, feature-affecting rules default off. Requires Android 10+, LSPosed 2.2.x and root for restart/log features.
 
 Personal use only. See [DISCLAIMER.txt](DISCLAIMER.txt). GPL-3.0.

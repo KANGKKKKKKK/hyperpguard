@@ -87,6 +87,9 @@ public class MainActivity extends Activity {
             new Group("SystemHelper", "com.mobiletools.systemhelper", Config.K_G_SYSHELPER, new Item[]{
                     new Item("拦截上报", "dm.wo.com.cn，设备 / SIM / 基站 / 应用列表", Config.K_SYSHELPER, true),
                     new Item("全断网（推荐）", "该进程所有外网请求一并拦截，只留本机回环；它没有用户功能", Config.K_SYSHELPER_ALLNET, true),
+                    new Item("定位（GPS）", "只对本应用：位置查询返回空", Config.K_LOC_SH, false),
+                    new Item("基站信息", "只对本应用：基站查询返回空，不影响信号显示", Config.K_CELL_SH, false),
+                    new Item("Wi-Fi 扫描", "只对本应用：扫描列表置空，SSID / BSSID 清空", Config.K_WIFI_SH, false),
             }),
             new Group("系统安全组件", "com.miui.guardprovider", Config.K_G_GUARD, new Item[]{
                     new Item("应用列表云查", "仅拦 flash.sec.miui.com，不动病毒库", Config.K_GUARD_APPLIST, true),
@@ -94,6 +97,9 @@ public class MainActivity extends Activity {
                     new Item("反诈配置拉取", "fraud-detection.engine.miui.com", Config.K_GUARD_FRAUD, true),
                     new Item("云查上传（Flamingo）", "virus-engine.sec.miui.com；关闭后不再上传应用清单，本地病毒库照常", Config.K_GP_CLOUDSCAN, false),
                     new Item("静默录屏拦截", "阻止 createVirtualDisplay 整屏录制，不影响正常截屏", Config.K_GP_SCREENGUARD, true),
+                    new Item("定位（GPS）", "只对本应用：位置查询返回空", Config.K_LOC_GP, false),
+                    new Item("Wi-Fi 扫描", "只对本应用：扫描列表置空，SSID / BSSID 清空", Config.K_WIFI_GP, false),
+                    new Item("通讯录 / 通话读取", "只对本应用：查询返回空；来电识别会受影响", Config.K_SOCIAL_GP, false),
             }),
             new Group("安全中心", "com.miui.securitycenter", Config.K_G_SECCENTER, new Item[]{
                     new Item("XSOF 行为查询拦截", "第三方查不到截图 / 通话 / 屏幕共享记录", Config.K_XSOF, true),
@@ -106,6 +112,8 @@ public class MainActivity extends Activity {
                     new Item("地震/报警/EPS 定位", "关闭后地震预警、紧急报警定位可能失效", Config.K_SC_LOCATION, false),
                     new Item("ADB 授权验证", "srv.sec.miui.com/data/adb；关闭后 ADB 安装授权可能失败", Config.K_SC_ADB, false),
                     new Item("行为库写入拦截", "拦截 screenshot / screen_share / voip_record 等 8 张表的写入", Config.K_SC_DBGUARD, true),
+                    new Item("定位（GPS）", "只对本应用：位置查询返回空", Config.K_LOC_SC, false),
+                    new Item("通讯录 / 通话 / 短信读取", "只对本应用：查询返回空；来电识别会受影响", Config.K_SOCIAL_SC, false),
             }),
             new Group("小米统计", "com.miui.analytics", Config.K_G_ANALYTICS, new Item[]{
                     new Item("拦截上报", "tracking / om.tracking / sdkconfig", Config.K_ANALYTICS, true),
@@ -126,6 +134,13 @@ public class MainActivity extends Activity {
             new Group("运营商服务", "com.xiaomi.registration", Config.K_G_REGISTRATION, new Item[]{
                     new Item("设备注册（zzhc）", "IMEI/IMSI/ICCID；关闭后 VoLTE / 运营商功能可能异常", Config.K_REG_ZZHC, false),
                     new Item("明文 CTEI 上报", "http://typdm.tydevice.com，IMEI / MAC / BSSID 明文 GET", Config.K_REG_TYPDM, true),
+                    new Item("定位（GPS）", "只对本应用：位置查询返回空", Config.K_LOC_REG, false),
+                    new Item("基站信息", "只对本应用：基站查询返回空，不影响信号显示", Config.K_CELL_REG, false),
+            }),
+            new Group("移动 DM（RegService）", "com.miui.dmregservice", Config.K_G_DMREG, new Item[]{
+                    new Item("拦截上报", "fxltsbl.com；App 清单 / SIM 标识", Config.K_DMREG, true),
+                    new Item("基站信息", "只对本应用：基站查询返回空，不影响信号显示", Config.K_CELL_DM, false),
+                    new Item("Wi-Fi 扫描", "只对本应用：扫描列表置空，SSID / BSSID 清空", Config.K_WIFI_DM, false),
             }),
             new Group("小米可信服务", "com.xiaomi.trustservice", Config.K_G_TRUST, new Item[]{
                     new Item("屏蔽 MRM 认证链", "会影响设备证书 / 查找设备", Config.K_TRUST, false),
@@ -150,10 +165,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle b) {
         super.onCreate(b);
 
-                // 先同步/恢复配置，再构建界面：界面构建过程中 setChecked 会写默认值进 SP
-        Config.syncNow(this);
-
-ScrollView sv = new ScrollView(this);
+        ScrollView sv = new ScrollView(this);
         sv.setBackgroundColor(BG);
         sv.setFillViewport(true);
 
@@ -202,6 +214,8 @@ ScrollView sv = new ScrollView(this);
         global.addView(line());
         makeSwitchRow(global, "抓取模式", "记录「没被拦截」的访问，平时关掉",
                 Config.K_SNIFF, false, true);
+        global.addView(line());
+        addHideIconRow(global);
         global.addView(line());
         // 需要 root 的功能，提示写在这里
         TextView rootTip = new TextView(this);
@@ -258,26 +272,6 @@ ScrollView sv = new ScrollView(this);
         disclaimer.setBackground(null);
         disclaimer.setTextColor(SUB);
         disclaimer.setOnClickListener(v -> showDisclaimer());
-        // 敏感数据：默认关闭，会影响功能
-        LinearLayout sensitive = card();
-        TextView sensHead = new TextView(this);
-        sensHead.setText("敏感数据（会影响功能，默认关闭）");
-        sensHead.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
-        sensHead.setTextColor(SUB);
-        sensHead.setPadding(0, dp(12), 0, 0);
-        sensitive.addView(sensHead);
-        makeSwitchRow(sensitive, "定位（GPS）", "位置请求直接返回空，天气、地图类功能会失效",
-                Config.K_LOC, false, true);
-        sensitive.addView(line());
-        makeSwitchRow(sensitive, "基站信息", "getCellLocation / getAllCellInfo 返回空，影响信号显示",
-                Config.K_CELL, false, true);
-        sensitive.addView(line());
-        makeSwitchRow(sensitive, "Wi-Fi 扫描", "扫描列表返回空，SSID / BSSID 置空",
-                Config.K_WIFI, false, true);
-        sensitive.addView(line());
-        makeSwitchRow(sensitive, "通讯录 / 通话 / 短信读取", "拦截这三类查询，来电识别、短信分类会失效",
-                Config.K_RESOLVER, false, true);
-        root.addView(sensitive);
 
         // 关于
         LinearLayout about = card();
@@ -716,6 +710,77 @@ ScrollView sv = new ScrollView(this);
         return sw;
     }
 
+    /* ---------------- 桌面图标 ---------------- */
+
+    private static final String LAUNCHER_ALIAS = "io.github.vivibibi30.hyperpguard.Launcher";
+
+    private boolean launcherIconEnabled() {
+        try {
+            int st = getPackageManager().getComponentEnabledSetting(
+                    new android.content.ComponentName(this, LAUNCHER_ALIAS));
+            return st != android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
+    private void setLauncherIcon(boolean on) {
+        try {
+            getPackageManager().setComponentEnabledSetting(
+                    new android.content.ComponentName(this, LAUNCHER_ALIAS),
+                    on ? android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                       : android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    android.content.pm.PackageManager.DONT_KILL_APP);
+        } catch (Throwable t) {
+            Toast.makeText(this, "切换失败：" + t, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** 隐藏桌面图标，入口保留在 LSPosed 模块页 */
+    private void addHideIconRow(LinearLayout parent) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, dp(10), 0, dp(10));
+
+        LinearLayout texts = new LinearLayout(this);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        texts.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView t1 = new TextView(this);
+        t1.setText("隐藏桌面图标");
+        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        t1.setTextColor(TEXT);
+
+        TextView t2 = new TextView(this);
+        t2.setText("隐藏后从 LSPosed 模块页进入本界面");
+        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        t2.setTextColor(SUB);
+        t2.setPadding(0, dp(2), 0, 0);
+
+        texts.addView(t1);
+        texts.addView(t2);
+        row.addView(texts);
+
+        final Switch sw = new Switch(this);
+        sw.setChecked(!launcherIconEnabled());
+        sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton v, boolean checked) {
+                setLauncherIcon(!checked);
+                boolean now = !launcherIconEnabled();
+                if (now != checked) sw.setChecked(now);
+                if (checked) {
+                    Toast.makeText(MainActivity.this,
+                            "图标已隐藏，可从 LSPosed 模块页进入", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+        row.addView(sw);
+        parent.addView(row);
+    }
+
     private ViewGroup buttonRow() {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -743,7 +808,87 @@ ScrollView sv = new ScrollView(this);
         share.setOnClickListener(v -> loadLog(true));
         row.addView(share);
 
+        TextView diag = new TextView(this);
+        diag.setText("自检");
+        diag.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        diag.setTextColor(ACCENT);
+        diag.setGravity(Gravity.CENTER);
+        diag.setPadding(0, dp(8), 0, dp(8));
+        diag.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        diag.setOnClickListener(v -> showDiagnostics());
+        row.addView(diag);
+
         return row;
+    }
+
+    /** 框架连接、真实作用域、开关数量、已注入进程，用来判断「为什么没拦住」 */
+    private void showDiagnostics() {
+        Toast.makeText(this, "检测中…（需 root）", Toast.LENGTH_SHORT).show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                StringBuilder sb = new StringBuilder();
+                sb.append("模块版本：").append(Config.VERSION).append('\n');
+                sb.append("LSPosed：").append(xposed == null ? "未连接"
+                        : (xposed.getFrameworkName() + " " + xposed.getFrameworkVersion())).append('\n');
+
+                java.util.List<String> scope = safeScope();
+                sb.append("作用域：")
+                        .append(scope == null ? "读取失败" : scope.size() + " 个").append("\n\n");
+
+                for (Group g : GROUPS) {
+                    boolean in = scope != null && scope.contains(g.pkg);
+                    sb.append(in ? "[✓] " : "[ ] ").append(g.pkg);
+                    if (!isInstalled(g.pkg)) sb.append("（未安装）");
+                    sb.append('\n');
+                }
+
+                int local = Config.ui(MainActivity.this).getAll().size();
+                int remote = 0;
+                try {
+                    String raw = android.provider.Settings.Global.getString(
+                            getContentResolver(), Config.GLOBAL_KEY);
+                    if (raw != null && !raw.isEmpty()) {
+                        for (String kv : raw.split("\\|")) if (kv.indexOf('=') > 0) remote++;
+                    }
+                } catch (Throwable ignored) {
+                }
+                sb.append("\n本地开关 ").append(local).append(" 项，系统设置 ").append(remote).append(" 项\n");
+                sb.append("\n已注入进程：\n");
+                String attach = execShell(
+                        "logcat -d -v time | grep -F 'HyperPGuard: attach' | tail -n 30");
+                sb.append(attach.trim().isEmpty()
+                        ? "（无记录：目标应用还没重启过，或该应用未加入作用域）"
+                        : attach.trim());
+
+                final String body = sb.toString();
+                ui.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        showText("环境自检", body);
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private String execShell(String cmd) {
+        Process p = null;
+        try {
+            p = Runtime.getRuntime().exec(new String[]{"su", "-c", cmd});
+            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) sb.append(line).append('\n');
+            br.close();
+            p.waitFor();
+            return sb.toString();
+        } catch (Throwable t) {
+            return "执行失败：" + t;
+        } finally {
+            if (p != null) p.destroy();
+        }
     }
 
     private void restartApp(final String pkg) {
@@ -830,32 +975,24 @@ ScrollView sv = new ScrollView(this);
     }
 
     private String execLogcat() {
-        Process p = null;
-        try {
-            p = Runtime.getRuntime().exec(new String[]{"su", "-c",
-                    "logcat -d -v time -t 30000 | grep -F HyperPGuard | tail -n 600"});
-            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) sb.append(line).append('\n');
-            br.close();
-            p.waitFor();
-            if (sb.length() == 0) {
-                return "没有记录。可能原因：\n"
-                        + "1. root 未授权（su 弹窗没点允许）\n"
-                        + "2. 模块刚启用，目标应用还没重启\n"
-                        + "3. 对应应用的「启用」开关未打开\n"
-                        + "4. 旧日志已被 logcat 环形缓冲覆盖";
-            }
-            return sb.toString();
-        } catch (Throwable t) {
-            return "读取失败：" + t;
-        } finally {
-            if (p != null) p.destroy();
+        String out = execShell(
+                "logcat -d -v time -t 30000 | grep -E 'HyperPGuard: |blocked by HyperPGuard' | tail -n 600");
+        if (out.trim().isEmpty()) {
+            return "没有记录。可能原因：\n"
+                    + "1. root 未授权（su 弹窗没点允许）\n"
+                    + "2. 模块刚启用，目标应用还没重启\n"
+                    + "3. 对应应用的「启用」开关未打开\n"
+                    + "4. 旧日志已被 logcat 环形缓冲覆盖\n\n"
+                    + "点「自检」可以看框架连接、作用域和已注入进程。";
         }
+        return out;
     }
 
     private void showLog(final String log) {
+        showText("拦截记录（" + log.split("\n").length + " 行）", log);
+    }
+
+    private void showText(String title, final String log) {
         TextView tv = new TextView(this);
         tv.setText(log);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
@@ -866,7 +1003,7 @@ ScrollView sv = new ScrollView(this);
         sv.addView(tv);
 
         new AlertDialog.Builder(this)
-                .setTitle("拦截记录（" + log.split("\n").length + " 行）")
+                .setTitle(title)
                 .setView(sv)
                 .setPositiveButton("复制", (d, w) -> {
                     ClipboardManager cm =
