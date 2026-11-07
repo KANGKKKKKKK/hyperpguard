@@ -177,6 +177,21 @@ ScrollView sv = new ScrollView(this);
         sub.setPadding(0, dp(4), 0, dp(10));
         root.addView(sub);
 
+        // 顶部明确语义：开关打开是拦截，不是放行
+        TextView hint = new TextView(this);
+        hint.setText("开关打开 = 拦截该行为，关闭 = 放行");
+        hint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        hint.setTextColor(0xFF1A6FD4);
+        GradientDrawable hintBg = new GradientDrawable();
+        hintBg.setColor(0xFFE8F2FF);
+        hintBg.setCornerRadius(dp(10));
+        hint.setBackground(hintBg);
+        hint.setPadding(dp(14), dp(11), dp(14), dp(11));
+        LinearLayout.LayoutParams hintLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        hintLp.bottomMargin = dp(12);
+        root.addView(hint, hintLp);
+
         // 全局设置
         LinearLayout global = card();
         makeSwitchRow(global, "总开关", "关闭后本模块在所有进程不生效",
