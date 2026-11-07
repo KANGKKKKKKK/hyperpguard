@@ -34,6 +34,31 @@ final class Hooks {
         }
     }
 
+    /**
+     * 把某个类里所有同名方法（不区分重载）都替换为固定返回值。
+     * 用于类名稳定、但方法签名随版本增加 slot 参数的情况。
+     */
+    static int retAllByName(XposedModule m, ClassLoader cl, String cls,
+                            String[] names, Object value) {
+        int n = 0;
+        try {
+            Class<?> c = Class.forName(cls, false, cl);
+            for (Method method : c.getDeclaredMethods()) {
+                for (String name : names) {
+                    if (!method.getName().equals(name)) continue;
+                    try {
+                        m.hook(method).intercept(chain -> value);
+                        n++;
+                    } catch (Throwable ignored) {
+                    }
+                    break;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return n;
+    }
+
     static void allByName(XposedModule m, Class<?> c, String name, Interceptor interceptor) {
         for (Method method : c.getDeclaredMethods()) {
             if (!method.getName().equals(name)) continue;

@@ -30,10 +30,21 @@ final class PrivacyApis {
                     new ArrayList<Object>());
         }
         if (ids) {
-            for (String name : new String[]{"getDeviceId", "getImei", "getMeid",
-                    "getSubscriberId", "getSimSerialNumber"}) {
-                Hooks.ret(m, cl, "android.telephony.TelephonyManager", name, new Class<?>[0], null);
-            }
+            String[] aosp = {"getDeviceId", "getImei", "getMeid",
+                    "getSubscriberId", "getSimSerialNumber", "getDeviceIdForSlot",
+                    "getImeiForSlot", "getMeidForSlot", "getSubscriberIdForSlot",
+                    "getSimSerialNumberForSlot"};
+            // AOSP：连同带 slot 参数的重载一起拦
+            int n = Hooks.retAllByName(m, cl, "android.telephony.TelephonyManager", aosp, null);
+            // 小米私有类：registration / systemhelper 等组件走这里，AOSP 那层拦不住
+            n += Hooks.retAllByName(m, cl, "miui.telephony.TelephonyManager", aosp, null);
+            n += Hooks.retAllByName(m, cl, "miui.telephony.TelephonyManagerEx", aosp, null);
+            Logs.i("telephony ids hooked=" + n);
+
+            // MAC：给固定值而不是 null，避免调用方判空崩溃
+            int mac = Hooks.retAllByName(m, cl, "android.net.wifi.WifiInfo",
+                    new String[]{"getMacAddress"}, "02:00:00:00:00:00");
+            Logs.i("mac hooked=" + mac);
         }
         if (sms) {
             Hooks.ret(m, cl, "android.telephony.SmsManager", "sendTextMessage",
