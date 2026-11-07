@@ -918,7 +918,6 @@ public class MainActivity extends Activity {
                         ? "（logcat 缓冲里没有，长时间运行后会被冲掉）"
                         : attach.trim());
 
-                sb.append("\n\n以上内容只有包名、类名、域名与异常信息，不含 IMEI、手机号、账号或文件路径，可以直接贴出。");
                 final String body = sb.toString();
                 ui.post(new Runnable() {
                     @Override
