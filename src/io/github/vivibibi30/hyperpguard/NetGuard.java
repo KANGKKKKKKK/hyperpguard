@@ -152,9 +152,59 @@ final class NetGuard {
         return h.equals(s) || h.endsWith("." + s);
     }
 
+    /**
+     * 是否内网地址。
+     * 只有「合法的 IP 字面量」才按网段判断，避免 10.evil.com 这类域名靠前缀冒充内网，
+     * 从而绕过整进程断网的严格模式。
+     */
     private static boolean isLocal(String h) {
-        return h.equals("localhost") || h.equals("127.0.0.1") || h.equals("::1")
-                || h.startsWith("127.") || h.startsWith("192.168.")
-                || h.startsWith("10.") || h.startsWith("172.16.") || h.endsWith(".local");
+        if (h == null) return false;
+        String s = h.trim().toLowerCase();
+        if (s.isEmpty()) return false;
+        if (s.equals("localhost") || s.endsWith(".local")) return true;
+
+        byte[] ip = parseIpLiteral(s);
+        if (ip == null) return false;
+
+        if (ip.length == 4) {
+            int a = ip[0] & 0xff;
+            int b = ip[1] & 0xff;
+            return a == 10                                  // 10.0.0.0/8
+                    || a == 127                             // 127.0.0.0/8
+                    || (a == 192 && b == 168)               // 192.168.0.0/16
+                    || (a == 172 && b >= 16 && b <= 31)     // 172.16.0.0/12
+                    || (a == 169 && b == 254);              // 169.254.0.0/16
+        }
+
+        // IPv6
+        int b0 = ip[0] & 0xff;
+        int b1 = ip[1] & 0xff;
+        if ((b0 & 0xfe) == 0xfc) return true;               // fc00::/7
+        if (b0 == 0xfe && (b1 & 0xc0) == 0x80) return true; // fe80::/10
+        boolean loopback = ip[15] == 1;
+        for (int i = 0; i < 15 && loopback; i++) if (ip[i] != 0) loopback = false;
+        return loopback;                                    // ::1
+    }
+
+    /** 只解析 IP 字面量，不做任何 DNS 查询；不是合法 IP 就返回 null */
+    private static byte[] parseIpLiteral(String s) {
+        try {
+            if (s.indexOf(':') >= 0) {
+                java.net.InetAddress ia = java.net.InetAddress.getByName(s);
+                return ia instanceof java.net.Inet6Address ? ia.getAddress() : null;
+            }
+            String[] p = s.split("\\.");
+            if (p.length != 4) return null;
+            byte[] out = new byte[4];
+            for (int i = 0; i < 4; i++) {
+                if (p[i].isEmpty() || p[i].length() > 3) return null;
+                int v = Integer.parseInt(p[i]);
+                if (v < 0 || v > 255) return null;
+                out[i] = (byte) v;
+            }
+            return out;
+        } catch (Throwable t) {
+            return null;
+        }
     }
 }
