@@ -71,14 +71,19 @@ public class MainActivity extends Activity {
     }
 
     private static final class Group {
-        final String title, pkg, key;
+        final String title, pkg, key, note;
         final Item[] items;
 
         Group(String title, String pkg, String key, Item[] items) {
+            this(title, pkg, key, items, null);
+        }
+
+        Group(String title, String pkg, String key, Item[] items, String note) {
             this.title = title;
             this.pkg = pkg;
             this.key = key;
             this.items = items;
+            this.note = note;
         }
     }
 
@@ -90,7 +95,7 @@ public class MainActivity extends Activity {
                     new Item("定位（GPS）", "只对本应用：位置查询返回空", Config.K_LOC_SH, false),
                     new Item("基站信息", "只对本应用：基站查询返回空，不影响信号显示", Config.K_CELL_SH, false),
                     new Item("Wi-Fi 扫描", "只对本应用：扫描列表置空，SSID / BSSID 清空", Config.K_WIFI_SH, false),
-            }),
+            }, "权限在开机激活时确认；本模块只拦上报，不回收已授予的权限"),
             new Group("系统安全组件", "com.miui.guardprovider", Config.K_G_GUARD, new Item[]{
                     new Item("应用列表云查", "仅拦 flash.sec.miui.com，不动病毒库", Config.K_GUARD_APPLIST, true),
                     new Item("AI 通话预警云检测", "detection-aigc.engine.miui.com", Config.K_GUARD_AIGC, true),
@@ -248,6 +253,7 @@ public class MainActivity extends Activity {
             childRows.put(g.pkg, rows);
 
             c.addView(groupHeader(g, rows));
+            if (g.note != null) c.addView(groupNote(g.note));
             for (Item it : g.items) {
                 c.addView(line());
                 LinearLayout row = new LinearLayout(this);
@@ -594,6 +600,15 @@ public class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
         l.setBackgroundColor(LINE);
         return l;
+    }
+
+    private android.view.View groupNote(String text) {
+        TextView tv = new TextView(this);
+        tv.setText(text);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        tv.setTextColor(SUB);
+        tv.setPadding(0, 0, 0, dp(8));
+        return tv;
     }
 
     private ViewGroup groupHeader(final Group g, List<LinearLayout> rows) {
