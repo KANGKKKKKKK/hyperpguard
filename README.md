@@ -172,6 +172,11 @@ build.sh              一键构建
 
 ## 更新日志
 
+### 1.3.6
+
+- SystemHelper 混淆类名变化时按方法签名兜底：`(String, byte[], byte[])` 返回 boolean 的数据出口、`(String)` 返回 void 的写库入口
+- 兜底也落空时，把候选类名或类名样本写进日志，便于按版本补硬编码
+
 ### 1.3.5
 
 - 「查看记录」改为「查看日志」，弹窗标题相应改为「模块日志」，不再叫「拦截记录」
@@ -194,11 +199,6 @@ build.sh              一键构建
 - 新增 `com.miui.misightservice` 覆盖：日志上传、售后检测、客服诊断三条规则，默认开
 - 触发条件是用户主动反馈或售后远程诊断；本地数据库里的记录不等于已经上传
 
-
-### 1.3.1
-
-- SystemHelper 卡片补一行：权限在开机激活阶段确认，本模块只拦上报，不回收已授予的权限
-- 系统安全组件卡片补一行：AI 反诈逻辑在 `AiGuardService` 内、用于通话场景，与 SystemHelper 不是同一条链路
 
 更早版本见 [docs/CHANGELOG.md](docs/CHANGELOG.md) 或 Releases 页。
 

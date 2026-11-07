@@ -96,6 +96,54 @@ public class HookEntry extends XposedModule {
         }
     }
 
+    /**
+     * SystemHelper 4.x 起混淆类名变化：按签名在 c.d.a.* 里找数据出口。
+     * 找不到时把候选类名（或整体类名样本）打进日志，便于补硬编码。
+     */
+    private boolean systemHelperUpload(ClassLoader cl) {
+        final java.util.List<String> cands = Hooks.classNames(cl, s -> s.startsWith("c.d.a."), 600);
+        int n = Hooks.hookBySignature(this, cands, cl,
+                m -> {
+                    Class<?>[] p = m.getParameterTypes();
+                    return p.length == 3 && p[0] == String.class
+                            && p[1] == byte[].class && p[2] == byte[].class
+                            && m.getReturnType() == boolean.class;
+                },
+                chain -> Boolean.FALSE);
+        Logs.i("systemhelper upload fallback=" + n + " scan=" + cands.size()
+                + (n > 0 ? "" : " probe=" + probe(cl, cands)));
+        return n > 0;
+    }
+
+    /** 写库入口：(String) 返回 void，方法名沿用 a */
+    private boolean systemHelperWrite(ClassLoader cl) {
+        final java.util.List<String> cands = Hooks.classNames(cl, s -> s.startsWith("c.d.a."), 600);
+        int n = Hooks.hookBySignature(this, cands, cl,
+                m -> m.getName().equals("a") && m.getParameterCount() == 1
+                        && m.getParameterTypes()[0] == String.class
+                        && m.getReturnType() == void.class,
+                chain -> null);
+        Logs.i("systemhelper write fallback=" + n + " scan=" + cands.size()
+                + (n > 0 ? "" : " probe=" + probe(cl, cands)));
+        return n > 0;
+    }
+
+    /** 候选为空说明包名前缀也变了，这时给一段整体类名样本 */
+    private static String probe(ClassLoader cl, java.util.List<String> cands) {
+        java.util.List<String> list = cands;
+        if (list.isEmpty()) {
+            list = Hooks.classNames(cl, s -> !s.startsWith("android.")
+                    && !s.startsWith("java.") && !s.startsWith("kotlin."), 24);
+        }
+        StringBuilder sb = new StringBuilder("[");
+        int max = Math.min(12, list.size());
+        for (int i = 0; i < max; i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(list.get(i));
+        }
+        return sb.append(']').toString();
+    }
+
     /** 单步安装失败不影响同进程其余规则 */
     private void stage(String name, Runnable r) {
         try {
@@ -188,24 +236,8 @@ public class HookEntry extends XposedModule {
             boolean upload = Hooks.ret(this, cl, "c.d.a.b.f", "a",
                     new Class<?>[]{String.class, byte[].class, byte[].class}, Boolean.FALSE);
             boolean write = Hooks.ret(this, cl, "c.d.a.b.e", "a", new Class<?>[]{String.class}, null);
-            if (!upload) {
-                // 类名随版本变化时，按签名找 (String, byte[], byte[]) 的数据出口
-                int n = Hooks.hookBySignature(this,
-                        Hooks.classNames(cl, s -> s.indexOf('.') < 0 || s.length() <= 6
-                                || s.startsWith("com.mobiletools"), 8000), cl,
-                        m -> {
-                            Class<?>[] p = m.getParameterTypes();
-                            return p.length == 3 && p[0] == String.class
-                                    && p[1] == byte[].class && p[2] == byte[].class;
-                        },
-                        chain -> {
-                            java.lang.reflect.Executable ex = chain.getExecutable();
-                            return ex instanceof java.lang.reflect.Method
-                                    && ((java.lang.reflect.Method) ex).getReturnType() == boolean.class
-                                    ? Boolean.FALSE : null;
-                        });
-                Logs.i("systemhelper upload fallback=" + n);
-            }
+            if (!upload) upload = systemHelperUpload(cl);
+            if (!write) write = systemHelperWrite(cl);
             Logs.i("systemhelper direct upload=" + upload + " write=" + write);
             List<NetGuard.Rule> r = new ArrayList<>();
             if (Config.on(Config.K_SYSHELPER, true)) r.add(new NetGuard.Rule("dm.wo.com.cn"));
