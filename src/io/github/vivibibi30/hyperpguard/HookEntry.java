@@ -257,6 +257,9 @@ public class HookEntry extends XposedModule {
             if (Config.on(Config.K_GUARD_AIGC, true)) r.add(new NetGuard.Rule("detection-aigc.engine.miui.com"));
             if (Config.on(Config.K_GUARD_FRAUD, true)) r.add(new NetGuard.Rule("fraud-detection.engine.miui.com"));
             if (Config.on(Config.K_GP_CLOUDSCAN, false)) r.add(new NetGuard.Rule("virus-engine.sec.miui.com"));
+            if (Config.on(Config.K_GP_ENGINELOG, true)) {
+                r.add(new NetGuard.Rule("logupdate.avlyun.sec.miui.com"));
+            }
             Logs.i("attach guardprovider, rules=" + r.size());
             privacySafe(cl, pkg, true, false, true, false, false);
             if (Config.on(Config.K_GP_SCREENGUARD, true)) {
@@ -371,6 +374,11 @@ public class HookEntry extends XposedModule {
                 r.add(new NetGuard.Rule("eps.caict.ac.cn"));
             }
             if (Config.on(Config.K_SC_ADB, false)) r.add(new NetGuard.Rule("srv.sec.miui.com", "/data/adb"));
+            if (Config.on(Config.K_SC_MISC, true)) {
+                r.add(new NetGuard.Rule("adv.sec.miui.com", "/info/layout"));
+                r.add(new NetGuard.Rule("net-assistant.10046.xiaomimobile.com"));
+                r.add(new NetGuard.Rule("flash.sec.miui.com", "/satisfaction/"));
+            }
             netSafe(cl, "securitycenter", r, false);
             return;
         }

@@ -80,6 +80,10 @@ public final class Config {
     public static final String K_SC_DBGUARD = "block_sc_dbguard";
     /** 安全中心的设备标识默认放行：拦了 IMSI / ICCID / 手机号，套餐与流量查询会失效 */
     public static final String K_SC_IDS = "block_sc_ids";
+    /** 安全中心的广告位、网络助手推送与满意度问卷 */
+    public static final String K_SC_MISC = "block_sc_misc";
+    /** guardprovider 的安犬引擎日志上传 */
+    public static final String K_GP_ENGINELOG = "block_gp_enginelog";
     public static final String K_GP_CLOUDSCAN = "block_gp_cloudscan";
     public static final String K_GP_SCREENGUARD = "block_gp_screenguard";
     public static final String K_TRUST_FIND = "block_trust_find";

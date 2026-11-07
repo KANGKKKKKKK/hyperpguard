@@ -103,6 +103,7 @@ public class MainActivity extends Activity {
                     new Item("反诈配置拉取", "fraud-detection.engine.miui.com", Config.K_GUARD_FRAUD, true),
                     new Item("云查上传（Flamingo）", "virus-engine.sec.miui.com；关闭后不再上传应用清单，本地病毒库照常", Config.K_GP_CLOUDSCAN, false),
                     new Item("静默录屏拦截", "阻止 createVirtualDisplay 整屏录制，不影响正常截屏", Config.K_GP_SCREENGUARD, true),
+                    new Item("引擎日志上传", "logupdate.avlyun.sec.miui.com；只影响日志回传，不影响本地查毒与病毒库更新", Config.K_GP_ENGINELOG, true),
                     new Item("定位（GPS）", "只对本应用：位置查询返回空", Config.K_LOC_GP, false),
                     new Item("Wi-Fi 扫描", "只对本应用：扫描列表置空，SSID / BSSID 清空", Config.K_WIFI_GP, false),
                     new Item("通讯录 / 通话读取", "只对本应用：查询返回空；来电识别会受影响", Config.K_SOCIAL_GP, false),
@@ -119,6 +120,7 @@ public class MainActivity extends Activity {
                     new Item("ADB 授权验证", "srv.sec.miui.com/data/adb；关闭后 ADB 安装授权可能失败", Config.K_SC_ADB, false),
                     new Item("行为库写入拦截", "拦截 screenshot / screen_share / voip_record 等 8 张表的写入", Config.K_SC_DBGUARD, true),
                     new Item("设备标识拦截", "IMSI / ICCID / 手机号 / IMEI；打开后剩余流量、套餐查询会失效", Config.K_SC_IDS, false),
+                    new Item("广告位与推送下发", "adv 广告位、网络助手推送、满意度问卷；关闭后这几处不再拉取配置", Config.K_SC_MISC, true),
                     new Item("定位（GPS）", "只对本应用：位置查询返回空", Config.K_LOC_SC, false),
                     new Item("通讯录 / 通话 / 短信读取", "只对本应用：查询返回空；来电识别会受影响", Config.K_SOCIAL_SC, false),
             }),
@@ -837,14 +839,16 @@ public class MainActivity extends Activity {
 
         add.setOnClickListener(v -> {
             String val = input.getText().toString().trim();
-            if (!val.matches("[A-Za-z0-9.\\-]+(/[A-Za-z0-9._\\-]*)*")) {
+            if (!val.matches("[A-Za-z0-9._\\-]+(/[A-Za-z0-9._\\-]*)*")) {
                 Toast.makeText(this, "格式：域名 或 域名/路径", Toast.LENGTH_SHORT).show();
                 return;
             }
             String raw = Config.customRulesRaw(this).trim();
-            if (raw.contains(val)) {
-                Toast.makeText(this, "已存在", Toast.LENGTH_SHORT).show();
-                return;
+            for (String one : raw.split(";;")) {
+                if (one.trim().equals(val)) {
+                    Toast.makeText(this, "已存在", Toast.LENGTH_SHORT).show();
+                    return;
+                }
             }
             Config.setCustomRules(this, raw.isEmpty() ? val : raw + ";;" + val);
             input.setText("");
