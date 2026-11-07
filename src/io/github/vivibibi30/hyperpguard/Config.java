@@ -14,12 +14,14 @@ public final class Config {
 
     public static final String PKG = "io.github.vivibibi30.hyperpguard";
     public static final String PREFS = "pg";
-    public static final String VERSION = "1.4.0";
+    public static final String VERSION = "1.5.0";
 
     /* 全局 */
     public static final String K_MASTER = "master";
     public static final String K_PATH = "block_path_markers";
     public static final String K_SNIFF = "sniff_all";
+    /** 自定义规则：域名 或 域名/路径，多条用 ;; 分隔 */
+    public static final String K_CUSTOM = "custom_rules";
 
     /* 敏感数据：按应用独立，默认全部关闭 */
     public static final String K_LOC_SH = "loc_sh";       // SystemHelper 定位
@@ -127,7 +129,7 @@ public final class Config {
      * 本地偏好被清理过时，不会把其余开关一起冲成默认值。
      */
     private static void syncOut(Context ctx, SharedPreferences sp, String changed) {
-        java.util.LinkedHashMap<String, Boolean> map = new java.util.LinkedHashMap<>();
+        java.util.LinkedHashMap<String, String> map = new java.util.LinkedHashMap<>();
         String cur = null;
         try {
             cur = android.provider.Settings.Global.getString(
@@ -139,19 +141,29 @@ public final class Config {
             for (String kv : cur.split("\\|")) {
                 int i = kv.indexOf('=');
                 if (i <= 0) continue;
-                map.put(kv.substring(0, i).trim(), "true".equals(kv.substring(i + 1).trim()));
+                String k = kv.substring(0, i).trim();
+                String val = kv.substring(i + 1).trim();
+                map.put(k, K_CUSTOM.equals(k) ? urlDecode(val) : val);
             }
         }
         for (java.util.Map.Entry<String, ?> e : sp.getAll().entrySet()) {
             Object v = e.getValue();
-            if (v instanceof Boolean) map.put(e.getKey(), (Boolean) v);
+            if (v instanceof Boolean) map.put(e.getKey(), String.valueOf(v));
+            else if (v instanceof String) map.put(e.getKey(), (String) v);
         }
-        map.put(changed, sp.getBoolean(changed, false));
+        Object localChanged = sp.getAll().get(changed);
+        map.put(changed, localChanged instanceof String
+                ? (String) localChanged : String.valueOf(sp.getBoolean(changed, false)));
 
         final StringBuilder sb = new StringBuilder();
-        for (java.util.Map.Entry<String, Boolean> e : map.entrySet()) {
+        for (java.util.Map.Entry<String, String> e : map.entrySet()) {
+            String val = e.getValue();
+            if (K_CUSTOM.equals(e.getKey())) {
+                if (val == null || val.isEmpty()) continue;
+                val = urlEncode(val);
+            }
             if (sb.length() > 0) sb.append('|');
-            sb.append(e.getKey()).append('=').append(e.getValue());
+            sb.append(e.getKey()).append('=').append(val);
         }
         if (sb.length() == 0) return;
         final String dump = sb.toString();
@@ -200,6 +212,9 @@ public final class Config {
 
     private static java.util.Map<String, Boolean> FALLBACK;
 
+    /** 自定义规则原文，进程内只读一次 */
+    private static volatile String CUSTOM = "";
+
     /** 界面改过开关后丢掉回落缓存，下次重新读 */
     public static void invalidateCache() {
         FALLBACK = null;
@@ -231,7 +246,7 @@ public final class Config {
      * 系统 Context 的包名是 android，uid 与包名不一致会被 provider 拒。
      */
     public static void load(android.content.Context ctx, String pkg) {
-        if (!REMOTE.isEmpty()) return;
+        if (!REMOTE.isEmpty() || !CUSTOM.isEmpty()) return;
         if (ctx != null) loadFromSettings(ctx);
         if (REMOTE.isEmpty() && ctx != null && pkg != null) {
             try {
@@ -252,10 +267,72 @@ public final class Config {
             for (String kv : v.split("\\|")) {
                 int i = kv.indexOf('=');
                 if (i <= 0) continue;
-                REMOTE.put(kv.substring(0, i).trim(), "true".equals(kv.substring(i + 1).trim()));
+                String k = kv.substring(0, i).trim();
+                String val = kv.substring(i + 1).trim();
+                if (K_CUSTOM.equals(k)) CUSTOM = urlDecode(val);
+                else REMOTE.put(k, "true".equals(val));
             }
         } catch (Throwable t) {
             Logs.i("config read fail: " + t);
+        }
+    }
+
+    public static void setCustomRules(Context ctx, String rules) {
+        SharedPreferences sp = ui(ctx);
+        sp.edit().putString(K_CUSTOM, rules).apply();
+        invalidateCache();
+        syncOut(ctx, sp, K_CUSTOM);
+    }
+
+    /** 界面读取：本地优先，被清过时回落到 Settings 里的同一份配置 */
+    public static String customRulesRaw(Context ctx) {
+        String v = ui(ctx).getString(K_CUSTOM, "");
+        if (v != null && !v.isEmpty()) return v;
+        try {
+            String all = android.provider.Settings.Global.getString(
+                    ctx.getContentResolver(), GLOBAL_KEY);
+            if (all != null) {
+                for (String kv : all.split("\\|")) {
+                    int i = kv.indexOf('=');
+                    if (i > 0 && K_CUSTOM.equals(kv.substring(0, i).trim())) {
+                        return urlDecode(kv.substring(i + 1).trim());
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            Logs.i("custom rules read fail: " + t);
+        }
+        return "";
+    }
+
+    /** hook 侧解析：域名 或 域名/路径 */
+    public static java.util.List<NetGuard.Rule> customRules() {
+        java.util.List<NetGuard.Rule> out = new java.util.ArrayList<>();
+        String s = CUSTOM;
+        if (s == null || s.isEmpty()) return out;
+        for (String item : s.split(";;")) {
+            item = item.trim();
+            if (item.isEmpty()) continue;
+            int i = item.indexOf('/');
+            if (i > 0) out.add(new NetGuard.Rule(item.substring(0, i), item.substring(i)));
+            else out.add(new NetGuard.Rule(item));
+        }
+        return out;
+    }
+
+    private static String urlEncode(String s) {
+        try {
+            return java.net.URLEncoder.encode(s, "UTF-8");
+        } catch (Throwable t) {
+            return s;
+        }
+    }
+
+    private static String urlDecode(String s) {
+        try {
+            return java.net.URLDecoder.decode(s, "UTF-8");
+        } catch (Throwable t) {
+            return s;
         }
     }
 

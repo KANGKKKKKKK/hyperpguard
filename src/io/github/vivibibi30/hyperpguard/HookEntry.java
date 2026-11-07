@@ -158,7 +158,9 @@ public class HookEntry extends XposedModule {
 
     private void netSafe(ClassLoader cl, String tag, List<NetGuard.Rule> rules, boolean strictAll) {
         try {
-            net.install(cl, tag, rules, strictAll);
+            List<NetGuard.Rule> all = new ArrayList<>(rules);
+            all.addAll(Config.customRules());
+            net.install(cl, tag, all, strictAll);
         } catch (Throwable t) {
             Logs.i("net install fail " + tag + ": " + t);
         }

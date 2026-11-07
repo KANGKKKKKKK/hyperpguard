@@ -23,6 +23,7 @@ import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
@@ -232,6 +233,8 @@ public class MainActivity extends Activity {
         addHideIconRow(global);
         global.addView(line());
         addFraudDbRow(global);
+        global.addView(line());
+        addCustomRulesRow(global);
         global.addView(line());
         // 需要 root 的功能，提示写在这里
         TextView rootTip = new TextView(this);
@@ -753,6 +756,110 @@ public class MainActivity extends Activity {
         return sw;
     }
 
+    /* ---------------- 自定义规则 ---------------- */
+
+    private void addCustomRulesRow(LinearLayout parent) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(0, dp(10), 0, dp(10));
+        row.setClickable(true);
+
+        TextView t1 = new TextView(this);
+        t1.setText("自定义规则");
+        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        t1.setTextColor(TEXT);
+
+        TextView t2 = new TextView(this);
+        String raw = Config.customRulesRaw(this).trim();
+        int count = raw.isEmpty() ? 0 : raw.split(";;").length;
+        t2.setText("按域名或 域名/路径 追加拦截，当前 " + count + " 条");
+        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        t2.setTextColor(SUB);
+        t2.setPadding(0, dp(2), 0, 0);
+
+        row.addView(t1);
+        row.addView(t2);
+        row.setOnClickListener(v -> showCustomRules());
+        parent.addView(row);
+    }
+
+    private void showCustomRules() {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(16), dp(8), dp(16), dp(8));
+
+        final EditText input = new EditText(this);
+        input.setHint("tracking.miui.com 或 tracking.miui.com/track/");
+        input.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        box.addView(input);
+
+        final TextView list = new TextView(this);
+        list.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        list.setTextIsSelectable(true);
+        list.setPadding(0, dp(8), 0, dp(8));
+        box.addView(list);
+
+        Button add = new Button(this);
+        add.setText("添加");
+        add.setAllCaps(false);
+        add.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        box.addView(add);
+
+        Button clear = new Button(this);
+        clear.setText("清空");
+        clear.setAllCaps(false);
+        clear.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        box.addView(clear);
+
+        ScrollView sv = new ScrollView(this);
+        sv.addView(box);
+
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("自定义规则")
+                .setView(sv)
+                .setNegativeButton("关闭", null)
+                .create();
+
+        final Runnable render = () -> {
+            String raw = Config.customRulesRaw(MainActivity.this).trim();
+            if (raw.isEmpty()) {
+                list.setText("还没有规则。\n\n域名 = 拦该域及其子域；域名/路径 = 只拦该前缀。"
+                        + "\n添加或删除后需要重启对应应用才生效。");
+                return;
+            }
+            StringBuilder sb = new StringBuilder();
+            for (String one : raw.split(";;")) {
+                if (!one.trim().isEmpty()) sb.append("• ").append(one.trim()).append('\n');
+            }
+            sb.append("\n添加或删除后需要重启对应应用才生效。");
+            list.setText(sb.toString());
+        };
+
+        add.setOnClickListener(v -> {
+            String val = input.getText().toString().trim();
+            if (!val.matches("[A-Za-z0-9.\\-]+(/[A-Za-z0-9._\\-]*)*")) {
+                Toast.makeText(this, "格式：域名 或 域名/路径", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String raw = Config.customRulesRaw(this).trim();
+            if (raw.contains(val)) {
+                Toast.makeText(this, "已存在", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Config.setCustomRules(this, raw.isEmpty() ? val : raw + ";;" + val);
+            input.setText("");
+            render.run();
+        });
+
+        clear.setOnClickListener(v -> {
+            Config.setCustomRules(this, "");
+            render.run();
+        });
+
+        dialog.show();
+        render.run();
+    }
+
     /* ---------------- 行为库状态 ---------------- */
 
     private static final String FRAUD_DB =
@@ -1201,6 +1308,45 @@ public class MainActivity extends Activity {
         return sb.toString();
     }
 
+    /** 常见上报域名的用途，用于给「未拦截」行加注 */
+    private static final String[][] HOST_HINTS = {
+            {"tracking.miui.com", "统计埋点"},
+            {"adv.sec.miui.com", "广告位"},
+            {"logupdate.avlyun", "病毒引擎日志"},
+            {"rcpc-sdk", "腾讯 RCPC SDK"},
+            {"net-assistant", "网络助手"},
+            {"game.sec.miui.com", "游戏加速"},
+            {"pre-api.miui.security", "游戏加速用户信息"},
+            {"flash.sec.miui.com", "安全检测接口"},
+            {"api.sec.miui.com", "安全中心接口"},
+            {"data.sec.miui.com", "月报与配置上报"},
+            {"framework.sec.miui.com", "XSOF 鉴权"},
+            {"virus-engine", "病毒库云查"},
+            {"deviceapi.micloud", "设备证书/查找设备"},
+            {"find.api.micloud", "查找设备"},
+            {"zzhc.vnet.cn", "运营商注册"},
+            {"typdm.tydevice.com", "CTEI 明文上报"},
+            {"fxltsbl.com", "移动 DM 上报"},
+            {"dm.wo.com.cn", "运营商遥测"},
+            {"xiaomimobile.com", "运营商合作服务"},
+            {"m.qq.com", "腾讯 SDK"},
+    };
+
+    private static String hintFor(String line) {
+        int i = line.indexOf(": ? ");
+        if (i < 0) return null;
+        String rest = line.substring(i + 4).trim();
+        int sp = rest.indexOf(' ');
+        if (sp < 0) return null;
+        String target = rest.substring(sp + 1).trim();
+        int slash = target.indexOf('/');
+        String host = (slash > 0 ? target.substring(0, slash) : target).toLowerCase();
+        for (String[] h : HOST_HINTS) {
+            if (host.contains(h[0])) return h[1];
+        }
+        return null;
+    }
+
     /** 每段只显示最近若干行，附总数与说明 */
     private static String section(String name, java.util.List<String> lines, String note) {
         if (lines.isEmpty()) return "";
@@ -1211,7 +1357,11 @@ public class MainActivity extends Activity {
         if (total > LOG_SECTION_LIMIT) sb.append("，显示最近 ").append(LOG_SECTION_LIMIT).append(" 条");
         sb.append("）\n");
         if (note != null) sb.append(note);
-        for (int i = from; i < total; i++) sb.append(lines.get(i)).append('\n');
+        for (int i = from; i < total; i++) {
+            String line = lines.get(i);
+            String hint = note == null ? null : hintFor(line);
+            sb.append(hint == null ? line : line + "   ← " + hint).append('\n');
+        }
         sb.append('\n');
         return sb.toString();
     }
