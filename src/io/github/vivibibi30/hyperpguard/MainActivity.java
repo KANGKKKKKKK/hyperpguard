@@ -330,8 +330,8 @@ ScrollView sv = new ScrollView(this);
                         @Override
                         public void onScopeRequestFailed(String message) {
                             android.util.Log.w("HyperPGuard", "requestScope(" + pkg + ") failed: " + message);
-                            ui.post(() -> Toast.makeText(MainActivity.this,
-                                    "未加入作用域：" + message, Toast.LENGTH_LONG).show());
+                            ui.post(() -> showScopeFailure("「" + g.title + "」加入作用域失败",
+                                    pkg, message));
                         }
                     });
         } catch (Throwable t) {
@@ -382,8 +382,7 @@ ScrollView sv = new ScrollView(this);
 
                 @Override
                 public void onScopeRequestFailed(String message) {
-                    ui.post(() -> Toast.makeText(MainActivity.this,
-                            "批量请求失败：" + message, Toast.LENGTH_LONG).show());
+                    ui.post(() -> showScopeFailure("批量加入作用域失败", "（多个应用）", message));
                 }
             });
         } catch (Throwable t) {
@@ -443,6 +442,21 @@ ScrollView sv = new ScrollView(this);
      * 把一组的状态刷到界面上。
      * 子项永远可点、永远满透明度；on 只反映这一组真实是否在作用域里。
      */
+    /**
+     * 作用域请求被拒时给出可操作的说明。
+     * 常见于系统 priv-app：LSPosed 的 requestScope 会拒绝，但管理器里手动勾选可以。
+     */
+    private void showScopeFailure(String title, String pkg, String message) {
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage("包名：" + pkg
+                        + "\n\nLSPosed 返回：" + (message == null || message.isEmpty() ? "（无）" : message)
+                        + "\n\n可以在 LSPosed 管理器 → 模块 → HyperPGuard → 作用域 里手动勾选该应用。"
+                        + "\n手动勾选后回到本界面，开关会跟着变成开启。")
+                .setPositiveButton("知道了", null)
+                .show();
+    }
+
     private void setGroupUi(Group g, boolean on) {
         updatingSwitch = true;
         Switch gs = groupSwitches.get(g.pkg);
@@ -519,9 +533,8 @@ ScrollView sv = new ScrollView(this);
 
                         @Override
                         public void onScopeRequestFailed(String message) {
-                            ui.post(() -> Toast.makeText(MainActivity.this,
-                                    "「" + g.title + "」未加入作用域：" + message,
-                                    Toast.LENGTH_LONG).show());
+                            ui.post(() -> showScopeFailure("「" + g.title + "」加入作用域失败",
+                                    g.pkg, message));
                         }
                     });
         } catch (Throwable t) {

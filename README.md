@@ -159,6 +159,11 @@ build.sh              一键构建
 
 ## 更新日志
 
+### 1.2.13
+
+- 加入作用域被 LSPosed 拒绝时改为对话框：显示包名、返回信息和手动勾选的路径
+- 系统 priv-app（如 SystemHelper）常见这种拒绝，此前只弹一个 Toast 容易错过
+
 ### 1.2.12
 
 - 修复整进程断网的内网判断：`10.evil.com`、`192.168.evil.com` 这类域名此前会被当成内网放行
@@ -177,12 +182,6 @@ build.sh              一键构建
 - 补齐设备标识拦截：`miui.telephony.TelephonyManager`、`TelephonyManagerEx` 此前完全没覆盖，运营商注册组件走的就是这条路
 - 带 slot 参数的重载（`getImeiForSlot` 等）一并拦截
 - 新增 `WifiInfo#getMacAddress` 拦截，返回固定值而非 null
-
-### 1.2.8
-
-- 应用图标：蓝底白色禁止上传标记，五档尺寸合计 13 KB
-- 本地配置被清空时，界面开关回落到 `Settings.Global` 里的实际值，不再显示成默认值
-- 本地配置为空时不再写入 `Settings.Global`，避免把用户设置冲成默认
 
 
 更早版本见 [docs/CHANGELOG.md](docs/CHANGELOG.md) 或 Releases 页。
