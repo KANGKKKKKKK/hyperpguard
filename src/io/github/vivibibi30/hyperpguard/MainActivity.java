@@ -230,7 +230,7 @@ ScrollView sv = new ScrollView(this);
                 c.addView(row);
             }
             root.addView(c);
-            setGroupUi(g, Config.ui(this).getBoolean(g.key, true));
+            setGroupUi(g, Config.get(this, g.key, true));
         }
 
         Button disclaimer = new Button(this);
@@ -468,7 +468,7 @@ ScrollView sv = new ScrollView(this);
         for (Group g : GROUPS) {
             boolean on;
             if (scope == null) {
-                on = Config.ui(this).getBoolean(g.key, true);
+                on = Config.get(this, g.key, true);
             } else {
                 on = scope.contains(g.pkg);
                 Config.uiSet(this, g.key, on);
@@ -589,12 +589,12 @@ ScrollView sv = new ScrollView(this);
 
         final Switch sw = new Switch(this);
         groupSwitches.put(g.pkg, sw);
-        sw.setChecked(Config.ui(this).getBoolean(g.key, true));
+        sw.setChecked(Config.get(this, g.key, true));
         sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton v, boolean checked) {
                 if (updatingSwitch) return;
-                boolean current = Config.ui(MainActivity.this).getBoolean(g.key, true);
+                boolean current = Config.get(MainActivity.this, g.key, true);
                 if (checked == current) return;
                 // 先回滚，等 LSPosed 确认后再改
                 updatingSwitch = true;
@@ -654,7 +654,7 @@ ScrollView sv = new ScrollView(this);
         row.addView(texts);
 
         Switch sw = new Switch(this);
-        sw.setChecked(Config.ui(this).getBoolean(key, def));
+        sw.setChecked(Config.get(this, key, def));
         sw.setEnabled(enabled);
         sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override

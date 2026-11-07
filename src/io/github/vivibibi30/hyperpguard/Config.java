@@ -213,6 +213,26 @@ public final class Config {
         }
     }
 
+    /** 界面读取：本地有就用本地，本地被清过就从 Settings 取回用户设置 */
+    public static boolean get(Context ctx, String key, boolean def) {
+        SharedPreferences sp = ui(ctx);
+        if (sp.contains(key)) return sp.getBoolean(key, def);
+        try {
+            String v = android.provider.Settings.Global.getString(
+                    ctx.getContentResolver(), GLOBAL_KEY);
+            if (v != null) {
+                for (String kv : v.split("\\|")) {
+                    int i = kv.indexOf('=');
+                    if (i > 0 && key.equals(kv.substring(0, i).trim()))
+                        return "true".equals(kv.substring(i + 1).trim());
+                }
+            }
+        } catch (Throwable t) {
+            Logs.i("config get fail: " + t);
+        }
+        return def;
+    }
+
     public static int size() {
         return REMOTE.size();
     }
