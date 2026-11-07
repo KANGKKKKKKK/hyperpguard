@@ -152,7 +152,7 @@ public class MainActivity extends Activity {
                     new Item("日志上传", "feedback.miui.com/misight/upload；关闭后主动反馈传不了日志包", Config.K_MISIGHT_UPLOAD, true),
                     new Item("售后检测", "port.sec.miui.com/mqsas；关闭后售后远程检测拿不到日志", Config.K_MISIGHT_MQSAS, true),
                     new Item("客服诊断", "chat.kefu.mi.com/openapi/misight/diagnostic；关闭后在线客服远程诊断不可用", Config.K_MISIGHT_KEFU, true),
-            }, "触发条件是用户主动反馈或售后远程诊断；本地库里是设备诊断与应用使用记录，尚未上传"),
+            }, "触发条件是用户主动反馈或售后远程诊断；本地记录不等于已经上传"),
             new Group("小米可信服务", "com.xiaomi.trustservice", Config.K_G_TRUST, new Item[]{
                     new Item("屏蔽 MRM 认证链", "会影响设备证书 / 查找设备", Config.K_TRUST, false),
                     new Item("设备证书/密钥上报", "find.api.micloud.xiaomi.net；关闭后查找设备、设备证书可能异常", Config.K_TRUST_FIND, false),
