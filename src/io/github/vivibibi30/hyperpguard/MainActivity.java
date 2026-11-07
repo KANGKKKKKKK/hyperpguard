@@ -105,7 +105,7 @@ public class MainActivity extends Activity {
                     new Item("定位（GPS）", "只对本应用：位置查询返回空", Config.K_LOC_GP, false),
                     new Item("Wi-Fi 扫描", "只对本应用：扫描列表置空，SSID / BSSID 清空", Config.K_WIFI_GP, false),
                     new Item("通讯录 / 通话读取", "只对本应用：查询返回空；来电识别会受影响", Config.K_SOCIAL_GP, false),
-            }),
+            }, "AI 反诈逻辑在本组件的 AiGuardService 内，用于通话场景；SystemHelper 只做运营商侧上报"),
             new Group("安全中心", "com.miui.securitycenter", Config.K_G_SECCENTER, new Item[]{
                     new Item("XSOF 行为查询拦截", "第三方查不到截图 / 通话 / 屏幕共享记录", Config.K_XSOF, true),
                     new Item("反诈配置拉取", "fraud-detection.engine.miui.com", Config.K_SECCENTER, true),

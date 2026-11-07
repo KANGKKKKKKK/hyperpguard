@@ -62,7 +62,7 @@
 | 组件 | 包名 | 拦截内容 |
 |---|---|---|
 | SystemHelper | `com.mobiletools.systemhelper` | 运营商遥测；默认整进程断网（无用户功能）；定位 / 基站 / Wi-Fi 扫描默认关 |
-| 系统安全组件 | `com.miui.guardprovider` | 应用列表云查、AI 通话预警云检测、反诈配置；静默录屏拦截默认开，Flamingo 云查上传默认关；定位 / Wi-Fi / 通讯录通话默认关 |
+| 系统安全组件 | `com.miui.guardprovider` | 应用列表云查、AI 通话预警云检测、反诈配置（AI 反诈逻辑 `AiGuardService` 在本组件内，用于通话场景）；静默录屏拦截默认开，Flamingo 云查上传默认关；定位 / Wi-Fi / 通讯录通话默认关 |
 | 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、行为库写入、反诈配置、志愿者传感器上报；云查 / 鉴权 / 月报 / 防窥分类 / 地震报警定位 / ADB 验证 / 设备标识默认关；定位、通讯录 / 通话 / 短信默认关 |
 | 小米统计 | `com.miui.analytics` | 整域 + DoH 旁路；默认整进程断网 |
 | 应用安装器 | `com.miui.packageinstaller` | AVL 上报、活跃统计、安装页广告位 |
@@ -152,6 +152,7 @@ build.sh              一键构建
 - 拦截范围限于已识别的通道，不代表覆盖 HyperOS 全部联网行为
 - `com.mobiletools.systemhelper` 的权限在新机激活（OOBE）阶段授予，激活时的权限弹窗值得逐项看清；本模块只拦上报，不回收已授予的权限。对授权有疑虑时，可在设置里找「隐私与安全 / 反馈 / 用户体验计划」这类入口，或备份后重置手机重走开机引导
 - 识别结论以静态分析与真机行为对照为准，单看一段静态代码不足以定性
+- AI 反诈逻辑位于 `com.miui.guardprovider` 的 `AiGuardService`，用于通话场景；`com.mobiletools.systemhelper` 承担运营商侧的数据上报，两者不是同一条链路
 
 ## 常见问题
 
@@ -165,6 +166,7 @@ build.sh              一键构建
 ### 1.3.1
 
 - SystemHelper 卡片补一行说明：权限在开机激活阶段确认，本模块只拦上报，不回收已授予的权限
+- 系统安全组件卡片补一行说明：AI 反诈逻辑在 `AiGuardService` 内、用于通话场景，与 SystemHelper 不是同一条链路
 
 ### 1.3.0
 
