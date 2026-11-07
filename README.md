@@ -23,7 +23,7 @@
 
 ## 安装
 
-1. 安装 `HyperPGuard-1.2.2.apk`
+1. 安装 `HyperPGuard`
 2. 在 LSPosed 中启用「HyperPGuard」
 3. 打开应用，首次会向 LSPosed 请求全部作用域，允许即可；也可在 LSPosed 里手动勾选
 4. 在模块里对目标应用点一次「重启」，或点批量行的「全部重启」，让它重新加载
