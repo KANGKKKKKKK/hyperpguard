@@ -41,10 +41,19 @@ final class XsofHooks {
     }
 
     private void installAidl(ClassLoader cl) {
+        int n = hookAidl(cl, "com.xiaomi.security.xsof.MiSafetyDetectService$MiSafetyDetectImpl");
+        if (n == 0) {
+            java.util.List<String> cands = Hooks.classNames(cl, s -> s.contains("MiSafetyDetect"), 50);
+            for (String c : cands) n += hookAidl(cl, c);
+            Logs.i("xsof aidl fallback cands=" + cands.size());
+        }
+        Logs.i("xsof aidl hooked=" + n);
+    }
+
+    private int hookAidl(ClassLoader cl, String className) {
+        int n = 0;
         try {
-            Class<?> impl = Class.forName(
-                    "com.xiaomi.security.xsof.MiSafetyDetectService$MiSafetyDetectImpl", false, cl);
-            int n = 0;
+            Class<?> impl = Class.forName(className, false, cl);
             for (Method method : impl.getDeclaredMethods()) {
                 Class<?>[] pts = method.getParameterTypes();
                 if (pts.length < 2) continue;
@@ -62,29 +71,52 @@ final class XsofHooks {
                 });
                 n++;
             }
-            Logs.i("xsof aidl hooked=" + n);
-        } catch (Throwable t) {
-            Logs.i("xsof aidl miss: " + t);
+        } catch (Throwable ignored) {
         }
+        return n;
     }
 
     private void installDbWrites(ClassLoader cl) {
-        try {
-            Class<?> rk = Class.forName("Ra.k", false, cl);
-            int n = 0;
-            for (Method method : rk.getDeclaredMethods()) {
-                if (method.getReturnType() != void.class) continue;
-                if (!java.lang.reflect.Modifier.isPublic(method.getModifiers())) continue;
-                Class<?>[] pts = method.getParameterTypes();
-                if (pts.length == 0) continue;
-                if (!pts[0].getName().startsWith("Qa.")) continue;
-                m.hook(method).intercept(chain -> null);
-                n++;
-            }
-            Logs.i("xsof db write hooked=" + n);
-        } catch (Throwable t) {
-            Logs.i("xsof db write miss: " + t);
+        int n = hookDbWritesIn(cl, "Ra.k");
+        if (n == 0) {
+            n = Hooks.hookBySignature(m,
+                    Hooks.classNames(cl, XsofHooks::obfuscatedLikely, 8000), cl,
+                    XsofHooks::isDbWrite, chain -> null);
+            Logs.i("xsof db write fallback=" + n);
         }
+        Logs.i("xsof db write hooked=" + n);
+    }
+
+    private int hookDbWritesIn(ClassLoader cl, String className) {
+        int n = 0;
+        try {
+            Class<?> c = Class.forName(className, false, cl);
+            for (Method method : c.getDeclaredMethods()) {
+                if (!isDbWrite(method)) continue;
+                try {
+                    m.hook(method).intercept(chain -> null);
+                    n++;
+                } catch (Throwable ignored) {
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return n;
+    }
+
+    /** 版本变化后混淆类名会变，靠"短名或 XSOF 包内"缩小扫描范围 */
+    private static boolean obfuscatedLikely(String name) {
+        return name.startsWith("com.xiaomi.security.xsof") || name.indexOf('.') < 0 || name.length() <= 5;
+    }
+
+    /** 写行为库的出口：void + public + 首参是 Qa.* 或 ContentValues */
+    private static boolean isDbWrite(Method method) {
+        if (method.getReturnType() != void.class) return false;
+        if (!java.lang.reflect.Modifier.isPublic(method.getModifiers())) return false;
+        Class<?>[] pts = method.getParameterTypes();
+        if (pts.length == 0) return false;
+        String p0 = pts[0].getName();
+        return p0.startsWith("Qa.") || p0.equals("android.content.ContentValues");
     }
 
     private void installScore(ClassLoader cl) {
@@ -99,7 +131,7 @@ final class XsofHooks {
             }
             Logs.i("xsof score hooked=" + n);
         } catch (Throwable t) {
-            Logs.i("xsof score miss: " + t);
+            Logs.i("xsof score miss (Pa.b 名随版本变化，未做宽泛扫描): " + t);
         }
     }
 

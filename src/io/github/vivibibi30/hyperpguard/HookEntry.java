@@ -60,9 +60,28 @@ public class HookEntry extends XposedModule {
             if (!Config.on(Config.K_G_SYSHELPER, true)) return;
             Logs.i("attach systemhelper");
             privacy.install(cl, false, false, true, false, false);
-            Hooks.ret(this, cl, "c.d.a.b.f", "a",
+            boolean upload = Hooks.ret(this, cl, "c.d.a.b.f", "a",
                     new Class<?>[]{String.class, byte[].class, byte[].class}, Boolean.FALSE);
-            Hooks.ret(this, cl, "c.d.a.b.e", "a", new Class<?>[]{String.class}, null);
+            boolean write = Hooks.ret(this, cl, "c.d.a.b.e", "a", new Class<?>[]{String.class}, null);
+            if (!upload) {
+                // 类名随版本变化时，按签名找 (String, byte[], byte[]) 的数据出口
+                int n = Hooks.hookBySignature(this,
+                        Hooks.classNames(cl, s -> s.indexOf('.') < 0 || s.length() <= 6
+                                || s.startsWith("com.mobiletools"), 8000), cl,
+                        m -> {
+                            Class<?>[] p = m.getParameterTypes();
+                            return p.length == 3 && p[0] == String.class
+                                    && p[1] == byte[].class && p[2] == byte[].class;
+                        },
+                        chain -> {
+                            java.lang.reflect.Executable ex = chain.getExecutable();
+                            return ex instanceof java.lang.reflect.Method
+                                    && ((java.lang.reflect.Method) ex).getReturnType() == boolean.class
+                                    ? Boolean.FALSE : null;
+                        });
+                Logs.i("systemhelper upload fallback=" + n);
+            }
+            Logs.i("systemhelper direct upload=" + upload + " write=" + write);
             List<NetGuard.Rule> r = new ArrayList<>();
             r.add(new NetGuard.Rule("dm.wo.com.cn"));
             net.install(cl, "systemhelper", r, Config.on(Config.K_SYSHELPER_ALLNET, true));
