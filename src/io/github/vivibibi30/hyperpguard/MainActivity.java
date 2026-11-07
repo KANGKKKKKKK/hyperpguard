@@ -224,7 +224,7 @@ public class MainActivity extends Activity {
         makeSwitchRow(global, "路径特征拦截", "路径规则（/avl/upload 等）是否生效",
                 Config.K_PATH, true, true);
         global.addView(line());
-        makeSwitchRow(global, "抓取模式", "记录「没被拦截」的访问，平时关掉",
+        makeSwitchRow(global, "记录未拦截访问", "把没命中规则的域名写进日志，排查漏拦时临时打开",
                 Config.K_SNIFF, false, true);
         global.addView(line());
         addHideIconRow(global);
