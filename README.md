@@ -159,6 +159,12 @@ build.sh              一键构建
 
 ## 更新日志
 
+### 1.2.9
+
+- 补齐设备标识拦截：`miui.telephony.TelephonyManager`、`TelephonyManagerEx` 此前完全没覆盖，运营商注册组件走的就是这条路
+- 带 slot 参数的重载（`getImeiForSlot` 等）一并拦截
+- 新增 `WifiInfo#getMacAddress` 拦截，返回固定值而非 null
+
 ### 1.2.8
 
 - 应用图标：蓝底白色禁止上传标记，五档尺寸合计 13 KB
