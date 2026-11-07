@@ -27,19 +27,68 @@ public class HookEntry extends XposedModule {
         Logs.i("module loaded: " + param.getProcessName());
     }
 
+    private final java.util.concurrent.atomic.AtomicBoolean dispatched =
+            new java.util.concurrent.atomic.AtomicBoolean();
+
     @Override
     public void onPackageReady(XposedModuleInterface.PackageReadyParam param) {
         final String pkg = param.getPackageName();
         final ClassLoader cl = param.getClassLoader();
         if (pkg == null || cl == null) return;
+
         android.app.Application app = currentApplication();
         if (app != null) {
+            // Application 已存在：拿到本进程 Context，配置和 hook 都按真实开关走
             Config.load(app.getApplicationContext());
-            Logs.i("app ctx config: " + Config.size());
-        } else {
-            Config.load(activityThreadContext());
+            dispatchOnce(pkg, cl);
+            return;
         }
-        if (!Config.masterOn()) return;
+        // 子进程常见情况：onPackageReady 时 Application 还没创建
+        if (hookApplicationOnCreate(pkg, cl)) {
+            return;
+        }
+        Config.load(activityThreadContext());
+        dispatchOnce(pkg, cl);
+    }
+
+    /** 等 Application.onCreate 再读配置并装 hook，返回是否挂上 */
+    private boolean hookApplicationOnCreate(final String pkg, final ClassLoader cl) {
+        try {
+            java.lang.reflect.Method m = android.app.Application.class.getDeclaredMethod("onCreate");
+            hook(m).intercept(chain -> {
+                Object self = chain.getThisObject();
+                if (self instanceof android.app.Application) {
+                    Config.load(((android.app.Application) self).getApplicationContext());
+                }
+                dispatchOnce(pkg, cl);
+                return chain.proceed();
+            });
+            // 兜底：Application 迟迟不创建时，用默认值先把拦截装上
+            new Thread(() -> {
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException ignored) {
+                }
+                if (!dispatched.get()) {
+                    Logs.i("onCreate timeout, use defaults: " + pkg);
+                    Config.load(activityThreadContext());
+                    dispatchOnce(pkg, cl);
+                }
+            }, "hyperpguard-fallback").start();
+            Logs.i("waiting Application.onCreate: " + pkg);
+            return true;
+        } catch (Throwable t) {
+            Logs.i("onCreate hook fail: " + t);
+            return false;
+        }
+    }
+
+    private void dispatchOnce(String pkg, ClassLoader cl) {
+        if (!dispatched.compareAndSet(false, true)) return;
+        if (!Config.masterOn()) {
+            Logs.i("master off, skip: " + pkg);
+            return;
+        }
         try {
             dispatch(pkg, cl);
         } catch (Throwable t) {
