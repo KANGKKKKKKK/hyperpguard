@@ -6,7 +6,7 @@
 ![language](https://img.shields.io/badge/language-Java-orange)
 ![release](https://img.shields.io/github/v/release/vivibibi30/hyperpguard?label=release&color=green)
 
-在采集入口、本地存储、对外接口、网络出口四层拦截 HyperOS / MIUI 预装组件的隐私上报
+在采集入口、本地存储、对外接口、网络出口四层拦截 HyperOS 预装组件的隐私上报
 
 </div>
 

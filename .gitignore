@@ -4,7 +4,6 @@ build/
 *.idsig
 *.ap_
 *.dex
-PrivacyGuard.apk
 
 # 签名与本地环境
 *.jks

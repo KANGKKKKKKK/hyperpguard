@@ -34,8 +34,6 @@ KS=${KEYSTORE:-$ROOT/debug.keystore}
 APIX=$ROOT/libs/libxposed-api.jar
 # 必须打进 dex：libxposed service + interface（IXposedService$Stub 在 interface 包里）
 LXP=$ROOT/libs/libxposed-service.jar
-# 传统 API，仅为兼容既有 hook 代码保留
-API=$ROOT/libs/api-82.jar
 
 # 固定签名：仓库内 debug.keystore 必须存在且证书指纹不变。
 # 换证书 = 无法覆盖安装 = 必须卸载重装 = uid 变化 = KernelSU 按 uid 记录的
@@ -63,7 +61,7 @@ mkdir -p build/classes build/dex build/gen
 
 echo "[1/6] javac"
 javac --release 11 -encoding UTF-8 -nowarn \
-  -cp "$ANDROID_JAR:$API:$LXP:$APIX" -d build/classes \
+  -cp "$ANDROID_JAR:$LXP:$APIX" -d build/classes \
   $(find src -name '*.java')
 
 echo "[2/6] d8"
