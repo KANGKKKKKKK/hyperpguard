@@ -70,6 +70,7 @@
 | 小米服务框架 | `com.xiaomi.xmsf` | 广告接口 |
 | 运营商服务 | `com.xiaomi.registration` | 明文 CTEI 上报（默认拦）、设备注册（默认关）；定位 / 基站默认关 |
 | 移动 DM | `com.miui.dmregservice` | `fxltsbl.com` 上报、App 清单、SIM 标识；基站 / Wi-Fi 扫描默认关 |
+| 系统诊断 | `com.miui.misightservice` | 日志上传 `feedback.miui.com/misight/upload`、售后检测 `port.sec.miui.com/mqsas`、客服诊断 `chat.kefu.mi.com/openapi/misight/diagnostic`；触发条件是用户主动反馈或售后远程诊断，本地记录不等于已上传 |
 | 小米可信服务 | `com.xiaomi.trustservice` | MRM 认证链、设备证书/密钥上报（均默认关） |
 | 翻译组件 | `com.xiaomi.aiasst.vision` | 语音识别上传（`/speech/`），默认关 |
 
@@ -163,6 +164,11 @@ build.sh              一键构建
 
 ## 更新日志
 
+### 1.3.2
+
+- 新增 `com.miui.misightservice` 覆盖：日志上传、售后检测、客服诊断三条规则，默认开
+- 触发条件是用户主动反馈或售后远程诊断；本地数据库里的记录不等于已经上传
+
 ### 1.3.1
 
 - SystemHelper 卡片补一行说明：权限在开机激活阶段确认，本模块只拦上报，不回收已授予的权限
@@ -185,11 +191,6 @@ build.sh              一键构建
 - 设备标识补齐：Android ID、硬件序列号、手机号（此前只有 IMEI / MEID / IMSI / ICCID / MAC）
 - 新增「敏感数据」分组，默认关闭：定位、基站信息、Wi-Fi 扫描与 SSID/BSSID、通讯录/通话/短信读取
 
-### 1.2.13
-
-- 加入作用域被 LSPosed 拒绝时改为对话框：显示包名、返回信息和手动勾选的路径
-- 系统 priv-app（如 SystemHelper）常见这种拒绝，此前只弹一个 Toast 容易错过
-
 
 
 更早版本见 [docs/CHANGELOG.md](docs/CHANGELOG.md) 或 Releases 页。
@@ -206,6 +207,7 @@ build.sh              一键构建
 - **[Android OS Privacy Under the Loupe – A Tale from the East](https://ar5iv.labs.arxiv.org/html/2302.01890)**（ACM WiSec '23）— 四类敏感数据的分类，以及设备标识、位置、通讯录在预装组件里的采集面
 - **酷安 [RooyCo《真问题还在》](https://www.coolapk.com/feed/74911090)** — `com.miui.dmregservice` 的存在与采集字段（Wi-Fi 列表、蓝牙、BSSID、路由器 MAC）、`operator_service_improve_plan`、采集频率
 - **[frauddb](https://github.com/acnekot/frauddb)**（acnekot，MIT）— `fraud_detection_data.db` 八张表结构与库路径、`tel_number_md5` 算法
+- **[misight-viewer](https://github.com/Artriai/misight-viewer)**（作者 [Artriai](https://github.com/Artriai)）— MiSight 数据库字段与事件分类、设备诊断与用户行为记录的区分依据
 - **libxposed API**（Apache-2.0）、**LSPosed** — 模块入口与作用域接口
 
 第三方组件：`Xposed API 82`、`libxposed API 102`（均为 Apache-2.0，编译期依赖）。

@@ -216,6 +216,24 @@ public class HookEntry extends XposedModule {
             return;
         }
 
+        if ("com.miui.misightservice".equals(pkg)) {
+            // 系统诊断：日志上传只在用户主动反馈或售后远程诊断时触发
+            if (!Config.on(Config.K_G_MISIGHT, true)) return;
+            Logs.i("attach misightservice");
+            List<NetGuard.Rule> r = new ArrayList<>();
+            if (Config.on(Config.K_MISIGHT_UPLOAD, true)) {
+                r.add(new NetGuard.Rule("feedback.miui.com", "/misight/upload/"));
+            }
+            if (Config.on(Config.K_MISIGHT_MQSAS, true)) {
+                r.add(new NetGuard.Rule("port.sec.miui.com", "/mqsas/kdxFileUpload"));
+            }
+            if (Config.on(Config.K_MISIGHT_KEFU, true)) {
+                r.add(new NetGuard.Rule("chat.kefu.mi.com", "/openapi/misight/diagnostic/"));
+            }
+            if (!r.isEmpty()) net.install(cl, "misightservice", r, false);
+            return;
+        }
+
         if ("com.xiaomi.trustservice".equals(pkg)) {
             if (!Config.on(Config.K_G_TRUST, true)) return;
             Logs.i("attach trustservice");

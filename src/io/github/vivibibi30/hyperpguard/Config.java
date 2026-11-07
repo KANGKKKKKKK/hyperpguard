@@ -14,7 +14,7 @@ public final class Config {
 
     public static final String PKG = "io.github.vivibibi30.hyperpguard";
     public static final String PREFS = "pg";
-    public static final String VERSION = "1.3.1";
+    public static final String VERSION = "1.3.2";
 
     /* 全局 */
     public static final String K_MASTER = "master";
@@ -83,6 +83,10 @@ public final class Config {
     public static final String K_TRUST_FIND = "block_trust_find";
     public static final String K_G_REGISTRATION = "g_registration";
     public static final String K_G_DMREG = "g_dmregservice";
+    public static final String K_G_MISIGHT = "g_misightservice";
+    public static final String K_MISIGHT_UPLOAD = "block_misight_upload";
+    public static final String K_MISIGHT_MQSAS = "block_misight_mqsas";
+    public static final String K_MISIGHT_KEFU = "block_misight_kefu";
     public static final String K_DMREG = "block_dmreg";
     public static final String K_REG_ZZHC = "block_reg_zzhc";
     public static final String K_REG_TYPDM = "block_reg_typdm";
