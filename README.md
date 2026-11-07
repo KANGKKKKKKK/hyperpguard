@@ -161,7 +161,7 @@ build.sh              一键构建
 
 ### 1.2.6
 
-- 修复普通应用读不到开关：改为改开关时同时落一份配置到 `/data/local/tmp/hyperpguard.conf`，目标进程查 provider 失败就改读文件
+- 修复普通应用读不到开关：开关改存系统设置 `Settings.Global`（写入走 su），目标进程用自己的 Context 直接读取，不再需要文件或对外暴露的 provider
 - XSOF 写库、AIDL 接口、SystemHelper 数据出口不再依赖写死的混淆类名：类名变化时按方法签名与包名特征重新定位，旧版本和新版本组件都能命中
 - 扫描结果写进日志，命中数为 0 时能直接看出来
 

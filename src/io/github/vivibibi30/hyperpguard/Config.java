@@ -153,29 +153,12 @@ public final class Config {
                 Logs.i("config settings fail: " + t);
             }
         }
-        if (!REMOTE.isEmpty()) {
-            Logs.i("config loaded: " + REMOTE.size() + " (settings)");
-            return;
-        }
-        android.database.Cursor c = null;
-        try {
-            c = ctx.getContentResolver().query(ConfigProvider.URI, null, null, null, null);
-            if (c == null) return;
-            while (c.moveToNext()) {
-                String k = c.getString(0);
-                if (k == null) continue;
-                REMOTE.put(k, "true".equals(c.getString(1)));
-            }
-        } catch (Throwable t) {
-            Logs.i("config query skipped: " + t);
-        } finally {
-            if (c != null) try { c.close(); } catch (Throwable ignored) { }
-        }
         if (REMOTE.isEmpty()) loadFromFile();
         Logs.i(REMOTE.isEmpty() ? "config loaded: 0 (use built-in defaults)"
-                : "config loaded: " + REMOTE.size() + " (file)");
+                : "config loaded: " + REMOTE.size());
     }
 
+    /** 解析 "k=v|k=v" 形式 */
     private static void parse(String v) {
         for (String kv : v.split("\\|")) {
             int i = kv.indexOf('=');
@@ -184,7 +167,7 @@ public final class Config {
         }
     }
 
-    /** 普通应用进程查 provider 会被 AMS 以「包名与 uid 不符」拒绝，改读这份文件 */
+    /** 兼容旧版本落下的文件，只读不写 */
     private static void loadFromFile() {
         java.io.BufferedReader br = null;
         try {
