@@ -1168,34 +1168,51 @@ public class MainActivity extends Activity {
     }
 
     private void showLog(final String log) {
-        showText("模块日志（" + log.split("\n").length + " 行）", classify(log));
+        String body = "改动任一开关后，需要点该组右上角「重启」或「全部重启」，"
+                + "目标应用重新加载规则才会生效。\n\n" + classify(log);
+        showText("模块日志（" + log.split("\n").length + " 行）", body);
     }
+
+    /** 每段最多显示的行数 */
+    private static final int LOG_SECTION_LIMIT = 20;
 
     /** 按未拦截 / 已拦截 / 其他分段，避免混在一起看不出结果 */
     private static String classify(String log) {
-        StringBuilder blocked = new StringBuilder();
-        StringBuilder passed = new StringBuilder();
-        StringBuilder other = new StringBuilder();
-        int nb = 0, np = 0, no = 0;
+        java.util.List<String> blocked = new java.util.ArrayList<>();
+        java.util.List<String> passed = new java.util.ArrayList<>();
+        java.util.List<String> other = new java.util.ArrayList<>();
         for (String line : log.split("\n")) {
             if (line.trim().isEmpty()) continue;
             if (line.contains("blocked by HyperPGuard")
                     || line.contains(" X(host") || line.contains(" X(strict)")) {
-                blocked.append(line).append('\n');
-                nb++;
+                blocked.add(line);
             } else if (line.contains(": ? ")) {
-                passed.append(line).append('\n');
-                np++;
+                passed.add(line);
             } else {
-                other.append(line).append('\n');
-                no++;
+                other.add(line);
             }
         }
-        if (nb == 0 && np == 0) return log;
+        if (blocked.isEmpty() && passed.isEmpty()) return log;
         StringBuilder sb = new StringBuilder();
-        if (np > 0) sb.append("未拦截（").append(np).append(" 条）\n").append(passed).append('\n');
-        if (nb > 0) sb.append("已拦截（").append(nb).append(" 条）\n").append(blocked).append('\n');
-        if (no > 0) sb.append("模块日志（").append(no).append(" 条）\n").append(other);
+        sb.append(section("未拦截", passed,
+                "未拦截指该域名不在当前规则里，不是拦截失败。\n"));
+        sb.append(section("已拦截", blocked, null));
+        sb.append(section("模块日志", other, null));
+        return sb.toString();
+    }
+
+    /** 每段只显示最近若干行，附总数与说明 */
+    private static String section(String name, java.util.List<String> lines, String note) {
+        if (lines.isEmpty()) return "";
+        int total = lines.size();
+        int from = Math.max(0, total - LOG_SECTION_LIMIT);
+        StringBuilder sb = new StringBuilder();
+        sb.append(name).append("（共 ").append(total).append(" 条");
+        if (total > LOG_SECTION_LIMIT) sb.append("，显示最近 ").append(LOG_SECTION_LIMIT).append(" 条");
+        sb.append("）\n");
+        if (note != null) sb.append(note);
+        for (int i = from; i < total; i++) sb.append(lines.get(i)).append('\n');
+        sb.append('\n');
         return sb.toString();
     }
 
