@@ -31,7 +31,7 @@ final class AnalyticsHooks {
 
     /** 遍历 analytics 的 dex，把 (long, long) -> JSONObject 的方法全部置空。 */
     private void scanUsageMethods(ClassLoader cl) {
-        int scanned = 0, hooked = 0;
+        int scanned = 0, hooked = 0, failed = 0;
         try {
             java.util.List<String> names = new java.util.ArrayList<>();
             Class<?> bdcl = Class.forName("dalvik.system.BaseDexClassLoader", false, cl);
@@ -73,11 +73,13 @@ final class AnalyticsHooks {
                     try {
                         m.hook(method).intercept(chain -> null);
                         hooked++;
-                    } catch (Throwable ignored) {
+                    } catch (Throwable t) {
+                        failed++;
                     }
                 }
             }
-            Logs.i("analytics scan scanned=" + scanned + " hooked=" + hooked);
+            Logs.i("analytics scan scanned=" + scanned + " hooked=" + hooked
+                    + (failed > 0 ? " failed=" + failed : ""));
         } catch (Throwable t) {
             Logs.i("analytics scan fail: " + t);
         }

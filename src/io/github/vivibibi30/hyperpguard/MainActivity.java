@@ -403,7 +403,8 @@ public class MainActivity extends Activity {
         try {
             Process p = Runtime.getRuntime().exec(new String[]{"su", "-c", cmd});
             p.waitFor();
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
+            Logs.i("su failed: " + cmd + " -> " + t);
         }
     }
 
