@@ -95,12 +95,40 @@ public final class Config {
         syncToGlobal(sp);
     }
 
-    /** 打开界面时主动重建一次配置文件，防止被清理工具删掉后开关回落到默认值 */
+    /** 打开界面时同步一次；本地配置丢了就从 Settings 恢复，避免把用户的选择覆盖成默认值 */
     public static void syncNow(Context ctx) {
-        syncToGlobal(ui(ctx));
+        SharedPreferences sp = ui(ctx);
+        if (sp.getAll().isEmpty()) {
+            try {
+                String v = android.provider.Settings.Global.getString(
+                        ctx.getContentResolver(), GLOBAL_KEY);
+                if (v != null && !v.isEmpty()) {
+                    SharedPreferences.Editor e = sp.edit();
+                    int n = 0;
+                    for (String kv : v.split("\\|")) {
+                        int i = kv.indexOf('=');
+                        if (i <= 0) continue;
+                        e.putBoolean(kv.substring(0, i).trim(),
+                                "true".equals(kv.substring(i + 1).trim()));
+                        n++;
+                    }
+                    e.apply();
+                    Logs.i("config restored from settings: " + n);
+                    return;
+                }
+            } catch (Throwable t) {
+                Logs.i("config restore fail: " + t);
+            }
+        }
+        syncToGlobal(sp);
     }
 
     private static void syncToGlobal(final SharedPreferences sp) {
+        // 本地配置为空说明刚清过数据，此时写入会把 Settings 里的用户设置冲掉
+        if (sp.getAll().isEmpty()) {
+            Logs.i("sync skipped: prefs empty");
+            return;
+        }
         final StringBuilder sb = new StringBuilder();
         for (java.util.Map.Entry<String, ?> e : sp.getAll().entrySet()) {
             if (sb.length() > 0) sb.append('|');

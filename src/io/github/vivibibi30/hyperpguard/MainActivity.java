@@ -150,7 +150,10 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle b) {
         super.onCreate(b);
 
-        ScrollView sv = new ScrollView(this);
+                // 先同步/恢复配置，再构建界面：界面构建过程中 setChecked 会写默认值进 SP
+        Config.syncNow(this);
+
+ScrollView sv = new ScrollView(this);
         sv.setBackgroundColor(BG);
         sv.setFillViewport(true);
 
@@ -266,9 +269,6 @@ public class MainActivity extends Activity {
         root.addView(about);
 
         root.addView(disclaimer);
-
-        // 每次打开界面刷一次配置，文件被删了也能自动重建
-        Config.syncNow(this);
 
         XposedServiceHelper.registerListener(new XposedServiceHelper.OnServiceListener() {
             @Override
