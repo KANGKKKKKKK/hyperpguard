@@ -229,6 +229,8 @@ public class MainActivity extends Activity {
         global.addView(line());
         addHideIconRow(global);
         global.addView(line());
+        addFraudDbRow(global);
+        global.addView(line());
         // 需要 root 的功能，提示写在这里
         TextView rootTip = new TextView(this);
         rootTip.setText("「重启」「查看记录」需要 root，首次使用请允许 KernelSU 授权");
@@ -747,6 +749,122 @@ public class MainActivity extends Activity {
         });
         row.addView(sw);
         return sw;
+    }
+
+    /* ---------------- 行为库状态 ---------------- */
+
+    private static final String FRAUD_DB =
+            "/data/misc/user/0/securitycenter/fraud_detection_data.db";
+    private static java.util.Map<String, Integer> lastSeq;
+
+    private void addFraudDbRow(LinearLayout parent) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(0, dp(10), 0, dp(10));
+        row.setClickable(true);
+
+        TextView t1 = new TextView(this);
+        t1.setText("行为库状态");
+        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        t1.setTextColor(TEXT);
+
+        TextView t2 = new TextView(this);
+        t2.setText("读安全中心 fraud_detection_data.db 的写入计数，用来判断拦截是否生效");
+        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        t2.setTextColor(SUB);
+        t2.setPadding(0, dp(2), 0, 0);
+
+        row.addView(t1);
+        row.addView(t2);
+        row.setOnClickListener(v -> showFraudDb());
+        parent.addView(row);
+    }
+
+    private void showFraudDb() {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(16), dp(8), dp(16), dp(8));
+
+        TextView tv = new TextView(this);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        tv.setTextIsSelectable(true);
+        tv.setText("读取中…");
+        box.addView(tv);
+
+        Button refresh = new Button(this);
+        refresh.setText("刷新");
+        refresh.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        refresh.setBackground(null);
+        refresh.setTextColor(ACCENT);
+        refresh.setAllCaps(false);
+        box.addView(refresh);
+
+        ScrollView sv = new ScrollView(this);
+        sv.addView(box);
+
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("行为库状态")
+                .setView(sv)
+                .setNegativeButton("关闭", null)
+                .create();
+
+        final Runnable load = () -> new Thread(() -> {
+            final String text = readFraudDb();
+            ui.post(() -> tv.setText(text));
+        }, "hyperpguard-frauddb").start();
+
+        refresh.setOnClickListener(v -> {
+            tv.setText("读取中…");
+            load.run();
+        });
+        dialog.show();
+        load.run();
+    }
+
+    /** 只读计数：复制主库与 -wal 到私有目录，查 sqlite_sequence，不读任何记录内容 */
+    private String readFraudDb() {
+        String dir = getFilesDir().getAbsolutePath();
+        execShell("cp " + FRAUD_DB + " " + dir + "/fd.db 2>/dev/null; "
+                + "cp " + FRAUD_DB + "-wal " + dir + "/fd.db-wal 2>/dev/null; "
+                + "chmod 644 " + dir + "/fd.db 2>/dev/null; "
+                + "chmod 644 " + dir + "/fd.db-wal 2>/dev/null; echo ok");
+        java.io.File f = new java.io.File(dir, "fd.db");
+        if (!f.exists() || f.length() == 0) {
+            return "读不到行为库。\n\n需要 root 授权，且设备上存在 "
+                    + "securitycenter/fraud_detection_data.db。";
+        }
+        SQLiteDatabase db = null;
+        try {
+            db = SQLiteDatabase.openDatabase(f.getAbsolutePath(), null,
+                    SQLiteDatabase.OPEN_READONLY);
+            java.util.TreeMap<String, Integer> now = new java.util.TreeMap<>();
+            android.database.Cursor c = db.rawQuery("select name, seq from sqlite_sequence", null);
+            while (c.moveToNext()) now.put(c.getString(0), c.getInt(1));
+            c.close();
+            if (now.isEmpty()) return "库里没有写入记录。";
+            StringBuilder sb = new StringBuilder();
+            int total = 0;
+            for (java.util.Map.Entry<String, Integer> e : now.entrySet()) {
+                int v = e.getValue();
+                total += v;
+                sb.append(e.getKey()).append("  ").append(v);
+                Integer old = lastSeq == null ? null : lastSeq.get(e.getKey());
+                if (old != null && v != old) sb.append("  (+").append(v - old).append(')');
+                sb.append('\n');
+            }
+            lastSeq = now;
+            sb.append("\n共 ").append(now.size()).append(" 张表，累计 ").append(total).append(" 次写入");
+            sb.append("\n\n这些数字只增不减。刷新后出现 (+N) 说明期间有写入；");
+            sb.append("拦截生效时应当保持不变。");
+            return sb.toString();
+        } catch (Throwable t) {
+            return "读取失败：" + t;
+        } finally {
+            if (db != null) try { db.close(); } catch (Throwable ignored) { }
+            new java.io.File(dir, "fd.db-wal").delete();
+            new java.io.File(dir, "fd.db-shm").delete();
+            f.delete();
+        }
     }
 
     /* ---------------- 桌面图标 ---------------- */
