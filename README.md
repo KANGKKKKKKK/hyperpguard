@@ -159,6 +159,12 @@ build.sh              一键构建
 
 ## 更新日志
 
+### 1.2.7
+
+- 开关改存系统设置 `Settings.Global`，不再落文件，也不再需要对外暴露的 provider
+- 目标进程用自己进程的 Context 读开关，普通应用不再回落到默认值；多进程应用等 Application 创建后再读一次
+- 移除对外暴露的 `ConfigProvider`，任何应用都无法再查询开关状态
+
 ### 1.2.6
 
 - 修复普通应用读不到开关：开关改存系统设置 `Settings.Global`（写入走 su），目标进程用自己的 Context 直接读取，不再需要文件或对外暴露的 provider
