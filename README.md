@@ -159,6 +159,11 @@ build.sh              一键构建
 
 ## 更新日志
 
+### 1.2.14
+
+- 设备标识补齐：Android ID、硬件序列号、手机号（此前只有 IMEI / MEID / IMSI / ICCID / MAC）
+- 新增「敏感数据」分组，默认关闭：定位、基站信息、Wi-Fi 扫描与 SSID/BSSID、通讯录/通话/短信读取
+
 ### 1.2.13
 
 - 加入作用域被 LSPosed 拒绝时改为对话框：显示包名、返回信息和手动勾选的路径
@@ -176,12 +181,6 @@ build.sh              一键构建
 ### 1.2.10
 
 - 应用图标换成白底蓝色禁止上传符号
-
-### 1.2.9
-
-- 补齐设备标识拦截：`miui.telephony.TelephonyManager`、`TelephonyManagerEx` 此前完全没覆盖，运营商注册组件走的就是这条路
-- 带 slot 参数的重载（`getImeiForSlot` 等）一并拦截
-- 新增 `WifiInfo#getMacAddress` 拦截，返回固定值而非 null
 
 
 更早版本见 [docs/CHANGELOG.md](docs/CHANGELOG.md) 或 Releases 页。

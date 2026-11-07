@@ -258,6 +258,27 @@ ScrollView sv = new ScrollView(this);
         disclaimer.setBackground(null);
         disclaimer.setTextColor(SUB);
         disclaimer.setOnClickListener(v -> showDisclaimer());
+        // 敏感数据：默认关闭，会影响功能
+        LinearLayout sensitive = card();
+        TextView sensHead = new TextView(this);
+        sensHead.setText("敏感数据（会影响功能，默认关闭）");
+        sensHead.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        sensHead.setTextColor(SUB);
+        sensHead.setPadding(0, dp(12), 0, 0);
+        sensitive.addView(sensHead);
+        makeSwitchRow(sensitive, "定位（GPS）", "位置请求直接返回空，天气、地图类功能会失效",
+                Config.K_LOC, false, true);
+        sensitive.addView(line());
+        makeSwitchRow(sensitive, "基站信息", "getCellLocation / getAllCellInfo 返回空，影响信号显示",
+                Config.K_CELL, false, true);
+        sensitive.addView(line());
+        makeSwitchRow(sensitive, "Wi-Fi 扫描", "扫描列表返回空，SSID / BSSID 置空",
+                Config.K_WIFI, false, true);
+        sensitive.addView(line());
+        makeSwitchRow(sensitive, "通讯录 / 通话 / 短信读取", "拦截这三类查询，来电识别、短信分类会失效",
+                Config.K_RESOLVER, false, true);
+        root.addView(sensitive);
+
         // 关于
         LinearLayout about = card();
         TextView aboutHead = new TextView(this);
