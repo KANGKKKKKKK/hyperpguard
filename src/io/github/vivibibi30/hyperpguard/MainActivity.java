@@ -908,12 +908,12 @@ public class MainActivity extends Activity {
 
                 sb.append("\n安装失败记录：\n");
                 String fails = execShell(
-                        "logcat -d -b all -v time | grep -E 'HyperPGuard: (stage|dispatch|net install|privacy install)' | tail -n 40");
+                        "logcat -d -b all -v time | grep -E 'HyperPGuard(\\( *[0-9]+\\))?: (stage|dispatch|net install|privacy install)' | tail -n 40");
                 sb.append(fails.trim().isEmpty() ? "（没有）" : fails.trim());
 
                 sb.append("\n最近 attach 日志：\n");
                 String attach = execShell(
-                        "logcat -d -b all -v time | grep -F 'HyperPGuard: attach' | tail -n 15");
+                        "logcat -d -b all -v time | grep -E 'HyperPGuard(\\( *[0-9]+\\))?: attach' | tail -n 15");
                 sb.append(attach.trim().isEmpty()
                         ? "（logcat 缓冲里没有，长时间运行后会被冲掉）"
                         : attach.trim());
@@ -1032,7 +1032,7 @@ public class MainActivity extends Activity {
 
     private String execLogcat() {
         String out = execShell(
-                "logcat -d -v time -t 30000 | grep -E 'HyperPGuard: |blocked by HyperPGuard' | tail -n 600");
+                "logcat -d -b all -v time | grep -E 'HyperPGuard(\\( *[0-9]+\\))?: |blocked by HyperPGuard' | tail -n 600");
         if (out.trim().isEmpty()) {
             return "没有记录。\n\n"
                     + "这里只列模块自身的运行日志（attach、hook 结果）和被拦截的域名访问；"

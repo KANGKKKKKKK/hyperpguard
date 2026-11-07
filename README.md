@@ -172,6 +172,11 @@ build.sh              一键构建
 
 ## 更新日志
 
+### 1.3.8
+
+- 修复「查看日志」在 Android 13 及以上始终为空：logcat 的 tag 从 `I/HyperPGuard:` 变成 `I/HyperPGuard( 1234):`，原过滤条件匹配不到
+- 自检的「安装失败记录」与 attach 记录同步修正
+
 ### 1.3.7
 
 - 分享出去的标题改为「运行日志」，分享选择器同步
@@ -195,10 +200,6 @@ build.sh              一键构建
 - 系统 Context 读开关被 AMS 拒绝时，改用目标包自己的 Context 再读一次（SystemHelper 这类进程此前只能拿到默认值）
 - LSPosed 服务断开后自动重连，覆盖安装模块不必重开界面
 - 自检新增总开关状态，「已注入进程」改读 LSPosed 的 modules 日志，attach 无记录时区分缓冲滚出与未注入
-
-### 1.3.3
-
-- 系统诊断卡片的说明改为适用于任意设备：只写触发来源，不写单台设备的记录状态
 
 
 更早版本见 [docs/CHANGELOG.md](docs/CHANGELOG.md) 或 Releases 页。
