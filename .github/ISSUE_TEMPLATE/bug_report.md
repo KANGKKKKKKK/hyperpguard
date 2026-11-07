@@ -12,7 +12,7 @@ assignees: ''
 |---|---|
 | 机型 | |
 | 系统版本 | |
-| 模块版本 | 1.0.0 |
+| 模块版本 | |
 | LSPosed 版本 | |
 | 目标组件版本 | 安全中心 / 系统安全组件 / SystemHelper / 应用安装器 等 |
 
@@ -29,9 +29,11 @@ assignees: ''
 ## 日志
 
 <!--
-在模块内点「查看记录」→「分享」，或：
-  su -c "logcat -d | grep HyperPGuard"
-粘贴相关部分，注意脱敏（电话号码、应用列表等）
+在模块内点「自检」和「查看日志」→「分享」，或：
+  su -c "logcat -d -v time | grep -E 'HyperPGuard: |blocked by HyperPGuard'"
+只贴与本问题相关的部分，并先脱敏：IMEI、IMSI、ICCID、手机号、账号、文件路径里的用户名。
+
+不要上传厂商组件的 APK 或反编译产物（见 CONTRIBUTING.md）。
 -->
 
 ```
