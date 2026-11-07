@@ -47,7 +47,7 @@ public class HookEntry extends XposedModule {
         if (hookApplicationOnCreate(pkg, cl)) {
             return;
         }
-        Config.load(activityThreadContext());
+        Config.load(activityThreadContext(), pkg);
         dispatchOnce(pkg, cl);
     }
 
@@ -71,7 +71,7 @@ public class HookEntry extends XposedModule {
                 }
                 if (!dispatched.get()) {
                     Logs.i("onCreate timeout, use defaults: " + pkg);
-                    Config.load(activityThreadContext());
+                    Config.load(activityThreadContext(), pkg);
                     dispatchOnce(pkg, cl);
                 }
             }, "hyperpguard-fallback").start();
@@ -93,6 +93,32 @@ public class HookEntry extends XposedModule {
             dispatch(pkg, cl);
         } catch (Throwable t) {
             Logs.i("dispatch fail " + pkg + ": " + t);
+        }
+    }
+
+    /** 单步安装失败不影响同进程其余规则 */
+    private void stage(String name, Runnable r) {
+        try {
+            r.run();
+        } catch (Throwable t) {
+            Logs.i("stage " + name + " fail: " + t);
+        }
+    }
+
+    private void netSafe(ClassLoader cl, String tag, List<NetGuard.Rule> rules, boolean strictAll) {
+        try {
+            net.install(cl, tag, rules, strictAll);
+        } catch (Throwable t) {
+            Logs.i("net install fail " + tag + ": " + t);
+        }
+    }
+
+    private void privacySafe(ClassLoader cl, String pkg, boolean appList, boolean usage,
+                             boolean ids, boolean sms, boolean xmsf) {
+        try {
+            privacy.install(cl, pkg, appList, usage, ids, sms, xmsf);
+        } catch (Throwable t) {
+            Logs.i("privacy install fail " + pkg + ": " + t);
         }
     }
 
@@ -158,7 +184,7 @@ public class HookEntry extends XposedModule {
         if ("com.mobiletools.systemhelper".equals(pkg)) {
             if (!Config.on(Config.K_G_SYSHELPER, true)) return;
             Logs.i("attach systemhelper");
-            privacy.install(cl, pkg, false, false, true, false, false);
+            privacySafe(cl, pkg, false, false, true, false, false);
             boolean upload = Hooks.ret(this, cl, "c.d.a.b.f", "a",
                     new Class<?>[]{String.class, byte[].class, byte[].class}, Boolean.FALSE);
             boolean write = Hooks.ret(this, cl, "c.d.a.b.e", "a", new Class<?>[]{String.class}, null);
@@ -183,7 +209,7 @@ public class HookEntry extends XposedModule {
             Logs.i("systemhelper direct upload=" + upload + " write=" + write);
             List<NetGuard.Rule> r = new ArrayList<>();
             if (Config.on(Config.K_SYSHELPER, true)) r.add(new NetGuard.Rule("dm.wo.com.cn"));
-            net.install(cl, "systemhelper", r, Config.on(Config.K_SYSHELPER_ALLNET, true));
+            netSafe(cl, "systemhelper", r, Config.on(Config.K_SYSHELPER_ALLNET, true));
             return;
         }
 
@@ -195,11 +221,11 @@ public class HookEntry extends XposedModule {
             if (Config.on(Config.K_GUARD_FRAUD, true)) r.add(new NetGuard.Rule("fraud-detection.engine.miui.com"));
             if (Config.on(Config.K_GP_CLOUDSCAN, false)) r.add(new NetGuard.Rule("virus-engine.sec.miui.com"));
             Logs.i("attach guardprovider, rules=" + r.size());
-            privacy.install(cl, pkg, true, false, true, false, false);
+            privacySafe(cl, pkg, true, false, true, false, false);
             if (Config.on(Config.K_GP_SCREENGUARD, true)) {
-                CaptureHooks.screenCapture(this, cl);
+                stage("screenCapture", () -> CaptureHooks.screenCapture(this, cl));
             }
-            if (!r.isEmpty()) net.install(cl, "guardprovider", r, false);
+            if (!r.isEmpty()) netSafe(cl, "guardprovider", r, false);
             return;
         }
 
@@ -207,11 +233,11 @@ public class HookEntry extends XposedModule {
             // 移动 DM 组件：App 清单、SIM 标识、基站、Wi-Fi/蓝牙扫描、BSSID
             if (!Config.on(Config.K_G_DMREG, true)) return;
             Logs.i("attach dmregservice");
-            privacy.install(cl, pkg, true, false, true, false, false);
+            privacySafe(cl, pkg, true, false, true, false, false);
             if (Config.on(Config.K_DMREG, true)) {
                 List<NetGuard.Rule> r = new ArrayList<>();
                 r.add(new NetGuard.Rule("fxltsbl.com"));
-                net.install(cl, "dmregservice", r, false);
+                netSafe(cl, "dmregservice", r, false);
             }
             return;
         }
@@ -230,20 +256,20 @@ public class HookEntry extends XposedModule {
             if (Config.on(Config.K_MISIGHT_KEFU, true)) {
                 r.add(new NetGuard.Rule("chat.kefu.mi.com", "/openapi/misight/diagnostic/"));
             }
-            if (!r.isEmpty()) net.install(cl, "misightservice", r, false);
+            if (!r.isEmpty()) netSafe(cl, "misightservice", r, false);
             return;
         }
 
         if ("com.xiaomi.trustservice".equals(pkg)) {
             if (!Config.on(Config.K_G_TRUST, true)) return;
             Logs.i("attach trustservice");
-            if (Config.on(Config.K_TRUST, false)) xsof.mrm(cl);
+            if (Config.on(Config.K_TRUST, false)) stage("mrm", () -> xsof.mrm(cl));
             List<NetGuard.Rule> r = new ArrayList<>();
             r.add(new NetGuard.Rule("deviceapi.micloud.xiaomi.net"));
             if (Config.on(Config.K_TRUST_FIND, false)) {
                 r.add(new NetGuard.Rule("find.api.micloud.xiaomi.net"));
             }
-            net.install(cl, "trustservice", r, false);
+            netSafe(cl, "trustservice", r, false);
             return;
         }
 
@@ -251,8 +277,8 @@ public class HookEntry extends XposedModule {
             if (!Config.on(Config.K_G_ANALYTICS, true)) return;
             if (!Config.on(Config.K_ANALYTICS, true)) return;
             Logs.i("attach analytics");
-            analytics.install(cl);
-            privacy.install(cl, pkg, true, true, true, false, true);
+            stage("analytics", () -> analytics.install(cl));
+            privacySafe(cl, pkg, true, true, true, false, true);
             List<NetGuard.Rule> r = new ArrayList<>();
             r.add(new NetGuard.Rule("miui.com"));
             r.add(new NetGuard.Rule("xiaomi.com"));
@@ -264,7 +290,7 @@ public class HookEntry extends XposedModule {
                 r.add(new NetGuard.Rule("8.8.8.8"));
                 r.add(new NetGuard.Rule("8.8.4.4"));
             }
-            net.install(cl, "analytics", r, Config.on(Config.K_ANALYTICS_ALLNET, true));
+            netSafe(cl, "analytics", r, Config.on(Config.K_ANALYTICS_ALLNET, true));
             return;
         }
 
@@ -274,7 +300,7 @@ public class HookEntry extends XposedModule {
             Logs.i("attach aiasst.vision");
             List<NetGuard.Rule> r = new ArrayList<>();
             r.add(new NetGuard.Rule("xiaomixiaoai.com", "/speech/"));
-            net.install(cl, "aiasst", r, false);
+            netSafe(cl, "aiasst", r, false);
             return;
         }
 
@@ -282,11 +308,11 @@ public class HookEntry extends XposedModule {
             if (!Config.on(Config.K_G_SECCENTER, true)) return;
             Logs.i("attach securitycenter");
             // 设备标识默认放行：安全中心要靠 IMSI / ICCID / 手机号查套餐与流量
-            privacy.install(cl, pkg, false, false,
+            privacySafe(cl, pkg, false, false,
                     Config.on(Config.K_SC_IDS, false), false, false);
-            if (Config.on(Config.K_XSOF, true)) xsof.install(cl);
+            if (Config.on(Config.K_XSOF, true)) stage("xsof", () -> xsof.install(cl));
             if (Config.on(Config.K_SC_DBGUARD, true)) {
-                CaptureHooks.dbWrites(this, cl);
+                stage("dbWrites", () -> CaptureHooks.dbWrites(this, cl));
             }
             List<NetGuard.Rule> r = new ArrayList<>();
             if (Config.on(Config.K_SECCENTER, true)) {
@@ -308,19 +334,19 @@ public class HookEntry extends XposedModule {
                 r.add(new NetGuard.Rule("eps.caict.ac.cn"));
             }
             if (Config.on(Config.K_SC_ADB, false)) r.add(new NetGuard.Rule("srv.sec.miui.com", "/data/adb"));
-            net.install(cl, "securitycenter", r, false);
+            netSafe(cl, "securitycenter", r, false);
             return;
         }
 
         if ("com.xiaomi.registration".equals(pkg)) {
             if (!Config.on(Config.K_G_REGISTRATION, true)) return;
             Logs.i("attach registration");
-            privacy.install(cl, pkg, false, false, true, true, false);
+            privacySafe(cl, pkg, false, false, true, true, false);
             List<NetGuard.Rule> r = new ArrayList<>();
             if (Config.on(Config.K_REG_ZZHC, false)) r.add(new NetGuard.Rule("zzhc.vnet.cn"));
             if (Config.on(Config.K_REG_TYPDM, true)) r.add(new NetGuard.Rule("typdm.tydevice.com"));
             if (r.isEmpty()) return;
-            net.install(cl, "registration", r, false);
+            netSafe(cl, "registration", r, false);
             return;
         }
 
@@ -339,7 +365,7 @@ public class HookEntry extends XposedModule {
             }
             if (r.isEmpty()) return;
             Logs.i("attach packageinstaller, rules=" + r.size());
-            net.install(cl, "packageinstaller", r, false);
+            netSafe(cl, "packageinstaller", r, false);
             return;
         }
 
@@ -348,7 +374,7 @@ public class HookEntry extends XposedModule {
             Logs.i("attach market");
             List<NetGuard.Rule> r = new ArrayList<>();
             if (Config.on(Config.K_AD_MARKET, true)) r.add(new NetGuard.Rule("sdkconfig.ad.xiaomi.com"));
-            net.install(cl, "market", r, false);
+            netSafe(cl, "market", r, false);
             return;
         }
 
@@ -357,7 +383,7 @@ public class HookEntry extends XposedModule {
             Logs.i("attach xmsf");
             List<NetGuard.Rule> r = new ArrayList<>();
             if (Config.on(Config.K_AD_XMSF, true)) r.add(new NetGuard.Rule("adv.sec.miui.com"));
-            net.install(cl, "xmsf", r, false);
+            netSafe(cl, "xmsf", r, false);
             return;
         }
     }

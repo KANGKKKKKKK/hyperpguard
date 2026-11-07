@@ -14,7 +14,7 @@ public final class Config {
 
     public static final String PKG = "io.github.vivibibi30.hyperpguard";
     public static final String PREFS = "pg";
-    public static final String VERSION = "1.3.3";
+    public static final String VERSION = "1.3.4";
 
     /* 全局 */
     public static final String K_MASTER = "master";
@@ -220,8 +220,23 @@ public final class Config {
      * 不写文件、不写系统设置，查询失败时按默认值运行。
      */
     public static void load(android.content.Context ctx) {
+        load(ctx, null);
+    }
+
+    /**
+     * pkg 用于系统 Context 读配置被 AMS 拒绝时，换成该包自己的 Context 再读一次。
+     * 系统 Context 的包名是 android，uid 与包名不一致会被 provider 拒。
+     */
+    public static void load(android.content.Context ctx, String pkg) {
         if (!REMOTE.isEmpty()) return;
         if (ctx != null) loadFromSettings(ctx);
+        if (REMOTE.isEmpty() && ctx != null && pkg != null) {
+            try {
+                loadFromSettings(ctx.createPackageContext(pkg, 0));
+            } catch (Throwable t) {
+                Logs.i("config pkg ctx fail: " + t);
+            }
+        }
         Logs.i(REMOTE.isEmpty() ? "config loaded: 0 (defaults)"
                 : "config loaded: " + REMOTE.size());
     }
