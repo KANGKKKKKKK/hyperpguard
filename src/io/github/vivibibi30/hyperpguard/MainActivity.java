@@ -826,7 +826,7 @@ public class MainActivity extends Activity {
         row.setPadding(0, dp(10), 0, dp(10));
 
         TextView view = new TextView(this);
-        view.setText("查看记录");
+        view.setText("查看日志");
         view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         view.setTextColor(ACCENT);
         view.setGravity(Gravity.CENTER);
@@ -1029,7 +1029,10 @@ public class MainActivity extends Activity {
         String out = execShell(
                 "logcat -d -v time -t 30000 | grep -E 'HyperPGuard: |blocked by HyperPGuard' | tail -n 600");
         if (out.trim().isEmpty()) {
-            return "没有记录。可能原因：\n"
+            return "没有记录。\n\n"
+                    + "这里只列模块自身的运行日志（attach、hook 结果）和被拦截的域名访问；"
+                    + "没有发生拦截时就是空的，不代表模块没工作。\n\n"
+                    + "可能原因：\n"
                     + "1. root 未授权（su 弹窗没点允许）\n"
                     + "2. 模块刚启用，目标应用还没重启\n"
                     + "3. 对应应用的「启用」开关未打开\n"
@@ -1040,7 +1043,7 @@ public class MainActivity extends Activity {
     }
 
     private void showLog(final String log) {
-        showText("拦截记录（" + log.split("\n").length + " 行）", log);
+        showText("模块日志（" + log.split("\n").length + " 行）", log);
     }
 
     private void showText(String title, final String log) {
