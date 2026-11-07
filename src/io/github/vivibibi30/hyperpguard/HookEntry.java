@@ -93,6 +93,9 @@ public class HookEntry extends XposedModule {
             dispatch(pkg, cl);
         } catch (Throwable t) {
             Logs.i("dispatch fail " + pkg + ": " + t);
+            for (String line : android.util.Log.getStackTraceString(t).split("\n")) {
+                if (!line.isEmpty()) Logs.i("dispatch stack " + pkg + ": " + line.trim());
+            }
         }
     }
 

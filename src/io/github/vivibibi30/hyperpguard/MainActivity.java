@@ -906,6 +906,11 @@ public class MainActivity extends Activity {
                                 + " | sed 's/^(//; s/).*//' | sort -u");
                 sb.append(lsp.trim().isEmpty() ? "（日志里没有本模块的加载记录）" : lsp.trim());
 
+                sb.append("\n安装失败记录：\n");
+                String fails = execShell(
+                        "logcat -d -b all -v time | grep -E 'HyperPGuard: (stage|dispatch|net install|privacy install)' | tail -n 40");
+                sb.append(fails.trim().isEmpty() ? "（没有）" : fails.trim());
+
                 sb.append("\n最近 attach 日志：\n");
                 String attach = execShell(
                         "logcat -d -b all -v time | grep -F 'HyperPGuard: attach' | tail -n 15");
@@ -913,6 +918,7 @@ public class MainActivity extends Activity {
                         ? "（logcat 缓冲里没有，长时间运行后会被冲掉）"
                         : attach.trim());
 
+                sb.append("\n\n以上内容只有包名、类名、域名与异常信息，不含 IMEI、手机号、账号或文件路径，可以直接贴出。");
                 final String body = sb.toString();
                 ui.post(new Runnable() {
                     @Override
