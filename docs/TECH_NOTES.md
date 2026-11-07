@@ -171,3 +171,17 @@ fallback，子项各自保留原本的默认值。
 | `staticScope=true` 时能否动态改作用域 | 可以。`requestScope()` 实测可把作用域从 3 个扩到 8 个，`getScope()` 立即反映 |
 | 覆盖安装后 KernelSU 授权失效 | 卸载重装会重新分配 uid，而 KernelSU 按 uid 记录授权；保持固定签名 + `pm install -r` 即可保留 |
 | `pm install` 读 `/sdcard` 报 `Can't open file` | `system_server` 无 fuse 读权限，先 `cp` 到 `/data/local/tmp` 再装 |
+
+## api.sec.miui.com 的端点与覆盖（securitycenter 12.8.6 静态确认）
+
+`classes2.dex` / `classes3.dex` 中该域名的常量共 7 类端点：
+
+| 路径 | 用途 | 处理 |
+|---|---|---|
+| `/GuardProviderV2/GetResourceZipFile` | 资源包下载 | 不拦（功能） |
+| `/health/v1/getOptimizationFile2` | 优化配置下载 | 不拦（功能） |
+| `/res/docs/disclaimer/av/privacy` | 隐私声明文档 | 不拦（功能） |
+| `/harassIntercept/intercepts` | 骚扰拦截数据 | 不拦（功能） |
+| `/earthquake/volunteer/sensor/upload` | 地震志愿者传感器上传 | 拦（默认开） |
+| `/LBS/geoconv/admin`、`/earthquake/volunteer/` | 坐标转换与志愿者注册 | 拦（默认关） |
+| `/universalWhitelist/checkUserId` | 用户 ID 白名单校验 | 未覆盖，未确认是否携带标识 |

@@ -32,12 +32,26 @@ public class HookEntry extends XposedModule {
         final String pkg = param.getPackageName();
         final ClassLoader cl = param.getClassLoader();
         if (pkg == null || cl == null) return;
+        Config.load(activityThreadContext());
         if (!Config.masterOn()) return;
 
         try {
             dispatch(pkg, cl);
         } catch (Throwable t) {
             Logs.i("dispatch fail " + pkg + ": " + t);
+        }
+    }
+
+    /** 目标进程早期的系统 Context，只用来查询开关；拿不到就按默认值走 */
+    private android.content.Context activityThreadContext() {
+        try {
+            Class<?> at = Class.forName("android.app.ActivityThread");
+            Object thread = at.getMethod("currentActivityThread").invoke(null);
+            if (thread == null) return null;
+            Object ctx = at.getMethod("getSystemContext").invoke(thread);
+            return ctx instanceof android.content.Context ? (android.content.Context) ctx : null;
+        } catch (Throwable t) {
+            return null;
         }
     }
 

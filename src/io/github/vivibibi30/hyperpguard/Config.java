@@ -14,7 +14,7 @@ public final class Config {
 
     public static final String PKG = "io.github.vivibibi30.hyperpguard";
     public static final String PREFS = "pg";
-    public static final String VERSION = "1.2.4";
+    public static final String VERSION = "1.2.5";
 
     /* 全局 */
     public static final String K_MASTER = "master";
@@ -96,11 +96,39 @@ public final class Config {
     /* ---------------- Hook 侧 ---------------- */
 
     public static boolean masterOn() {
-        return true;
+        return on(K_MASTER, true);
+    }
+
+    /** hook 侧读到的开关，进程内缓存一份，读不到就用各规则的默认值 */
+    private static final java.util.Map<String, Boolean> REMOTE =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * 在目标进程里尝试一次性拉取 UI 侧的开关。
+     * 没有 Context、provider 不存在、被拦截，都只是回退到默认值，不影响拦截本身。
+     */
+    public static void load(android.content.Context ctx) {
+        if (ctx == null || !REMOTE.isEmpty()) return;
+        android.database.Cursor c = null;
+        try {
+            c = ctx.getContentResolver().query(ConfigProvider.URI, null, null, null, null);
+            if (c == null) return;
+            while (c.moveToNext()) {
+                String k = c.getString(0);
+                if (k == null) continue;
+                REMOTE.put(k, "true".equals(c.getString(1)));
+            }
+            Logs.i("config loaded: " + REMOTE.size());
+        } catch (Throwable t) {
+            Logs.i("config load skipped: " + t);
+        } finally {
+            if (c != null) try { c.close(); } catch (Throwable ignored) { }
+        }
     }
 
     public static boolean on(String key, boolean fallback) {
-        return fallback;
+        Boolean v = REMOTE.get(key);
+        return v == null ? fallback : v;
     }
 
     public static boolean strict() {
