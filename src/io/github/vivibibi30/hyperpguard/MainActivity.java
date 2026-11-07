@@ -1048,7 +1048,35 @@ public class MainActivity extends Activity {
     }
 
     private void showLog(final String log) {
-        showText("模块日志（" + log.split("\n").length + " 行）", log);
+        showText("模块日志（" + log.split("\n").length + " 行）", classify(log));
+    }
+
+    /** 按未拦截 / 已拦截 / 其他分段，避免混在一起看不出结果 */
+    private static String classify(String log) {
+        StringBuilder blocked = new StringBuilder();
+        StringBuilder passed = new StringBuilder();
+        StringBuilder other = new StringBuilder();
+        int nb = 0, np = 0, no = 0;
+        for (String line : log.split("\n")) {
+            if (line.trim().isEmpty()) continue;
+            if (line.contains("blocked by HyperPGuard")
+                    || line.contains(" X(host") || line.contains(" X(strict)")) {
+                blocked.append(line).append('\n');
+                nb++;
+            } else if (line.contains(": ? ")) {
+                passed.append(line).append('\n');
+                np++;
+            } else {
+                other.append(line).append('\n');
+                no++;
+            }
+        }
+        if (nb == 0 && np == 0) return log;
+        StringBuilder sb = new StringBuilder();
+        if (np > 0) sb.append("未拦截（").append(np).append(" 条）\n").append(passed).append('\n');
+        if (nb > 0) sb.append("已拦截（").append(nb).append(" 条）\n").append(blocked).append('\n');
+        if (no > 0) sb.append("模块日志（").append(no).append(" 条）\n").append(other);
+        return sb.toString();
     }
 
     private void showText(String title, final String log) {
