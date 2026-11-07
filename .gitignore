@@ -19,3 +19,11 @@ android-stub.jar
 .DS_Store
 Thumbs.db
 .gradle/
+
+# 内部文档与本地副本，禁止入库
+*交接*.md
+README-WORKSPACE.txt
+README-TMP.txt
+*.db
+*.db-wal
+*.db-shm
