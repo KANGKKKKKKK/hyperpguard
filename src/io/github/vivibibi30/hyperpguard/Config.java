@@ -100,6 +100,9 @@ public final class Config {
     /* 广告 */
     public static final String K_AD_MARKET = "block_ad_market";
     public static final String K_AD_XMSF = "block_ad_xmsf";
+    /** 应用商店 / 服务框架自带的 OneTrack 埋点，路径 /track/ */
+    public static final String K_MARKET_TRACK = "block_market_track";
+    public static final String K_XMSF_TRACK = "block_xmsf_track";
 
     private Config() {
     }

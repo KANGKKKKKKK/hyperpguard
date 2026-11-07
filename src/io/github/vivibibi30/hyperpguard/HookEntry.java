@@ -409,6 +409,9 @@ public class HookEntry extends XposedModule {
             Logs.i("attach market");
             List<NetGuard.Rule> r = new ArrayList<>();
             if (Config.on(Config.K_AD_MARKET, true)) r.add(new NetGuard.Rule("sdkconfig.ad.xiaomi.com"));
+            if (Config.on(Config.K_MARKET_TRACK, true)) {
+                r.add(new NetGuard.Rule("tracking.miui.com", "/track/"));
+            }
             netSafe(cl, "market", r, false);
             return;
         }
@@ -418,6 +421,9 @@ public class HookEntry extends XposedModule {
             Logs.i("attach xmsf");
             List<NetGuard.Rule> r = new ArrayList<>();
             if (Config.on(Config.K_AD_XMSF, true)) r.add(new NetGuard.Rule("adv.sec.miui.com"));
+            if (Config.on(Config.K_XMSF_TRACK, true)) {
+                r.add(new NetGuard.Rule("tracking.miui.com", "/track/"));
+            }
             netSafe(cl, "xmsf", r, false);
             return;
         }

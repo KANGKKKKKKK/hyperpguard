@@ -133,9 +133,11 @@ public class MainActivity extends Activity {
             }),
             new Group("应用商店", "com.xiaomi.market", Config.K_G_AD_MARKET, new Item[]{
                     new Item("广告配置下发", "sdkconfig.ad.xiaomi.com", Config.K_AD_MARKET, true),
+                    new Item("使用统计上报", "tracking.miui.com/track；只影响统计，不影响下载与安装", Config.K_MARKET_TRACK, true),
             }),
             new Group("小米服务框架", "com.xiaomi.xmsf", Config.K_G_AD_XMSF, new Item[]{
                     new Item("广告接口", "adv.sec.miui.com", Config.K_AD_XMSF, true),
+                    new Item("使用统计上报", "tracking.miui.com/track；只影响统计，不影响推送与登录", Config.K_XMSF_TRACK, true),
             }),
             new Group("运营商服务", "com.xiaomi.registration", Config.K_G_REGISTRATION, new Item[]{
                     new Item("设备注册（zzhc）", "IMEI/IMSI/ICCID；关闭后 VoLTE / 运营商功能可能异常", Config.K_REG_ZZHC, false),

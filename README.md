@@ -68,8 +68,8 @@
 | 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、行为库写入、反诈配置、志愿者传感器上报；云查 / 鉴权 / 月报 / 防窥分类 / 地震报警定位 / ADB 验证 / 设备标识默认关；定位、通讯录 / 通话 / 短信默认关 |
 | 小米统计 | `com.miui.analytics` | 整域 + DoH 旁路；默认整进程断网 |
 | 应用安装器 | `com.miui.packageinstaller` | AVL 上报、活跃统计、安装页广告位 |
-| 应用商店 | `com.xiaomi.market` | 广告配置下发 |
-| 小米服务框架 | `com.xiaomi.xmsf` | 广告接口 |
+| 应用商店 | `com.xiaomi.market` | 广告配置下发、OneTrack 统计上报（`tracking.miui.com/track/`） |
+| 小米服务框架 | `com.xiaomi.xmsf` | 广告接口、OneTrack 统计上报（`tracking.miui.com/track/`） |
 | 运营商服务 | `com.xiaomi.registration` | 明文 CTEI 上报（默认拦）、设备注册（默认关）；定位 / 基站默认关 |
 | 移动 DM | `com.miui.dmregservice` | `fxltsbl.com` 上报、App 清单、SIM 标识；基站 / Wi-Fi 扫描默认关 |
 | 系统诊断 | `com.miui.misightservice` | 日志上传 `feedback.miui.com/misight/upload`、售后检测 `port.sec.miui.com/mqsas`、客服诊断 `chat.kefu.mi.com/openapi/misight/diagnostic`；触发条件是用户主动反馈或售后远程诊断，本地记录不等于已上传 |
@@ -176,6 +176,7 @@ build.sh              一键构建
 
 - 新增「行为库状态」：读安全中心 `fraud_detection_data.db` 的 `sqlite_sequence`，显示各表累计写入次数，刷新后对增长标注 (+N)
 - 只读计数，不读通话号码与截图路径；复制到应用私有目录读完即删
+- 应用商店与小米服务框架新增「使用统计上报」：拦 `tracking.miui.com/track/`，只影响统计，不影响下载、推送与登录
 
 ### 1.3.9
 
