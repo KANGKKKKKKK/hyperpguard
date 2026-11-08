@@ -690,10 +690,8 @@ public class MainActivity extends Activity {
         android.view.View v = new android.view.View(this);
         v.setBackgroundColor(LINE);
         int h = Math.max(1, Math.round(getResources().getDisplayMetrics().density * 0.75f));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, h);
-        lp.leftMargin = dp(16);
-        v.setLayoutParams(lp);
+        v.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, h));
         return v;
     }
 
