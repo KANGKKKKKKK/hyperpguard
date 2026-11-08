@@ -31,7 +31,7 @@ final class AnalyticsHooks {
 
     /** 遍历 analytics 的 dex，把 (long, long) -> JSONObject 的方法全部置空。 */
     private void scanUsageMethods(ClassLoader cl) {
-        int scanned = 0, hooked = 0, failed = 0;
+        int scanned = 0, hooked = 0, failed = 0, skipped = 0;
         try {
             java.util.List<String> names = new java.util.ArrayList<>();
             Class<?> bdcl = Class.forName("dalvik.system.BaseDexClassLoader", false, cl);
@@ -66,10 +66,24 @@ final class AnalyticsHooks {
                     continue;
                 }
                 scanned++;
-                for (Method method : c.getDeclaredMethods()) {
-                    Class<?>[] p = method.getParameterTypes();
+                Method[] ms;
+                try {
+                    ms = c.getDeclaredMethods();   // 签名含运行时缺失类型时整类抛错
+                } catch (Throwable t) {
+                    skipped++;
+                    continue;
+                }
+                for (Method method : ms) {
+                    Class<?>[] p;
+                    Class<?> ret;
+                    try {
+                        p = method.getParameterTypes();
+                        ret = method.getReturnType();
+                    } catch (Throwable t) {
+                        continue;
+                    }
                     if (p.length != 2 || p[0] != long.class || p[1] != long.class) continue;
-                    if (method.getReturnType() != org.json.JSONObject.class) continue;
+                    if (ret != org.json.JSONObject.class) continue;
                     try {
                         m.hook(method).intercept(chain -> null);
                         hooked++;
@@ -79,7 +93,8 @@ final class AnalyticsHooks {
                 }
             }
             Logs.i("analytics scan scanned=" + scanned + " hooked=" + hooked
-                    + (failed > 0 ? " failed=" + failed : ""));
+                    + (failed > 0 ? " failed=" + failed : "")
+                    + (skipped > 0 ? " skipped=" + skipped : ""));
         } catch (Throwable t) {
             Logs.i("analytics scan fail: " + t);
         }

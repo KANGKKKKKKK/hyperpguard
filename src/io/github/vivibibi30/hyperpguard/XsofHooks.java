@@ -77,29 +77,107 @@ final class XsofHooks {
     }
 
     private void installDbWrites(ClassLoader cl) {
-        int n = hookDbWritesIn(cl, "Ra.k");
+        int n = hookBehaviorHelper(cl);
         if (n == 0) {
-            n = Hooks.hookBySignature(m,
-                    Hooks.classNames(cl, XsofHooks::obfuscatedLikely, 8000), cl,
-                    XsofHooks::isDbWrite, chain -> null);
-            Logs.i("xsof db write fallback=" + n);
+            // 结构化识别失败时才退回写死的旧混淆名
+            n = hookDbWritesIn(cl, "Ra.k");
+            if (n > 0) Logs.i("xsof db write legacy=Ra.k x" + n);
         }
         Logs.i("xsof db write hooked=" + n);
     }
 
-    private int hookDbWritesIn(ClassLoader cl, String className) {
+    /**
+     * 行为库 helper 的结构特征：SQLiteOpenHelper 子类、实现同包接口、
+     * 且有一组 public void 的 bean 参数写方法。
+     * 12.8.6 是 Ra.k + Qa.*，13.6.6 是 jo.k + io.*，类名和 bean 包都换过，
+     * 按签名谓词写死 Qa.* 在 13.6.6 上一个都命中不了。
+     */
+    private int hookBehaviorHelper(ClassLoader cl) {
         int n = 0;
-        try {
-            Class<?> c = Class.forName(className, false, cl);
-            for (Method method : c.getDeclaredMethods()) {
-                if (!isDbWrite(method)) continue;
+        for (String name : Hooks.classNames(cl, XsofHooks::obfuscatedLikely, 8000)) {
+            Class<?> c;
+            Method[] ms;
+            try {
+                c = Class.forName(name, false, cl);
+                ms = c.getDeclaredMethods();
+            } catch (Throwable t) {
+                continue;
+            }
+            String pkg = name.lastIndexOf('.') < 0 ? "" : name.substring(0, name.lastIndexOf('.'));
+            if (!isBehaviorHelper(c, pkg)) continue;
+            java.util.List<Method> writes = new java.util.ArrayList<>();
+            for (Method method : ms) {
+                boolean beanWrite;
+                try {
+                    beanWrite = isBeanWrite(method, pkg);
+                } catch (Throwable t) {
+                    continue;
+                }
+                if (beanWrite) writes.add(method);
+            }
+            if (writes.size() < 4) continue;
+            int ok = 0;
+            for (Method method : writes) {
                 try {
                     m.hook(method).intercept(chain -> null);
-                    n++;
+                    ok++;
                 } catch (Throwable ignored) {
                 }
             }
+            Logs.i("xsof db helper " + name + " writes=" + writes.size() + " hooked=" + ok);
+            n += ok;
+        }
+        return n;
+    }
+
+    private static boolean isBehaviorHelper(Class<?> c, String pkg) {
+        try {
+            Class<?> sup = c.getSuperclass();
+            if (sup == null || !"android.database.sqlite.SQLiteOpenHelper".equals(sup.getName())) {
+                return false;
+            }
+            for (Class<?> itf : c.getInterfaces()) {
+                String in = itf.getName();
+                String ip = in.lastIndexOf('.') < 0 ? "" : in.substring(0, in.lastIndexOf('.'));
+                if (ip.equals(pkg)) return true;
+            }
         } catch (Throwable ignored) {
+        }
+        return false;
+    }
+
+    /** public void，首参是本包内 bean（Qa.* \/ io.*），参数 1~2 个 */
+    private static boolean isBeanWrite(Method method, String pkg) {
+        if (method.getReturnType() != void.class) return false;
+        if (!java.lang.reflect.Modifier.isPublic(method.getModifiers())) return false;
+        int pc = method.getParameterCount();
+        if (pc < 1 || pc > 2) return false;
+        String p0 = method.getParameterTypes()[0].getName();
+        String pp = p0.lastIndexOf('.') < 0 ? "" : p0.substring(0, p0.lastIndexOf('.'));
+        return pp.equals(pkg);
+    }
+
+    private int hookDbWritesIn(ClassLoader cl, String className) {
+        int n = 0;
+        Method[] ms;
+        try {
+            ms = Class.forName(className, false, cl).getDeclaredMethods();
+        } catch (Throwable t) {
+            return 0;
+        }
+        for (Method method : ms) {
+            boolean hit;
+            try {
+                hit = isDbWrite(method);   // getParameterTypes 也会解析签名
+            } catch (Throwable t) {
+                continue;
+            }
+            if (!hit) continue;
+            try {
+                m.hook(method).intercept(chain -> null);
+                n++;
+            } catch (Throwable ignored) {
+            }
         }
         return n;
     }
@@ -119,20 +197,50 @@ final class XsofHooks {
         return p0.startsWith("Qa.") || p0.equals("android.content.ContentValues");
     }
 
+    /**
+     * 评分出口按签名找：返回 float，三个参数是 XSOF 的评分 bean
+     * （ScoreConfigBean / PastFraudData / DurationFraudData）。
+     * 12.8.6 是 Pa.b#j，13.6.6 是 ho.b#j，类名换了但签名没换。
+     */
     private void installScore(ClassLoader cl) {
-        try {
-            Class<?> fd = Class.forName("Pa.b", false, cl);
-            int n = 0;
-            for (Method method : fd.getDeclaredMethods()) {
-                if (method.getParameterCount() != 3) continue;
-                if (method.getReturnType() != float.class) continue;
-                m.hook(method).intercept(chain -> Float.valueOf(0f));
-                n++;
+        int n = 0;
+        for (String name : Hooks.classNames(cl, XsofHooks::obfuscatedLikely, 8000)) {
+            Class<?> c;
+            Method[] ms;
+            try {
+                c = Class.forName(name, false, cl);
+                ms = c.getDeclaredMethods();
+            } catch (Throwable t) {
+                continue;
             }
-            Logs.i("xsof score hooked=" + n);
-        } catch (Throwable t) {
-            Logs.i("xsof score miss (Pa.b 名随版本变化，未做宽泛扫描): " + t);
+            for (Method method : ms) {
+                boolean hit;
+                try {
+                    hit = isScoreMethod(method);
+                } catch (Throwable t) {
+                    continue;
+                }
+                if (!hit) continue;
+                try {
+                    m.hook(method).intercept(chain -> Float.valueOf(0f));
+                    n++;
+                    Logs.i("xsof score " + name + "#" + method.getName());
+                } catch (Throwable ignored) {
+                }
+            }
         }
+        Logs.i("xsof score hooked=" + n);
+    }
+
+    private static boolean isScoreMethod(Method method) {
+        if (method.getReturnType() != float.class) return false;
+        if (method.getParameterCount() != 3) return false;
+        int beans = 0;
+        for (Class<?> p : method.getParameterTypes()) {
+            String sn = p.getSimpleName();
+            if (sn.endsWith("FraudData") || sn.equals("ScoreConfigBean")) beans++;
+        }
+        return beans >= 2;
     }
 
     void mrm(ClassLoader cl) {

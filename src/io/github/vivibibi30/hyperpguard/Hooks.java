@@ -108,15 +108,25 @@ final class Hooks {
     static int hookBySignature(XposedModule m, java.util.List<String> classNames,
                                ClassLoader cl, MethodFilter filter, Interceptor interceptor) {
         int n = 0;
+        int broken = 0;
         for (String name : classNames) {
-            Class<?> c;
+            Method[] ms;
             try {
-                c = Class.forName(name, false, cl);
+                // 签名解析在 getDeclaredMethods 里发生：类里含运行时缺失的类型
+                // （如 AutoValue 生成的 javax.lang.model.element.*）会整类抛错
+                ms = Class.forName(name, false, cl).getDeclaredMethods();
             } catch (Throwable t) {
+                broken++;
                 continue;
             }
-            for (Method method : c.getDeclaredMethods()) {
-                if (!filter.test(method)) continue;
+            for (Method method : ms) {
+                boolean hit;
+                try {
+                    hit = filter.test(method);
+                } catch (Throwable t) {
+                    continue;
+                }
+                if (!hit) continue;
                 try {
                     m.hook(method).intercept(interceptor::intercept);
                     n++;
@@ -124,6 +134,7 @@ final class Hooks {
                 }
             }
         }
+        if (broken > 0) Logs.i("hookBySignature skipped classes=" + broken);
         return n;
     }
 }
