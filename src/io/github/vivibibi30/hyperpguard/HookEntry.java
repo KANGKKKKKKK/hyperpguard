@@ -414,6 +414,9 @@ public class HookEntry extends XposedModule {
                 r.add(new NetGuard.Rule("api.ad.xiaomi.com"));
                 r.add(new NetGuard.Rule("monitor-check.ad.xiaomi.com"));
                 r.add(new NetGuard.Rule("sdkconfig.ad.xiaomi.com"));
+                // 推荐位的应用图标走商店图片 CDN，只拦缩略图路径
+                r.add(new NetGuard.Rule("t1.a.market.xiaomi.com", "/thumbnail/"));
+                r.add(new NetGuard.Rule("t2.a.market.xiaomi.com", "/thumbnail/"));
             }
             // 方法层：MSA OAID，返回空串
             if (Config.on(Config.K_PKG_OAID, true)) {
