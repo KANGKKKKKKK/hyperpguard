@@ -93,6 +93,8 @@ public final class Config {
     public static final String K_MISIGHT_UPLOAD = "block_misight_upload";
     public static final String K_MISIGHT_MQSAS = "block_misight_mqsas";
     public static final String K_MISIGHT_KEFU = "block_misight_kefu";
+    /** MiSight 事件日志上报域名 */
+    public static final String K_MISIGHT_EVENTLOG = "block_misight_eventlog";
     public static final String K_DMREG = "block_dmreg";
     public static final String K_REG_ZZHC = "block_reg_zzhc";
     public static final String K_REG_TYPDM = "block_reg_typdm";

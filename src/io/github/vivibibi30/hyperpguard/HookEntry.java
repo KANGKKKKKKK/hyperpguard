@@ -296,6 +296,9 @@ public class HookEntry extends XposedModule {
             if (Config.on(Config.K_MISIGHT_KEFU, true)) {
                 r.add(new NetGuard.Rule("chat.kefu.mi.com", "/openapi/misight/diagnostic/"));
             }
+            if (Config.on(Config.K_MISIGHT_EVENTLOG, true)) {
+                r.add(new NetGuard.Rule("event-log.cnbj1.mi-fds.com"));
+            }
             if (!r.isEmpty()) netSafe(cl, "misightservice", r, false);
             return;
         }
