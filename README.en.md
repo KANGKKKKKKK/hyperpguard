@@ -137,6 +137,10 @@ src/io/github/vivibibi30/hyperpguard/
 - `IMrm` is a HAL-level service; only the `ServiceManager` side is disconnected
 - The module blocks reporting; it does not revoke permissions already granted during device setup
 
+## Contributing
+
+Run "self-check" before opening an issue, redact identifiers in logs, and read [CONTRIBUTING.en.md](CONTRIBUTING.en.md) for what not to upload (vendor APKs, decompiled output, device databases).
+
 ## License and disclaimer
 
 GPL-3.0, see [LICENSE](LICENSE). Usage terms, legal notes and risk statements are in [DISCLAIMER.txt](DISCLAIMER.txt); please read them before use. The project is not affiliated with Xiaomi or China Unicom, and all trademarks belong to their respective owners.
