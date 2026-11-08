@@ -6,12 +6,15 @@
 ![language](https://img.shields.io/badge/language-Java-orange)
 ![release](https://img.shields.io/github/v/release/vivibibi30/hyperpguard?label=release&color=green)
 ![android](https://img.shields.io/badge/Android-10--16-green)
+![status](https://img.shields.io/badge/status-按需维护-2da44e?style=flat-square)
 
 在采集入口、本地存储、对外接口、网络出口四层拦截 HyperOS 预装组件的隐私上报
 
 </div>
 
 预装系统组件会持续采集设备标识、应用使用记录、位置、通话行为等信息，并通过网络或跨进程接口提供给厂商、运营商或第三方。本模块在这些通道上按应用分组拦截，开关与 LSPosed 作用域联动。
+
+> **维护节奏**：本项目由个人维护，开发与验证依赖自费的模型调用与真机测试。因此只在出现影响使用的缺陷、发现新的上报通道或系统大版本适配时发版；界面与文案类改动会并入下一次实质更新，不再单独出包。
 
 本仓库即源码仓：`src/` 下是全部 Java 实现，`build.sh` 是完整构建脚本，用 `javac` + `d8` + `aapt2` + `zipalign` + `apksigner` 打包，不依赖 Gradle；`Releases` 里的 APK 由它构建。`Xposed-Modules-Repo/io.github.vivibibi30.hyperpguard` 只是 LSPosed 的索引仓库，只放 APK 与简介。
 
