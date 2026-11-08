@@ -435,6 +435,18 @@ public class HookEntry extends XposedModule {
                 }
                 Logs.i("packageinstaller oaid hooked=" + n);
             }
+            // 方法层：广告缓存读取，返回 null 让推荐位不渲染
+            if (Config.on(Config.K_AD_PKG, true)) {
+                int n = Hooks.hookBySignature(this,
+                        Hooks.classNames(cl, s -> !s.startsWith("android.")
+                                && !s.startsWith("java.") && !s.startsWith("kotlin."), 2500),
+                        cl,
+                        m -> m.getParameterCount() == 1
+                                && m.getParameterTypes()[0] == String.class
+                                && m.getReturnType().getName().contains("AdModel"),
+                        chain -> null);
+                Logs.i("packageinstaller ad cache hooked=" + n);
+            }
             // 方法层：安装页广告位请求入口，static void 7 参、第 3 参 Integer、末参回调接口
             if (Config.on(Config.K_AD_PKG, true)) {
                 Hooks.MethodFilter ad = m -> java.lang.reflect.Modifier.isStatic(m.getModifiers())
