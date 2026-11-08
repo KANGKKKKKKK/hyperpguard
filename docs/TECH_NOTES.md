@@ -50,7 +50,7 @@
 - 应用名（`app_name_cn`）为「翻译」，无桌面入口
 - 主要 Activity：`TextTranslateEditActivity`、`TextTranslateMicActivity`、`SimultaneousInterpretationActivity`、`AITranslateDetailsActivity`
 - 域名以 `*.xiaomixiaoai.com` 为主，识别接口路径为 `/speech/v1.0/...`、`/speech/v2.0/...`
-- 代码内自带 onetrack 埋点，但无独立上报域名；空闲状态下短时抓包未见自发请求
+- 代码内自带 onetrack 埋点，但无独立上报域名；空闲状态下短时观察未见自发请求
 - 真正的语音服务是另一个包 `com.xiaomi.aiasst.service`
 - 规则因此只针对 `/speech/` 路径，避免连带切断文字翻译
 
@@ -103,7 +103,7 @@
 - `tracking.india/rus/eu/intl.miui.com` 与 `pn-tracking-bak.onetrack.mi.com`
 - `sdkconfig(.intl).xiaomi.com`（配置与自更新）
 
-另外单独拦 `dns.google` 与 `8.8.8.8` / `8.8.4.4`：6.33.0 国际版在策略与网络异常条件下会走 DoH 解析后直连 IP，纯域名规则会被绕过。
+另外单独拦 `dns.google` 与 `8.8.8.8` / `8.8.4.4`：6.33.0 国际版在策略与网络异常条件下会走 DoH 解析后直连 IP，纯域名规则会失效。
 
 ### 覆盖不到的部分
 
