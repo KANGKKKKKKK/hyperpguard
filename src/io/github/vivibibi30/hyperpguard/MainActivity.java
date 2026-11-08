@@ -190,6 +190,7 @@ public class MainActivity extends Activity {
     private final Map<String, List<LinearLayout>> childRows = new LinkedHashMap<>();
     /** 组 key → 组开关 */
     private final Map<String, Switch> groupSwitches = new LinkedHashMap<>();
+    private final Map<String, TextView> scopeHints = new LinkedHashMap<>();
     private final Handler ui = new Handler(Looper.getMainLooper());
     private XposedService xposed;
     private boolean updatingSwitch = false;
@@ -223,9 +224,15 @@ public class MainActivity extends Activity {
                     android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
             getWindow().setStatusBarColor(0);
             getWindow().setNavigationBarColor(0);
-            getWindow().getDecorView().setSystemUiVisibility(
-                    android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                // 30 起必须关掉 decorFitsSystemWindows 才会真的延伸到状态栏/导航栏下面
+                getWindow().setDecorFitsSystemWindows(false);
+            } else {
+                int flags = android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+                if (!nightMode) flags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                getWindow().getDecorView().setSystemUiVisibility(flags);
+            }
         } catch (Throwable ignored) {
         }
 
@@ -235,7 +242,7 @@ public class MainActivity extends Activity {
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(16), dp(16) + statusBarHeight(), dp(16), dp(24));
+        root.setPadding(dp(16), dp(16) + statusBarHeight(), dp(16), dp(24) + navBarHeight());
         sv.addView(root, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -312,6 +319,15 @@ public class MainActivity extends Activity {
 
             c.addView(groupHeader(g, rows));
             if (g.note != null) c.addView(groupNote(g.note));
+            TextView scopeHint = new TextView(this);
+            scopeHint.setText(T("未在作用域，点此加入"));
+            scopeHint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+            scopeHint.setTextColor(ACCENT);
+            scopeHint.setPadding(dp(4), dp(10), 0, dp(8));
+            scopeHint.setVisibility(android.view.View.GONE);
+            scopeHint.setOnClickListener(v -> ensureInScope(g));
+            c.addView(scopeHint);
+            scopeHints.put(g.pkg, scopeHint);
             for (Item it : g.items) {
                 if (c.getChildCount() > 0) c.addView(divider());
                 LinearLayout row = new LinearLayout(this);
@@ -370,20 +386,38 @@ public class MainActivity extends Activity {
 
         setContentView(sv);
         I18n.apply(sv);
-        if (nightMode) {
-            // decorView 还没 attach 时 getInsetsController() 会 NPE，必须等 setContentView 之后
-            try {
-                android.view.WindowInsetsController c =
-                        getWindow().getDecorView().getWindowInsetsController();
-                if (c != null) {
-                    int light = android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
-                    c.setSystemBarsAppearance(nightMode ? 0 : light, light);
-                } else {
-                    getWindow().getDecorView().setSystemUiVisibility(0);
-                }
-            } catch (Throwable ignored) {
+        // 深浅两种模式都要设状态栏图标颜色，否则浅色下会出现白图标压白底
+        try {
+            android.view.WindowInsetsController c =
+                    getWindow().getDecorView().getWindowInsetsController();
+            if (c != null) {
+                int light = android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
+                c.setSystemBarsAppearance(nightMode ? 0 : light, light);
             }
+        } catch (Throwable ignored) {
         }
+    }
+
+    /** 服务未连接时暂存的动作，绑定成功后自动执行一次 */
+    private Runnable pendingAction;
+
+    /** 没连上就把动作排队，绑定成功后执行；4 秒还没连上才提示失败 */
+    private void runWhenBound(final Runnable action) {
+        if (xposed != null) {
+            action.run();
+            return;
+        }
+        pendingAction = action;
+        bindServiceHelper();
+        Toast.makeText(this, "正在连接 LSPosed…", Toast.LENGTH_SHORT).show();
+        ui.postDelayed(() -> {
+            if (pendingAction == action && xposed == null) {
+                pendingAction = null;
+                Toast.makeText(MainActivity.this,
+                        "LSPosed 服务未连接，请确认已在 LSPosed 中启用本模块后重开本界面",
+                        Toast.LENGTH_LONG).show();
+            }
+        }, 4000);
     }
 
     /** LSPosed 服务断开后重连：覆盖安装模块时服务端会重启一次 */
@@ -404,6 +438,9 @@ public class MainActivity extends Activity {
                     android.util.Log.i("HyperPGuard", "XposedService bound: "
                             + service.getFrameworkName() + " " + service.getFrameworkVersion());
                     ui.post(MainActivity.this::syncFromService);
+                    final Runnable pending = pendingAction;
+                    pendingAction = null;
+                    if (pending != null) ui.post(pending);
                 }
 
                 @Override
@@ -419,15 +456,18 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (xposed != null) syncFromService();
+        if (xposed != null) {
+            syncFromService();
+        } else {
+            bindServiceHelper();
+        }
     }
 
     /* ---------------- 软重启 ---------------- */
 
     private void requestAdd(final String pkg, final Group g, final Switch sw) {
         if (xposed == null) {
-            Toast.makeText(this, "LSPosed 服务未连接，请确认已在 LSPosed 中启用本模块",
-                    Toast.LENGTH_LONG).show();
+            runWhenBound(() -> requestAdd(pkg, g, sw));
             return;
         }
         android.util.Log.i("HyperPGuard", "requestScope(" + pkg + ") sending");
@@ -465,7 +505,7 @@ public class MainActivity extends Activity {
     /** 一次性请求全部作用域 */
     private void requestAll() {
         if (xposed == null) {
-            Toast.makeText(this, "LSPosed 服务未连接", Toast.LENGTH_LONG).show();
+            runWhenBound(this::requestAll);
             return;
         }
         final java.util.List<String> all = new java.util.ArrayList<>();
@@ -571,6 +611,10 @@ public class MainActivity extends Activity {
     }
 
     private void setGroupUi(Group g, boolean on) {
+        TextView scopeHint = scopeHints.get(g.pkg);
+        if (scopeHint != null) {
+            scopeHint.setVisibility(on ? android.view.View.GONE : android.view.View.VISIBLE);
+        }
         updatingSwitch = true;
         Switch gs = groupSwitches.get(g.pkg);
         if (gs != null) gs.setChecked(on);
@@ -627,8 +671,7 @@ public class MainActivity extends Activity {
     /** 子项被打开时，如果该应用还没进作用域，顺手请求加入（不再靠置灰拦人） */
     private void ensureInScope(final Group g) {
         if (xposed == null) {
-            Toast.makeText(this, "LSPosed 服务未连接，请确认已在 LSPosed 中启用本模块",
-                    Toast.LENGTH_LONG).show();
+            runWhenBound(() -> ensureInScope(g));
             return;
         }
         java.util.List<String> cur = safeScope();
@@ -705,6 +748,16 @@ public class MainActivity extends Activity {
         } catch (Throwable ignored) {
         }
         return dp(24);
+    }
+
+    /** 系统导航栏高度，沉浸式布局下补底部留白 */
+    private int navBarHeight() {
+        try {
+            int id = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+            if (id > 0) return getResources().getDimensionPixelSize(id);
+        } catch (Throwable ignored) {
+        }
+        return 0;
     }
 
     /** 列表分隔线：0.75dp，左侧从内容边缘开始，和 Settings 的 item divider 一致 */
