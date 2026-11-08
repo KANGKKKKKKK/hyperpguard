@@ -411,6 +411,23 @@ public class HookEntry extends XposedModule {
             if (pathOn && Config.on(Config.K_AD_PKG, true)) {
                 r.add(new NetGuard.Rule("api.installer.xiaomi.com", "/info/layout"));
             }
+            // 方法层：AVL 上报入口，静态 4 参、第二参为 ApkInfo、返回 void
+            if (Config.on(Config.K_PKG_AVL, true)) {
+                Hooks.MethodFilter avl = m -> java.lang.reflect.Modifier.isStatic(m.getModifiers())
+                        && m.getParameterCount() == 4
+                        && m.getParameterTypes()[1].getName().contains("ApkInfo")
+                        && m.getReturnType() == void.class;
+                int n = Hooks.hookBySignature(this,
+                        Hooks.classNames(cl, s -> s.startsWith("C2."), 900), cl, avl, chain -> null);
+                if (n == 0) {
+                    // 包名前缀变了就退到全量扫描
+                    n = Hooks.hookBySignature(this,
+                            Hooks.classNames(cl, s -> !s.startsWith("android.")
+                                    && !s.startsWith("java.") && !s.startsWith("kotlin."), 2500),
+                            cl, avl, chain -> null);
+                }
+                Logs.i("packageinstaller avl method hooked=" + n);
+            }
             if (r.isEmpty()) return;
             Logs.i("attach packageinstaller, rules=" + r.size());
             netSafe(cl, "packageinstaller", r, false);
