@@ -1,5 +1,7 @@
 # 参与与反馈
 
+[简体中文](CONTRIBUTING.md) · [English](CONTRIBUTING.en.md)
+
 ## 提交 issue 前
 
 - 先在模块里点「自检」，确认总开关、作用域和已注入进程

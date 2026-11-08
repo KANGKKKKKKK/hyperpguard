@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 自定义规则使用说明 / Custom rules guide
+    url: https://github.com/vivibibi30/hyperpguard/blob/main/docs/CUSTOM-RULES.md
+    about: 域名、域名/路径、类名#方法 三种写法与限制 / How custom rules work
