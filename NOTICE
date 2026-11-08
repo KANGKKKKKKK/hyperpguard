@@ -6,11 +6,11 @@ Copyright (C) 2026 vivibibi30
 第三方组件（编译期依赖，未修改）：
 
 - libxposed API（io.github.libxposed:api）
-  Apache License 2.0
+  Apache License 2.0，全文见 LICENSES/Apache-2.0.txt
   https://github.com/libxposed/api
 
 - libxposed service（io.github.libxposed:service）
-  Apache License 2.0
+  Apache License 2.0，全文见 LICENSES/Apache-2.0.txt
   同属 libxposed 项目
 
 LSPosed 框架不随本项目分发；模块运行依赖使用者自行安装的 LSPosed。
