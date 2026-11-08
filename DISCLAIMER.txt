@@ -1,5 +1,5 @@
 隐私上报拦截（HyperPGuard）免责声明
-版本 1.13
+版本 1.14
 ========================================
 
 一、用途定位
@@ -33,6 +33,10 @@
    件在某一版本上读取或发送了哪些数据，不构成对任何厂商、产品或个人的违法
    性判断与事实认定。组件行为随版本变化，规则可能滞后或误判；发现描述与真
    机实测不符时，以实测为准。
+6) 「自定义规则」由使用者自行填写，其中方法级规则（类名#方法）会直接改变目
+   标进程内该方法的返回值。模块不提供任何预置的方法级规则，也不判断填写内
+   容是否适当；由填写、启用规则引起的应用异常、功能失效、数据丢失或其他后
+   果，由使用者自行承担。
 
 四、不收集任何数据
 本模块默认不联网、不收集、不上传任何用户信息。仅在用户主动点击设置页
@@ -60,6 +64,8 @@
 2) 不得将本模块用于侵入、干扰他人设备或网络，或用于规避法律法规要求的
    安全监管措施。
 3) 不得移除本声明后再次分发。
+4) 不得利用自定义规则对他人设备、应用或网络实施干扰，或用于绕过安全校验、
+   规避法律法规要求的安全监管措施。
 
 七、无担保
 本模块按“现状”提供，不对适销性、特定用途适用性、无中断或无错误作出任何
@@ -92,6 +98,8 @@ usage data to vendor or carrier servers.
 - Use at your own risk. Rooting and system modification may void warranties,
   break device integrity checks, or degrade security features (cloud scanning,
   remote authentication, etc.).
+- User-defined rules, including method-level hooks, are entered by the user and
+  are used at the user's own risk. No preset method-level rules are shipped.
 - Provided "as is" without warranty of any kind.
 - Redistribution must include this notice verbatim.
 
@@ -99,4 +107,4 @@ This tool operates solely on the local device of its user and does not access,
 interfere with, or compromise any third party's network or system.
 
 ========================================
-生成日期：2026-11-07
+生成日期：2026-11-08

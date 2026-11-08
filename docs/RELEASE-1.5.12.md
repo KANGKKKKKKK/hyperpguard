@@ -15,6 +15,7 @@
 ## 说明
 
 - 规则解析与匹配只读取你自己填的内容，未填则完全不安装，默认行为与之前一致
+- 免责声明更新到 1.14：补方法级规则的风险自负条款与禁止用途，应用内展示的版本同步更新
 - 写法、匹配细节、适用范围与限制见 [自定义规则使用说明](https://github.com/vivibibi30/hyperpguard/blob/main/docs/CUSTOM-RULES.md)
 
 全部提交：https://github.com/vivibibi30/hyperpguard/compare/v1.5.11...v1.5.12

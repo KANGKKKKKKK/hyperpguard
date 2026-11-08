@@ -19,6 +19,10 @@ final class Hooks {
     private Hooks() {
     }
 
+    /** 自定义方法规则首次命中只记一条日志 */
+    private static final java.util.Set<String> CUSTOM_HITS =
+            java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<String, Boolean>());
+
     /** 把方法整体替换为固定返回值。返回是否挂上。 */
     static boolean ret(XposedModule m, ClassLoader cl, String cls, String name,
                        Class<?>[] types, Object value) {
@@ -137,9 +141,6 @@ final class Hooks {
         if (broken > 0) Logs.i("hookBySignature skipped classes=" + broken);
         return n;
     }
-
-    private static final java.util.Set<String> CUSTOM_HITS =
-            java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<String, Boolean>());
 
     /**
      * 自定义方法规则：`类名#方法名`，方法名 `*` 表示整类。
