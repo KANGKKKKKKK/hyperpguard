@@ -262,6 +262,8 @@ final class I18n {
         EN.put("检查更新", "Check for updates");
         EN.put("刷新", "Refresh");
         EN.put("关于", "About");
+        EN.put("通用", "General");
+        EN.put("组件拦截", "Components");
         EN.put("统计埋点上报", "Usage stats upload");
         EN.put("tracking.*.miui.com / sdkconfig.*.xiaomi.com；只影响统计，不影响功能",
                 "tracking.*.miui.com / sdkconfig.*.xiaomi.com; statistics only, no functional impact");

@@ -230,7 +230,7 @@ public class MainActivity extends Activity {
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(14), dp(18), dp(14), dp(24));
+        root.setPadding(dp(16), dp(16), dp(16), dp(24));
         sv.addView(root, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -264,24 +264,24 @@ public class MainActivity extends Activity {
         root.addView(hint, hintLp);
 
         // 全局设置
+        root.addView(sectionTitle("通用"));
         LinearLayout global = card();
         makeSwitchRow(global, "总开关", "关闭后本模块在所有进程不生效",
                 Config.K_MASTER, true, true);
-        global.addView(line());
+        global.addView(divider());
         makeSwitchRow(global, "路径特征拦截", "路径规则（/avl/upload 等）是否生效",
                 Config.K_PATH, true, true);
-        global.addView(line());
+        global.addView(divider());
         makeSwitchRow(global, "记录未拦截访问", "把没命中规则的域名写进日志，排查漏拦时临时打开",
                 Config.K_SNIFF, false, true);
-        global.addView(line());
+        global.addView(divider());
         addFraudDbRow(global);
-        global.addView(line());
+        global.addView(divider());
         addCustomRulesRow(global);
-        global.addView(line());
+        global.addView(divider());
         addCleanLogRow(global);
-        global.addView(line());
+        global.addView(divider());
         addHideIconRow(global);
-        global.addView(line());
         // 需要 root 的功能，提示写在这里
         TextView rootTip = new TextView(this);
         rootTip.setText("「重启」「查看日志」需要 root，首次使用请允许 KernelSU 授权");
@@ -304,6 +304,7 @@ public class MainActivity extends Activity {
 
 
         // 每个应用一张卡片
+        root.addView(sectionTitle("组件拦截"));
         for (final Group g : GROUPS) {
             LinearLayout c = card();
             List<Switch> children = new ArrayList<>();
@@ -314,11 +315,12 @@ public class MainActivity extends Activity {
             c.addView(groupHeader(g, rows));
             if (g.note != null) c.addView(groupNote(g.note));
             for (Item it : g.items) {
-                c.addView(line());
+                if (c.getChildCount() > 0) c.addView(divider());
                 LinearLayout row = new LinearLayout(this);
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 row.setGravity(Gravity.CENTER_VERTICAL);
-                row.setPadding(0, dp(10), 0, dp(10));
+                row.setMinimumHeight(dp(56));
+        row.setPadding(0, dp(9), 0, dp(9));
                 Switch sw = buildSwitchRow(row, it.name, it.desc, it.key, it.def, true, g);
                 children.add(sw);
                 rows.add(row);
@@ -656,19 +658,43 @@ public class MainActivity extends Activity {
 
     /* ---------------- 卡片与控件 ---------------- */
 
+    /** 分组小标题：13sp 灰色，放在卡片外 */
+    private TextView sectionTitle(String text) {
+        TextView tv = new TextView(this);
+        tv.setText(text);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        tv.setTextColor(SUB);
+        tv.setMinHeight(dp(35));
+        tv.setGravity(Gravity.BOTTOM);
+        tv.setPadding(dp(4), dp(16), 0, dp(8));
+        return tv;
+    }
+
     private LinearLayout card() {
         LinearLayout c = new LinearLayout(this);
         c.setOrientation(LinearLayout.VERTICAL);
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(CARD);
-        bg.setCornerRadius(dp(18));
+        bg.setCornerRadius(dp(20));
         c.setBackground(bg);
-        c.setPadding(dp(16), dp(6), dp(16), dp(8));
+        c.setPadding(dp(16), dp(4), dp(16), dp(4));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.bottomMargin = dp(12);
+        lp.bottomMargin = dp(10);
         c.setLayoutParams(lp);
         return c;
+    }
+
+    /** 列表分隔线：0.75dp，左侧从内容边缘开始，和 Settings 的 item divider 一致 */
+    private android.view.View divider() {
+        android.view.View v = new android.view.View(this);
+        v.setBackgroundColor(LINE);
+        int h = Math.max(1, Math.round(getResources().getDisplayMetrics().density * 0.75f));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, h);
+        lp.leftMargin = dp(16);
+        v.setLayoutParams(lp);
+        return v;
     }
 
     private ViewGroup line() {
@@ -692,23 +718,25 @@ public class MainActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0, dp(12), 0, dp(10));
+        row.setPadding(0, dp(12), 0, dp(8));
 
         LinearLayout texts = new LinearLayout(this);
         texts.setOrientation(LinearLayout.VERTICAL);
+        texts.setPadding(0, 0, dp(12), 0);
         texts.setLayoutParams(new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
         TextView t1 = new TextView(this);
         t1.setText(g.title);
-        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-        t1.setAlpha(0.6f);
+        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
         t1.setTextColor(TEXT);
 
         TextView t2 = new TextView(this);
         t2.setText(g.pkg);
-        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         t2.setTextColor(SUB);
+        t2.setMaxLines(1);
+        t2.setEllipsize(android.text.TextUtils.TruncateAt.END);
         t2.setPadding(0, dp(2), 0, 0);
 
         texts.addView(t1);
@@ -723,8 +751,10 @@ public class MainActivity extends Activity {
         reboot.setOnClickListener(v -> restartApp(g.pkg));
         row.addView(reboot);
 
-        final Switch sw = new Switch(this);
-        styleSwitch(sw);
+        final Switch sw = new PgSwitch(this, ACCENT,
+                nightMode ? 0xFF3A3A3C : 0xFFE9E9EB);
+        sw.setLayoutParams(new LinearLayout.LayoutParams(dp(49), dp(28)));
+        sw.setLayoutParams(new LinearLayout.LayoutParams(dp(49), dp(28)));
         groupSwitches.put(g.pkg, sw);
         sw.setChecked(Config.get(this, g.key, true));
         sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -768,21 +798,23 @@ public class MainActivity extends Activity {
                                   final Group group) {
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0, dp(10), 0, dp(10));
+        row.setMinimumHeight(dp(56));
+        row.setPadding(0, dp(9), 0, dp(9));
 
         LinearLayout texts = new LinearLayout(this);
         texts.setOrientation(LinearLayout.VERTICAL);
+        texts.setPadding(0, 0, dp(12), 0);
         texts.setLayoutParams(new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
         TextView t1 = new TextView(this);
         t1.setText(name);
-        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         t1.setTextColor(TEXT);
 
         TextView t2 = new TextView(this);
         t2.setText(desc);
-        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         t2.setTextColor(SUB);
         t2.setPadding(0, dp(2), 0, 0);
 
@@ -790,8 +822,9 @@ public class MainActivity extends Activity {
         texts.addView(t2);
         row.addView(texts);
 
-        Switch sw = new Switch(this);
-        styleSwitch(sw);
+        Switch sw = new PgSwitch(this, ACCENT,
+                nightMode ? 0xFF3A3A3C : 0xFFE9E9EB);
+        sw.setLayoutParams(new LinearLayout.LayoutParams(dp(49), dp(28)));
         sw.setChecked(Config.get(this, key, def));
         sw.setEnabled(enabled);
         sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -810,17 +843,18 @@ public class MainActivity extends Activity {
     private void addCleanLogRow(LinearLayout parent) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.VERTICAL);
-        row.setPadding(0, dp(10), 0, dp(10));
+        row.setMinimumHeight(dp(56));
+        row.setPadding(0, dp(9), 0, dp(9));
         row.setClickable(true);
 
         TextView t1 = new TextView(this);
         t1.setText("清理日志缓冲");
-        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         t1.setTextColor(TEXT);
 
         TextView t2 = new TextView(this);
         t2.setText("清空 logcat 环形缓冲；其他应用的日志会一起清掉，配置与截图不受影响");
-        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         t2.setTextColor(SUB);
         t2.setPadding(0, dp(2), 0, 0);
 
@@ -844,19 +878,20 @@ public class MainActivity extends Activity {
     private void addCustomRulesRow(LinearLayout parent) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.VERTICAL);
-        row.setPadding(0, dp(10), 0, dp(10));
+        row.setMinimumHeight(dp(56));
+        row.setPadding(0, dp(9), 0, dp(9));
         row.setClickable(true);
 
         TextView t1 = new TextView(this);
         t1.setText("自定义规则");
-        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         t1.setTextColor(TEXT);
 
         TextView t2 = new TextView(this);
         String raw = Config.customRulesRaw(this).trim();
         int count = raw.isEmpty() ? 0 : raw.split(";;").length;
         t2.setText(I18n.text("按域名、域名/路径 或 类名#方法 追加拦截，当前 %d 条", count));
-        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         t2.setTextColor(SUB);
         t2.setPadding(0, dp(2), 0, 0);
 
@@ -975,17 +1010,18 @@ public class MainActivity extends Activity {
     private void addFraudDbRow(LinearLayout parent) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.VERTICAL);
-        row.setPadding(0, dp(10), 0, dp(10));
+        row.setMinimumHeight(dp(56));
+        row.setPadding(0, dp(9), 0, dp(9));
         row.setClickable(true);
 
         TextView t1 = new TextView(this);
         t1.setText("行为库状态");
-        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         t1.setTextColor(TEXT);
 
         TextView t2 = new TextView(this);
         t2.setText("读安全中心 fraud_detection_data.db 的写入计数，用来判断拦截是否生效");
-        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         t2.setTextColor(SUB);
         t2.setPadding(0, dp(2), 0, 0);
 
@@ -1113,21 +1149,23 @@ public class MainActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0, dp(10), 0, dp(10));
+        row.setMinimumHeight(dp(56));
+        row.setPadding(0, dp(9), 0, dp(9));
 
         LinearLayout texts = new LinearLayout(this);
         texts.setOrientation(LinearLayout.VERTICAL);
+        texts.setPadding(0, 0, dp(12), 0);
         texts.setLayoutParams(new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
         TextView t1 = new TextView(this);
         t1.setText("隐藏桌面图标");
-        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         t1.setTextColor(TEXT);
 
         TextView t2 = new TextView(this);
         t2.setText("隐藏后从 LSPosed 模块页进入本界面");
-        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         t2.setTextColor(SUB);
         t2.setPadding(0, dp(2), 0, 0);
 
@@ -1135,8 +1173,10 @@ public class MainActivity extends Activity {
         texts.addView(t2);
         row.addView(texts);
 
-        final Switch sw = new Switch(this);
-        styleSwitch(sw);
+        final Switch sw = new PgSwitch(this, ACCENT,
+                nightMode ? 0xFF3A3A3C : 0xFFE9E9EB);
+        sw.setLayoutParams(new LinearLayout.LayoutParams(dp(49), dp(28)));
+        sw.setLayoutParams(new LinearLayout.LayoutParams(dp(49), dp(28)));
         sw.setChecked(!launcherIconEnabled());
         sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -1157,7 +1197,8 @@ public class MainActivity extends Activity {
     private ViewGroup buttonRow() {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setPadding(0, dp(10), 0, dp(10));
+        row.setMinimumHeight(dp(56));
+        row.setPadding(0, dp(9), 0, dp(9));
 
         TextView view = new TextView(this);
         view.setText("查看日志");
@@ -1516,7 +1557,8 @@ public class MainActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0, dp(12), 0, dp(12));
+        row.setMinimumHeight(dp(56));
+        row.setPadding(0, dp(9), 0, dp(9));
         row.setClickable(true);
         TextView name = new TextView(this);
         name.setText(label);
@@ -1649,35 +1691,6 @@ public class MainActivity extends Activity {
                 .setView(sv)
                 .setPositiveButton(T("我知道了"), null)
                 .show();
-    }
-
-    /** HyperOS 风格开关：细轨道 + 小滑块，按下状态由 StateListDrawable 自动切换 */
-    private void styleSwitch(Switch sw) {
-        int on = ACCENT;
-        int off = nightMode ? 0xFF3A3A3C : 0xFFE5E5EA;
-
-        GradientDrawable trackOn = new GradientDrawable();
-        trackOn.setCornerRadius(dp(13));
-        trackOn.setColor(on);
-        GradientDrawable trackOff = new GradientDrawable();
-        trackOff.setCornerRadius(dp(13));
-        trackOff.setColor(off);
-
-        android.graphics.drawable.StateListDrawable track =
-                new android.graphics.drawable.StateListDrawable();
-        track.addState(new int[]{android.R.attr.state_checked}, trackOn);
-        track.addState(new int[]{}, trackOff);
-
-        GradientDrawable thumb = new GradientDrawable();
-        thumb.setShape(GradientDrawable.OVAL);
-        thumb.setColor(0xFFFFFFFF);
-        thumb.setSize(dp(18), dp(18));
-
-        sw.setTrackDrawable(track);
-        sw.setThumbDrawable(thumb);
-        sw.setShowText(false);
-        sw.setSplitTrack(false);
-        sw.setPadding(0, 0, dp(2), 0);
     }
 
     private int dp(int v) {
