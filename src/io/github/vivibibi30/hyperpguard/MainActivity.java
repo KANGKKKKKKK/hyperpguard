@@ -238,6 +238,8 @@ public class MainActivity extends Activity {
         global.addView(line());
         addCustomRulesRow(global);
         global.addView(line());
+        addCleanLogRow(global);
+        global.addView(line());
         // 需要 root 的功能，提示写在这里
         TextView rootTip = new TextView(this);
         rootTip.setText("「重启」「查看记录」需要 root，首次使用请允许 KernelSU 授权");
@@ -756,6 +758,40 @@ public class MainActivity extends Activity {
         });
         row.addView(sw);
         return sw;
+    }
+
+    /* ---------------- 清理日志缓冲 ---------------- */
+
+    private void addCleanLogRow(LinearLayout parent) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(0, dp(10), 0, dp(10));
+        row.setClickable(true);
+
+        TextView t1 = new TextView(this);
+        t1.setText("清理日志缓冲");
+        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        t1.setTextColor(TEXT);
+
+        TextView t2 = new TextView(this);
+        t2.setText("清空 logcat 环形缓冲；其他应用的日志会一起清掉，配置与截图不受影响");
+        t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        t2.setTextColor(SUB);
+        t2.setPadding(0, dp(2), 0, 0);
+
+        row.addView(t1);
+        row.addView(t2);
+        row.setOnClickListener(v -> new AlertDialog.Builder(this)
+                .setTitle("清空日志缓冲？")
+                .setMessage("会清空系统 logcat 的全部缓冲，包括其他应用的日志。"
+                        + "模块配置、已保存的截图与行为库都不受影响。")
+                .setPositiveButton("清空", (d, w) -> new Thread(() -> {
+                    execShell("logcat -b all -c");
+                    ui.post(() -> Toast.makeText(this, "已清空", Toast.LENGTH_SHORT).show());
+                }, "hyperpguard-clean-log").start())
+                .setNegativeButton("取消", null)
+                .show());
+        parent.addView(row);
     }
 
     /* ---------------- 自定义规则 ---------------- */
