@@ -217,13 +217,25 @@ public class MainActivity extends Activity {
             }
         }
 
+        // 状态栏透明，让背景延伸到状态栏下面；图标颜色按深浅模式切换
+        try {
+            getWindow().addFlags(
+                    android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            getWindow().setStatusBarColor(0);
+            getWindow().setNavigationBarColor(0);
+            getWindow().getDecorView().setSystemUiVisibility(
+                    android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        } catch (Throwable ignored) {
+        }
+
         ScrollView sv = new ScrollView(this);
         sv.setBackgroundColor(BG);
         sv.setFillViewport(true);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(16), dp(16), dp(16), dp(24));
+        root.setPadding(dp(16), dp(16) + statusBarHeight(), dp(16), dp(24));
         sv.addView(root, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -241,20 +253,13 @@ public class MainActivity extends Activity {
         sub.setPadding(0, dp(4), 0, dp(10));
         root.addView(sub);
 
-        // 顶部明确语义：开关打开是拦截，不是放行
+        // 顶部说明：开关语义，做成普通小字，不用色块
         TextView hint = new TextView(this);
         hint.setText("开关打开 = 拦截该行为，关闭 = 放行");
-        hint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
-        hint.setTextColor(0xFF1A6FD4);
-        GradientDrawable hintBg = new GradientDrawable();
-        hintBg.setColor(0xFFE8F2FF);
-        hintBg.setCornerRadius(dp(10));
-        hint.setBackground(hintBg);
-        hint.setPadding(dp(14), dp(11), dp(14), dp(11));
-        LinearLayout.LayoutParams hintLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        hintLp.bottomMargin = dp(12);
-        root.addView(hint, hintLp);
+        hint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        hint.setTextColor(SUB);
+        hint.setPadding(dp(4), dp(2), 0, dp(10));
+        root.addView(hint);
 
         // 全局设置
         root.addView(sectionTitle("通用"));
@@ -371,9 +376,8 @@ public class MainActivity extends Activity {
                 android.view.WindowInsetsController c =
                         getWindow().getDecorView().getWindowInsetsController();
                 if (c != null) {
-                    c.setSystemBarsAppearance(0,
-                            android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                                    | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
+                    int light = android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
+                    c.setSystemBarsAppearance(nightMode ? 0 : light, light);
                 } else {
                     getWindow().getDecorView().setSystemUiVisibility(0);
                 }
@@ -691,6 +695,16 @@ public class MainActivity extends Activity {
         lp.bottomMargin = dp(10);
         c.setLayoutParams(lp);
         return c;
+    }
+
+    /** 系统状态栏高度，用于沉浸式布局的顶部留白 */
+    private int statusBarHeight() {
+        try {
+            int id = getResources().getIdentifier("status_bar_height", "dimen", "android");
+            if (id > 0) return getResources().getDimensionPixelSize(id);
+        } catch (Throwable ignored) {
+        }
+        return dp(24);
     }
 
     /** 列表分隔线：0.75dp，左侧从内容边缘开始，和 Settings 的 item divider 一致 */

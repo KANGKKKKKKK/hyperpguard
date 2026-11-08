@@ -8,6 +8,11 @@
 - 现在改为 `setContentView` 之后再取 `decorView.getWindowInsetsController()`，并整段包 try/catch；取不到时退回 `setSystemUiVisibility(0)`
 - 窗口背景设置也一并包了 try/catch
 
+## 界面
+
+- 顶部「开关打开 = 拦截该行为，关闭 = 放行」改为灰色小字说明，去掉蓝色色块
+- 状态栏改为透明，背景延伸到状态栏下方；状态栏图标按深浅模式切换，内容顶部补系统状态栏高度
+
 ## 说明
 
 - 只影响界面启动路径，拦截逻辑未改动
