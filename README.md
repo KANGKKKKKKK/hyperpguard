@@ -175,6 +175,11 @@ build.sh              一键构建
 
 ## 更新日志
 
+### 1.5.10
+
+- 安装器新增「风险校验查询」：`verify.sec.xiaomi.com`、`tz.sec.xiaomi.com`，默认关，打开后风险检测失效
+- 安装器新增「游戏防篡改检查」：`/v2|v3|v4/game/interceptcheck`，默认关
+
 ### 1.5.9
 
 - 安装页推荐位补拦图片 CDN（`t1/t2.a.market.xiaomi.com` 的 `/thumbnail/`）
@@ -196,10 +201,6 @@ build.sh              一键构建
 ### 1.5.6
 
 - 网络层补 okhttp 自定义 DNS：默认实现走 `InetAddress` 已被拦，DoH 或内置 IP 列表的 `Dns` 实现现在也会按规则抛 `UnknownHostException`
-
-### 1.5.5
-
-- 应用安装器补方法层拦截：AVL 上报入口按「静态 4 参、第二参为 ApkInfo、返回 void」定位并置空，不再只依赖 URL 路径
 
 更早版本见 [docs/CHANGELOG.md](docs/CHANGELOG.md) 或 Releases 页。
 
