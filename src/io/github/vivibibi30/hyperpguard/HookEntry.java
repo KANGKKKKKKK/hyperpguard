@@ -411,6 +411,16 @@ public class HookEntry extends XposedModule {
             if (pathOn && Config.on(Config.K_AD_PKG, true)) {
                 r.add(new NetGuard.Rule("api.installer.xiaomi.com", "/info/layout"));
             }
+            // 方法层：安装活跃统计入口，AppActiveStatService 内的 void(List) 方法
+            if (Config.on(Config.K_PKG_STAT, true)) {
+                int n = Hooks.hookBySignature(this,
+                        Hooks.classNames(cl, s -> s.contains("AppActiveStatService"), 40), cl,
+                        m -> m.getReturnType() == void.class
+                                && m.getParameterCount() == 1
+                                && java.util.List.class.isAssignableFrom(m.getParameterTypes()[0]),
+                        chain -> null);
+                Logs.i("packageinstaller stat method hooked=" + n);
+            }
             // 方法层：AVL 上报入口，静态 4 参、第二参为 ApkInfo、返回 void
             if (Config.on(Config.K_PKG_AVL, true)) {
                 Hooks.MethodFilter avl = m -> java.lang.reflect.Modifier.isStatic(m.getModifiers())

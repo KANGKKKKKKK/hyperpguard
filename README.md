@@ -175,6 +175,11 @@ build.sh              一键构建
 
 ## 更新日志
 
+### 1.5.7
+
+- 「安装活跃统计」补方法层：hook `AppActiveStatService` 内的 `void(List)` 入口，不再只依赖 `/statistics/appactive` 这条 URL
+- 安装器三个子项的说明写明层次与影响：AVL 与活跃统计是网络层 + 方法层，广告位是网络层
+
 ### 1.5.6
 
 - 网络层补 okhttp 自定义 DNS：默认实现走 `InetAddress` 已被拦，DoH 或内置 IP 列表的 `Dns` 实现现在也会按规则抛 `UnknownHostException`
