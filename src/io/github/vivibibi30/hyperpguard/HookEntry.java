@@ -386,7 +386,35 @@ public class HookEntry extends XposedModule {
                 r.add(new NetGuard.Rule("net-assistant.10046.xiaomimobile.com"));
                 r.add(new NetGuard.Rule("flash.sec.miui.com", "/satisfaction/"));
             }
+            if (Config.on(Config.K_SC_TRACKING, true)) {
+                // OneTrack 统计埋点；host 是裸域名，按区域各自一条
+                r.add(new NetGuard.Rule("tracking.miui.com"));
+                r.add(new NetGuard.Rule("tracking.rus.miui.com"));
+                r.add(new NetGuard.Rule("tracking.intl.miui.com"));
+                r.add(new NetGuard.Rule("tracking.india.miui.com"));
+                r.add(new NetGuard.Rule("tracking.eu.miui.com"));
+                r.add(new NetGuard.Rule("sdkconfig.xiaomi.com"));
+                r.add(new NetGuard.Rule("sdkconfig.rus.xiaomi.com"));
+                r.add(new NetGuard.Rule("sdkconfig.intl.xiaomi.com"));
+                r.add(new NetGuard.Rule("sdkconfig.india.xiaomi.com"));
+                r.add(new NetGuard.Rule("sdkconfig.eu.xiaomi.com"));
+            }
             netSafe(cl, "securitycenter", r, false);
+            return;
+        }
+
+
+        if ("com.miui.systemAdSolution".equals(pkg)) {
+            if (!Config.on(Config.K_G_MSA, true)) return;
+            Logs.i("attach msa");
+            if (Config.on(Config.K_MSA_USAGE, true)) {
+                stage("msaUsage", () -> new MsaHooks(this).installUsage(cl));
+            }
+            if (Config.on(Config.K_MSA_TRACK, true)) {
+                stage("msaTrack", () -> new MsaHooks(this).installTrack(cl));
+            }
+            // 广告 SDK 失败会重试，域名层默认不拦，保留自定义规则入口
+            netSafe(cl, "msa", new ArrayList<>(), false);
             return;
         }
 

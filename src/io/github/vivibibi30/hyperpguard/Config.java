@@ -14,7 +14,7 @@ public final class Config {
 
     public static final String PKG = "io.github.vivibibi30.hyperpguard";
     public static final String PREFS = "pg";
-    public static final String VERSION = "1.5.15";
+    public static final String VERSION = "1.5.16";
 
     /* 全局 */
     public static final String K_MASTER = "master";
@@ -47,6 +47,7 @@ public final class Config {
     public static final String K_G_PKG = "g_packageinstaller";
     public static final String K_G_AD_MARKET = "g_ad_market";
     public static final String K_G_AD_XMSF = "g_ad_xmsf";
+    public static final String K_G_MSA = "g_msa";
 
     /* SystemHelper */
     public static final String K_SYSHELPER = "block_syshelper";
@@ -65,6 +66,12 @@ public final class Config {
     public static final String K_ANALYTICS_ALLNET = "analytics_all_net";
     public static final String K_SYSHELPER_ALLNET = "syshelper_all_net";
 
+    /* MSA 广告组件 */
+    /** 广告使用画像：查询应用今日是否打开、最后使用时间 */
+    public static final String K_MSA_USAGE = "block_msa_usage";
+    /** 广告埋点：OneTrack 的 track / adTrack 方法 */
+    public static final String K_MSA_TRACK = "block_msa_track";
+
     /* 翻译组件 */
     public static final String K_AIASST = "block_aiasst";
 
@@ -82,6 +89,8 @@ public final class Config {
     public static final String K_SC_IDS = "block_sc_ids";
     /** 安全中心的广告位、网络助手推送与满意度问卷 */
     public static final String K_SC_MISC = "block_sc_misc";
+    /** 安全中心的 OneTrack 统计埋点（tracking.*.miui.com / sdkconfig.*.xiaomi.com） */
+    public static final String K_SC_TRACKING = "block_sc_tracking";
     /** guardprovider 的安犬引擎日志上传 */
     public static final String K_GP_ENGINELOG = "block_gp_enginelog";
     public static final String K_GP_CLOUDSCAN = "block_gp_cloudscan";

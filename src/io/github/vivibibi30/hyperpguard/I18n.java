@@ -262,6 +262,16 @@ final class I18n {
         EN.put("检查更新", "Check for updates");
         EN.put("刷新", "Refresh");
         EN.put("关于", "About");
+        EN.put("统计埋点上报", "Usage stats upload");
+        EN.put("tracking.*.miui.com / sdkconfig.*.xiaomi.com；只影响统计，不影响功能",
+                "tracking.*.miui.com / sdkconfig.*.xiaomi.com; statistics only, no functional impact");
+        EN.put("广告组件（MSA）", "Ads (MSA)");
+        EN.put("广告使用画像", "Ad usage profile");
+        EN.put("读取应用今日是否打开、最后使用时间；按少推广告的一侧返回",
+                "Reads whether apps were opened today and their last-used time; answers the fewer-ads side");
+        EN.put("广告埋点上报", "Ad event tracking");
+        EN.put("OneTrack 的 track / adTrack 方法直接返回空",
+                "OneTrack track / adTrack methods return immediately");
         EN.put("环境自检", "Self-check");
         EN.put("全断网（推荐）", "Block all traffic (recommended)");
         EN.put("该进程所有外网请求一并拦截；云端换域名也不用管",

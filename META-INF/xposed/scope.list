@@ -1,12 +1,13 @@
 com.miui.analytics
+com.miui.dmregservice
 com.miui.guardprovider
+com.miui.misightservice
 com.miui.packageinstaller
 com.miui.securitycenter
+com.miui.systemAdSolution
 com.mobiletools.systemhelper
 com.xiaomi.aiasst.vision
 com.xiaomi.market
 com.xiaomi.registration
 com.xiaomi.trustservice
 com.xiaomi.xmsf
-com.miui.dmregservice
-com.miui.misightservice

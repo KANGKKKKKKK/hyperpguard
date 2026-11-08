@@ -44,12 +44,13 @@ import java.util.Map;
  */
 public class MainActivity extends Activity {
 
-    private static final int BG = 0xFFF2F3F5;
-    private static final int CARD = 0xFFFFFFFF;
-    private static final int TEXT = 0xFF1A1A1A;
-    private static final int SUB = 0xFF8A8A8E;
-    private static final int LINE = 0xFFEFEFF0;
+    private int BG = 0xFFF2F3F5;
+    private int CARD = 0xFFFFFFFF;
+    private int TEXT = 0xFF1A1A1A;
+    private int SUB = 0xFF8A8A8E;
+    private int LINE = 0xFFEFEFF0;
     private static final int ACCENT = 0xFF3478F6;
+    private boolean nightMode;
 
     private static final String URL_REPO = "https://github.com/vivibibi30/hyperpguard";
     private static final String URL_CUSTOM_RULES_DOC =
@@ -128,6 +129,7 @@ public class MainActivity extends Activity {
                     new Item(T("行为库写入拦截"), T("拦截 screenshot / screen_share / voip_record 等 8 张表的写入"), Config.K_SC_DBGUARD, true),
                     new Item(T("设备标识拦截"), T("IMSI / ICCID / 手机号 / IMEI；打开后剩余流量、套餐查询会失效"), Config.K_SC_IDS, false),
                     new Item(T("广告位与推送下发"), T("adv 广告位、网络助手推送、满意度问卷；关闭后这几处不再拉取配置"), Config.K_SC_MISC, true),
+                    new Item(T("统计埋点上报"), T("tracking.*.miui.com / sdkconfig.*.xiaomi.com；只影响统计，不影响功能"), Config.K_SC_TRACKING, true),
                     new Item(T("定位（GPS）"), T("只对本应用：位置查询返回空"), Config.K_LOC_SC, false),
                     new Item(T("通讯录 / 通话 / 短信读取"), T("只对本应用：查询返回空；来电识别会受影响"), Config.K_SOCIAL_SC, false),
             }),
@@ -152,6 +154,10 @@ public class MainActivity extends Activity {
             new Group(T("小米服务框架"), "com.xiaomi.xmsf", Config.K_G_AD_XMSF, new Item[]{
                     new Item(T("广告接口"), T("adv.sec.miui.com"), Config.K_AD_XMSF, true),
                     new Item(T("使用统计上报"), T("tracking.miui.com/track；只影响统计，不影响推送与登录"), Config.K_XMSF_TRACK, true),
+            }),
+            new Group(T("广告组件（MSA）"), "com.miui.systemAdSolution", Config.K_G_MSA, new Item[]{
+                    new Item(T("广告使用画像"), T("读取应用今日是否打开、最后使用时间；按少推广告的一侧返回"), Config.K_MSA_USAGE, true),
+                    new Item(T("广告埋点上报"), T("OneTrack 的 track / adTrack 方法直接返回空"), Config.K_MSA_TRACK, true),
             }),
             new Group(T("运营商服务"), "com.xiaomi.registration", Config.K_G_REGISTRATION, new Item[]{
                     new Item(T("设备注册（zzhc）"), T("IMEI/IMSI/ICCID；关闭后 VoLTE / 运营商功能可能异常"), Config.K_REG_ZZHC, false),
@@ -193,6 +199,30 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        nightMode = (getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        if (nightMode) {
+            BG = 0xFF000000;
+            CARD = 0xFF1C1C1E;
+            TEXT = 0xFFFFFFFF;
+            SUB = 0xFF8E8E93;
+            LINE = 0xFF2C2C2E;
+        }
+        if (nightMode) {
+            getWindow().setBackgroundDrawable(
+                    new android.graphics.drawable.ColorDrawable(0xFF000000));
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                android.view.WindowInsetsController c = getWindow().getInsetsController();
+                if (c != null) {
+                    c.setSystemBarsAppearance(0,
+                            android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                                    | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
+                }
+            } else {
+                getWindow().getDecorView().setSystemUiVisibility(0);
+            }
+        }
 
         ScrollView sv = new ScrollView(this);
         sv.setBackgroundColor(BG);
@@ -631,9 +661,9 @@ public class MainActivity extends Activity {
         c.setOrientation(LinearLayout.VERTICAL);
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(CARD);
-        bg.setCornerRadius(dp(16));
+        bg.setCornerRadius(dp(18));
         c.setBackground(bg);
-        c.setPadding(dp(16), dp(4), dp(16), dp(6));
+        c.setPadding(dp(16), dp(6), dp(16), dp(8));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.bottomMargin = dp(12);
@@ -671,8 +701,8 @@ public class MainActivity extends Activity {
 
         TextView t1 = new TextView(this);
         t1.setText(g.title);
-        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-        t1.setTypeface(null, Typeface.BOLD);
+        t1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        t1.setAlpha(0.6f);
         t1.setTextColor(TEXT);
 
         TextView t2 = new TextView(this);
@@ -694,6 +724,7 @@ public class MainActivity extends Activity {
         row.addView(reboot);
 
         final Switch sw = new Switch(this);
+        styleSwitch(sw);
         groupSwitches.put(g.pkg, sw);
         sw.setChecked(Config.get(this, g.key, true));
         sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -760,6 +791,7 @@ public class MainActivity extends Activity {
         row.addView(texts);
 
         Switch sw = new Switch(this);
+        styleSwitch(sw);
         sw.setChecked(Config.get(this, key, def));
         sw.setEnabled(enabled);
         sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -1104,6 +1136,7 @@ public class MainActivity extends Activity {
         row.addView(texts);
 
         final Switch sw = new Switch(this);
+        styleSwitch(sw);
         sw.setChecked(!launcherIconEnabled());
         sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -1616,6 +1649,35 @@ public class MainActivity extends Activity {
                 .setView(sv)
                 .setPositiveButton(T("我知道了"), null)
                 .show();
+    }
+
+    /** HyperOS 风格开关：细轨道 + 小滑块，按下状态由 StateListDrawable 自动切换 */
+    private void styleSwitch(Switch sw) {
+        int on = ACCENT;
+        int off = nightMode ? 0xFF3A3A3C : 0xFFE5E5EA;
+
+        GradientDrawable trackOn = new GradientDrawable();
+        trackOn.setCornerRadius(dp(13));
+        trackOn.setColor(on);
+        GradientDrawable trackOff = new GradientDrawable();
+        trackOff.setCornerRadius(dp(13));
+        trackOff.setColor(off);
+
+        android.graphics.drawable.StateListDrawable track =
+                new android.graphics.drawable.StateListDrawable();
+        track.addState(new int[]{android.R.attr.state_checked}, trackOn);
+        track.addState(new int[]{}, trackOff);
+
+        GradientDrawable thumb = new GradientDrawable();
+        thumb.setShape(GradientDrawable.OVAL);
+        thumb.setColor(0xFFFFFFFF);
+        thumb.setSize(dp(18), dp(18));
+
+        sw.setTrackDrawable(track);
+        sw.setThumbDrawable(thumb);
+        sw.setShowText(false);
+        sw.setSplitTrack(false);
+        sw.setPadding(0, 0, dp(2), 0);
     }
 
     private int dp(int v) {

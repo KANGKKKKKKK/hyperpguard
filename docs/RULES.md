@@ -6,6 +6,7 @@
 
 | 应用 | 规则 | 依据 |
 |---|---|---|
+| MSA | `com.miui.systemAdSolution` 方法层 | 广告使用画像按「今天已打开 = true / 最后使用 = -1」返回；OneTrack 的 `track*` / `adTrack*` 返回空。类名跨版本会漂移，按修饰符 + 参数 + 返回类型 + 包名组合判定 |
 | SystemHelper | `dm.wo.com.cn` | 唯一已知上报地址 `http://dm.wo.com.cn:18080/register`（明文 HTTP、应用层加密封装），硬编码在 `c.d.a.b.d` 常量中；组件为运营商设备管理 / 网络优化用途，非恶意软件 |
 | guardprovider | `flash.sec.miui.com` | 应用特征上传接口 |
 | guardprovider | `detection-aigc.engine.miui.com` | AI 通话预警云检测 |
@@ -24,6 +25,7 @@
 | registration | `typdm.tydevice.com` | 默认开启：明文 HTTP 上传 CTEI / IMEI / MAC |
 | registration | `zzhc.vnet.cn` | 默认关闭：设备注册（IMEI / IMSI / ICCID） |
 | securitycenter | `fraud-detection.engine.miui.com` | 反诈配置 |
+| securitycenter | `tracking.*.miui.com`、`sdkconfig.*.xiaomi.com` 共 10 条 | OneTrack 统计埋点；host 为裸域名（CN/RU/INTL/IN/IN/EU 五套），无路径依赖 |
 | securitycenter | `flash.sec.miui.com` + `/detect/` | 检测接口 |
 | packageinstaller | `api.installer.xiaomi.com` + `/avl/upload` | 上传接口 |
 | packageinstaller | `api.installer.xiaomi.com` + `/statistics/appactive` | 活跃统计埋点 |
