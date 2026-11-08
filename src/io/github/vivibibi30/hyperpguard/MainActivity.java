@@ -134,6 +134,7 @@ public class MainActivity extends Activity {
                     new Item("安装活跃统计", "网络层 + 方法层；关闭后不再上报安装活跃数据，无功能影响", Config.K_PKG_STAT, true),
                     new Item("安装页广告位", "网络层 + 方法层；关闭后安装页不再拉取推荐位配置", Config.K_AD_PKG, true),
                     new Item("设备标识（OAID）", "MSA SDK 返回空串；只影响广告归因，不影响安装", Config.K_PKG_OAID, true),
+                    new Item("云端配置下发", "阻断安装器云端参数，含「未查询到备案」提示；关闭后按内置默认值展示", Config.K_PKG_CLOUD, true),
             }),
             new Group("应用商店", "com.xiaomi.market", Config.K_G_AD_MARKET, new Item[]{
                     new Item("广告配置下发", "sdkconfig.ad.xiaomi.com", Config.K_AD_MARKET, true),

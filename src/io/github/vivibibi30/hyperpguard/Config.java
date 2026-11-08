@@ -106,6 +106,8 @@ public final class Config {
     public static final String K_AD_PKG = "block_ad_pkg";
     /** 安装器的 MSA OAID 获取 */
     public static final String K_PKG_OAID = "block_pkg_oaid";
+    /** 安装器云端参数下发（含新未注册应用的备案提示） */
+    public static final String K_PKG_CLOUD = "block_pkg_cloud";
 
     /* 广告 */
     public static final String K_AD_MARKET = "block_ad_market";
