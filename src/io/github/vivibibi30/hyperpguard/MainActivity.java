@@ -52,6 +52,8 @@ public class MainActivity extends Activity {
     private static final int ACCENT = 0xFF3478F6;
 
     private static final String URL_REPO = "https://github.com/vivibibi30/hyperpguard";
+    private static final String URL_CUSTOM_RULES_DOC =
+            URL_REPO + "/blob/main/docs/CUSTOM-RULES.md";
     private static final String URL_ISSUES = URL_REPO + "/issues";
     private static final String URL_RELEASES = URL_REPO + "/releases";
     private static final String URL_MODULE =
@@ -826,6 +828,16 @@ public class MainActivity extends Activity {
         parent.addView(row);
     }
 
+    private void openCustomRulesDoc() {
+        try {
+            Intent i = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(URL_CUSTOM_RULES_DOC));
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+        } catch (Throwable t) {
+            Toast.makeText(this, "没有可以打开链接的应用", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void showCustomRules() {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
@@ -853,6 +865,14 @@ public class MainActivity extends Activity {
         clear.setAllCaps(false);
         clear.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
         box.addView(clear);
+
+        TextView doc = new TextView(this);
+        doc.setText("使用说明");
+        doc.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        doc.setTextColor(ACCENT);
+        doc.setPadding(0, dp(10), 0, 0);
+        doc.setOnClickListener(v -> openCustomRulesDoc());
+        box.addView(doc);
 
         ScrollView sv = new ScrollView(this);
         sv.addView(box);
