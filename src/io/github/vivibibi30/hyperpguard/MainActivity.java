@@ -232,17 +232,17 @@ public class MainActivity extends Activity {
         makeSwitchRow(global, "记录未拦截访问", "把没命中规则的域名写进日志，排查漏拦时临时打开",
                 Config.K_SNIFF, false, true);
         global.addView(line());
-        addHideIconRow(global);
-        global.addView(line());
         addFraudDbRow(global);
         global.addView(line());
         addCustomRulesRow(global);
         global.addView(line());
         addCleanLogRow(global);
         global.addView(line());
+        addHideIconRow(global);
+        global.addView(line());
         // 需要 root 的功能，提示写在这里
         TextView rootTip = new TextView(this);
-        rootTip.setText("「重启」「查看记录」需要 root，首次使用请允许 KernelSU 授权");
+        rootTip.setText("「重启」「查看日志」需要 root，首次使用请允许 KernelSU 授权");
         rootTip.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
         rootTip.setTextColor(SUB);
         rootTip.setPadding(0, dp(8), 0, 0);
