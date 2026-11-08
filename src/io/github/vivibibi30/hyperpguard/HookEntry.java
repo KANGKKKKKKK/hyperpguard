@@ -91,6 +91,10 @@ public class HookEntry extends XposedModule {
         }
         try {
             dispatch(pkg, cl);
+            final java.util.List<String> methodRules = Config.customMethodRules();
+            if (!methodRules.isEmpty()) {
+                stage("customMethods", () -> Hooks.customMethods(this, cl, methodRules));
+            }
         } catch (Throwable t) {
             Logs.i("dispatch fail " + pkg + ": " + t);
             for (String line : android.util.Log.getStackTraceString(t).split("\n")) {
@@ -265,7 +269,7 @@ public class HookEntry extends XposedModule {
             if (Config.on(Config.K_GP_SCREENGUARD, true)) {
                 stage("screenCapture", () -> CaptureHooks.screenCapture(this, cl));
             }
-            if (!r.isEmpty()) netSafe(cl, "guardprovider", r, false);
+            netSafe(cl, "guardprovider", r, false);
             return;
         }
 
@@ -299,7 +303,7 @@ public class HookEntry extends XposedModule {
             if (Config.on(Config.K_MISIGHT_EVENTLOG, true)) {
                 r.add(new NetGuard.Rule("event-log.cnbj1.mi-fds.com"));
             }
-            if (!r.isEmpty()) netSafe(cl, "misightservice", r, false);
+            netSafe(cl, "misightservice", r, false);
             return;
         }
 
@@ -393,7 +397,6 @@ public class HookEntry extends XposedModule {
             List<NetGuard.Rule> r = new ArrayList<>();
             if (Config.on(Config.K_REG_ZZHC, false)) r.add(new NetGuard.Rule("zzhc.vnet.cn"));
             if (Config.on(Config.K_REG_TYPDM, true)) r.add(new NetGuard.Rule("typdm.tydevice.com"));
-            if (r.isEmpty()) return;
             netSafe(cl, "registration", r, false);
             return;
         }
@@ -506,7 +509,6 @@ public class HookEntry extends XposedModule {
                 }
                 Logs.i("packageinstaller avl method hooked=" + n);
             }
-            if (r.isEmpty()) return;
             Logs.i("attach packageinstaller, rules=" + r.size());
             netSafe(cl, "packageinstaller", r, false);
             return;

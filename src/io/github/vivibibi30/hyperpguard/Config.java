@@ -14,7 +14,7 @@ public final class Config {
 
     public static final String PKG = "io.github.vivibibi30.hyperpguard";
     public static final String PREFS = "pg";
-    public static final String VERSION = "1.5.11";
+    public static final String VERSION = "1.5.12";
 
     /* 全局 */
     public static final String K_MASTER = "master";
@@ -326,9 +326,23 @@ public final class Config {
         for (String item : s.split(";;")) {
             item = item.trim();
             if (item.isEmpty()) continue;
+            if (item.indexOf('#') > 0) continue;   // 方法级规则，见 customMethodRules()
             int i = item.indexOf('/');
             if (i > 0) out.add(new NetGuard.Rule(item.substring(0, i), item.substring(i)));
             else out.add(new NetGuard.Rule(item));
+        }
+        return out;
+    }
+
+    /** 方法级规则：`类名#方法名`，方法名写 `*` 表示整类全部方法 */
+    public static java.util.List<String> customMethodRules() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        String s = CUSTOM;
+        if (s == null || s.isEmpty()) return out;
+        for (String item : s.split(";;")) {
+            item = item.trim();
+            if (item.indexOf('#') <= 0 || item.endsWith("#")) continue;
+            out.add(item);
         }
         return out;
     }

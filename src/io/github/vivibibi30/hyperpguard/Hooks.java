@@ -137,4 +137,57 @@ final class Hooks {
         if (broken > 0) Logs.i("hookBySignature skipped classes=" + broken);
         return n;
     }
+
+    private static final java.util.Set<String> CUSTOM_HITS =
+            java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<String, Boolean>());
+
+    /**
+     * 自定义方法规则：`类名#方法名`，方法名 `*` 表示整类。
+     * 命中后直接返回该返回类型的默认值（void 与引用类型返回 null）。
+     */
+    static void customMethods(XposedModule m, ClassLoader cl, java.util.List<String> rules) {
+        for (String rule : rules) {
+            int i = rule.indexOf('#');
+            if (i <= 0 || i >= rule.length() - 1) continue;
+            String cls = rule.substring(0, i).trim();
+            String name = rule.substring(i + 1).trim();
+            int n = 0;
+            try {
+                Class<?> c = Class.forName(cls, false, cl);
+                for (Method method : c.getDeclaredMethods()) {
+                    if (!"*".equals(name) && !method.getName().equals(name)) continue;
+                    int mod = method.getModifiers();
+                    if (java.lang.reflect.Modifier.isAbstract(mod)
+                            || java.lang.reflect.Modifier.isNative(mod)) continue;
+                    final Object value = defaultValue(method.getReturnType());
+                    final String key = rule;
+                    try {
+                        m.hook(method).intercept(chain -> {
+                            if (CUSTOM_HITS.add(key)) Logs.i("custom hit " + key);
+                            return value;
+                        });
+                        n++;
+                    } catch (Throwable ignored) {
+                    }
+                }
+            } catch (Throwable t) {
+                Logs.i("custom method miss " + rule + " -> " + t);
+                continue;
+            }
+            Logs.i("custom method " + rule + " hooked=" + n);
+        }
+    }
+
+    private static Object defaultValue(Class<?> t) {
+        if (t == null || !t.isPrimitive()) return null;
+        if (t == boolean.class) return Boolean.FALSE;
+        if (t == char.class) return Character.valueOf('\u0000');
+        if (t == byte.class) return Byte.valueOf((byte) 0);
+        if (t == short.class) return Short.valueOf((short) 0);
+        if (t == int.class) return Integer.valueOf(0);
+        if (t == long.class) return Long.valueOf(0L);
+        if (t == float.class) return Float.valueOf(0f);
+        if (t == double.class) return Double.valueOf(0d);
+        return null;
+    }
 }

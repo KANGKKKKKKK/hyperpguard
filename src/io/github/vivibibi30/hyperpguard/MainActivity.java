@@ -815,7 +815,7 @@ public class MainActivity extends Activity {
         TextView t2 = new TextView(this);
         String raw = Config.customRulesRaw(this).trim();
         int count = raw.isEmpty() ? 0 : raw.split(";;").length;
-        t2.setText("按域名或 域名/路径 追加拦截，当前 " + count + " 条");
+        t2.setText("按域名、域名/路径 或 类名#方法 追加拦截，当前 " + count + " 条");
         t2.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
         t2.setTextColor(SUB);
         t2.setPadding(0, dp(2), 0, 0);
@@ -832,7 +832,7 @@ public class MainActivity extends Activity {
         box.setPadding(dp(16), dp(8), dp(16), dp(8));
 
         final EditText input = new EditText(this);
-        input.setHint("tracking.miui.com 或 tracking.miui.com/track/");
+        input.setHint("tracking.miui.com 或 tracking.miui.com/track/ 或 jo.k#U0");
         input.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
         box.addView(input);
 
@@ -866,7 +866,8 @@ public class MainActivity extends Activity {
         final Runnable render = () -> {
             String raw = Config.customRulesRaw(MainActivity.this).trim();
             if (raw.isEmpty()) {
-                list.setText("还没有规则。\n\n域名 = 拦该域及其子域；域名/路径 = 只拦该前缀。"
+                list.setText("还没有规则。\n\n域名 = 拦该域及其子域；域名/路径 = 只拦该前缀；"
+                        + "类名#方法 = 方法直接返回默认值（* 表示整类）。"
                         + "\n添加或删除后需要重启对应应用才生效。");
                 return;
             }
@@ -880,8 +881,10 @@ public class MainActivity extends Activity {
 
         add.setOnClickListener(v -> {
             String val = input.getText().toString().trim();
-            if (!val.matches("[A-Za-z0-9._\\-]+(/[A-Za-z0-9._\\-]*)*")) {
-                Toast.makeText(this, "格式：域名 或 域名/路径", Toast.LENGTH_SHORT).show();
+            boolean host = val.matches("[A-Za-z0-9._\\-]+(/[A-Za-z0-9._\\-]*)*");
+            boolean method = val.matches("[A-Za-z0-9._$]+#[A-Za-z0-9_$*<>]+");
+            if (!host && !method) {
+                Toast.makeText(this, "格式：域名、域名/路径 或 类名#方法", Toast.LENGTH_SHORT).show();
                 return;
             }
             String raw = Config.customRulesRaw(this).trim();
