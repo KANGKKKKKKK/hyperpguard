@@ -1281,7 +1281,7 @@ public class MainActivity extends Activity {
     /* ---------------- 日志 ---------------- */
 
     private void loadLog(final boolean share) {
-        Toast.makeText(this, "读取中…（需 root）", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "正在读取日志，约需数秒（需 root）", Toast.LENGTH_LONG).show();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -1351,6 +1351,7 @@ public class MainActivity extends Activity {
     /** 常见上报域名的用途，用于给「未拦截」行加注 */
     private static final String[][] HOST_HINTS = {
             {"tracking.miui.com", "统计埋点"},
+            {"msg.xiaomi.net", "推送接入调度"},
             {"adv.sec.miui.com", "广告位"},
             {"logupdate.avlyun", "病毒引擎日志"},
             {"rcpc-sdk", "腾讯 RCPC SDK"},

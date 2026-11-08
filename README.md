@@ -175,6 +175,11 @@ build.sh              一键构建
 
 ## 更新日志
 
+### 1.5.3
+
+- 未拦截行的用途标注新增「推送接入调度」：`msg.xiaomi.net` 是小米推送的接入点调度，不是上报
+- 「查看日志」的提示改为「正在读取日志，约需数秒」
+
 ### 1.5.2
 
 - 全局卡片新增「清理日志缓冲」：确认后清空 logcat 环形缓冲；其他应用日志会一起清掉，配置与截图不受影响
@@ -195,50 +200,3 @@ build.sh              一键构建
 - 只读计数，不读通话号码与截图路径；复制到应用私有目录读完即删
 - 应用商店与小米服务框架新增「使用统计上报」：拦 `tracking.miui.com/track/`，只影响统计，不影响下载、推送与登录
 
-### 1.3.7
-
-- 分享出去的标题改为「运行日志」，分享选择器同步
-- 自检不再附带粘贴提示
-
-
-更早版本见 [docs/CHANGELOG.md](docs/CHANGELOG.md) 或 Releases 页。
-
-## 参考来源
-
-以下项目的公开资料提供了识别目标与验证思路。本项目代码独立编写，未复制、未反编译复用其实现。
-
-- **[HyperCeiler](https://github.com/ReChronoRain/HyperCeiler)**（GPL-3.0，作者 [Sevtinge](https://github.com/Sevtinge)，现维护于 [ReChronoRain](https://github.com/ReChronoRain)）— analytics 目标方法、`flash.sec.miui.com/detect/app`、安装器 `/avl/upload`、MRM 拦截思路
-- **[XSOF Privacy](https://github.com/yunyizea/xsof-privacy)**（作者 yunyizea）— 8 类行为记录的拦截范围、`(null, 1017)` 拒绝语义、按组组织 hook
-- **Hyper 隐私卫士**（`io.github.hyperprivacyguard`）— SystemHelper 采集入口特征、guardprovider 应用列表采集
-- **[HyperOS4-XSOF-Analysis](https://github.com/FAQQAQ/HyperOS4-XSOF-Analysis)**（作者 [FAQQAQ](https://github.com/FAQQAQ)）— 7 个组件的静态分析记录：整域范围、`om.tracking.miui.com/track/mt`、区域与备份域、DoH 重试、`framework.sec.miui.com`、`virus-engine.sec.miui.com`、地震/报警/EPS 族、`typdm.tydevice.com` 明文上报、analytics 6.33.0 的 `a.b.a.*` 结构
-- **[OSAKOo](https://www.coolapk.com/feed/74882729?s=MzNlYzk4NWUxNWZhMjRnNmFlZTFjMDJ6a1664)**（酷安）— `fraud_detection_data.db` 八张表与 `screenshort_time` 拼写、`createScreenCaptureIntent` 零调用与 `privateLookupIn` 反射调用、`clip.mp4` 上报链路、SystemHelper 采集项与明文上报、六个域名的实际用途
-- **[Android OS Privacy Under the Loupe – A Tale from the East](https://ar5iv.labs.arxiv.org/html/2302.01890)**（ACM WiSec '23）— 四类敏感数据的分类，以及设备标识、位置、通讯录在预装组件里的采集面
-- **酷安 [RooyCo《真问题还在》](https://www.coolapk.com/feed/74911090)** — `com.miui.dmregservice` 的存在与采集字段（Wi-Fi 列表、蓝牙、BSSID、路由器 MAC）、`operator_service_improve_plan`、采集频率
-- **[frauddb](https://github.com/acnekot/frauddb)**（acnekot，MIT）— `fraud_detection_data.db` 八张表结构与库路径、`tel_number_md5` 算法
-- **[misight-viewer](https://github.com/Artriai/misight-viewer)**（作者 [Artriai](https://github.com/Artriai)）— MiSight 数据库字段与事件分类、设备诊断与用户行为记录的区分依据
-- **libxposed API**（Apache-2.0）、**LSPosed** — 模块入口与作用域接口
-
-第三方组件：`libxposed API 102`（Apache-2.0，编译期依赖），详见 [NOTICE](NOTICE)。
-
-感谢以上作者与维护者。
-
-## 免责声明
-
-- 本模块仅用于在**本人拥有完全控制权**的 Android 设备上限制预装组件的上报行为，不提供任何入侵、破解他人系统或获取他人数据的能力
-- 作者不参与、不支持商业销售、付费分发或捆绑获利；第三方分发须遵守 GPL-3.0
-- 模块默认不联网、不收集、不上传任何信息；仅在手动点设置页「检查更新」时向 GitHub API 查询一次版本号，不发送任何设备标识或使用数据；开关配置存在本地，日志只在本地 logcat 读取
-- 模块名称、包名、图标归作者所有，不得冒充官方版本
-- 与小米、中国联通等厂商无隶属或合作关系，商标归各自权利人
-- 按「现状」提供，不提供任何明示或暗示担保
-
-完整九条条款见 [DISCLAIMER.txt](DISCLAIMER.txt)。
-
-## 许可
-
-GPL-3.0，见 [LICENSE](LICENSE)。
-
-## English
-
-HyperPGuard is an LSPosed module for HyperOS that blocks telemetry from preinstalled system components — carrier telemetry, cloud app scanning, installer stats, ads, XSOF behaviour queries and silent screen recording — at four stages: data source, local storage, IPC interfaces and network egress. Per-app switches, feature-affecting rules default off. Requires Android 10+, LSPosed 2.2.x and root for restart/log features.
-
-Personal use only. See [DISCLAIMER.txt](DISCLAIMER.txt). GPL-3.0.
