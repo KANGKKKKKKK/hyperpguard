@@ -178,7 +178,9 @@ build.sh              一键构建
 ### 1.5.8
 
 - 「安装页广告位」补方法层：按「static void 7 参、第 3 参 Integer、末参回调接口」定位请求入口并置空
-- 安装器三项现在都是网络层 + 方法层，三项各自独立开关
+- 安装页广告补拦 `api.ad.xiaomi.com`、`monitor-check.ad.xiaomi.com`、`sdkconfig.ad.xiaomi.com`
+- 新增「设备标识（OAID）」：MSA SDK 返回空串，只影响广告归因，不影响安装
+- 安装器四个子项各自独立开关
 
 ### 1.5.7
 

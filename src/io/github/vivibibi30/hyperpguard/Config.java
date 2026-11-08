@@ -104,6 +104,8 @@ public final class Config {
     public static final String K_PKG_AVL = "block_packageinstaller_avl";
     public static final String K_PKG_STAT = "block_packageinstaller_stat";
     public static final String K_AD_PKG = "block_ad_pkg";
+    /** 安装器的 MSA OAID 获取 */
+    public static final String K_PKG_OAID = "block_pkg_oaid";
 
     /* 广告 */
     public static final String K_AD_MARKET = "block_ad_market";

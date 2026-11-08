@@ -132,7 +132,8 @@ public class MainActivity extends Activity {
             new Group("应用安装器", "com.miui.packageinstaller", Config.K_G_PKG, new Item[]{
                     new Item("AVL 上报", "网络层 + 方法层；关闭后安装信息不再上传，病毒扫描结果可能缺失", Config.K_PKG_AVL, true),
                     new Item("安装活跃统计", "网络层 + 方法层；关闭后不再上报安装活跃数据，无功能影响", Config.K_PKG_STAT, true),
-                    new Item("安装页广告位", "网络层；关闭后安装页不再拉取推荐位配置", Config.K_AD_PKG, true),
+                    new Item("安装页广告位", "网络层 + 方法层；关闭后安装页不再拉取推荐位配置", Config.K_AD_PKG, true),
+                    new Item("设备标识（OAID）", "MSA SDK 返回空串；只影响广告归因，不影响安装", Config.K_PKG_OAID, true),
             }),
             new Group("应用商店", "com.xiaomi.market", Config.K_G_AD_MARKET, new Item[]{
                     new Item("广告配置下发", "sdkconfig.ad.xiaomi.com", Config.K_AD_MARKET, true),

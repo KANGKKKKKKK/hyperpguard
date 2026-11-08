@@ -415,6 +415,23 @@ public class HookEntry extends XposedModule {
                 r.add(new NetGuard.Rule("monitor-check.ad.xiaomi.com"));
                 r.add(new NetGuard.Rule("sdkconfig.ad.xiaomi.com"));
             }
+            // 方法层：MSA OAID，返回空串
+            if (Config.on(Config.K_PKG_OAID, true)) {
+                final java.util.List<String> oaCands = Hooks.classNames(
+                        cl, s -> s.contains("OAID") || s.contains("MdidSdkHelper"), 80);
+                int n = Hooks.hookBySignature(this, oaCands, cl,
+                        m -> m.getReturnType() == String.class
+                                && m.getParameterCount() <= 2
+                                && m.getName().toLowerCase().contains("oaid"),
+                        chain -> "");
+                if (n == 0) {
+                    // 方法名被混淆时，退到「类名含 OAID、返回 String、参数不超过 2」
+                    n = Hooks.hookBySignature(this, oaCands, cl,
+                            m -> m.getReturnType() == String.class && m.getParameterCount() <= 2,
+                            chain -> "");
+                }
+                Logs.i("packageinstaller oaid hooked=" + n);
+            }
             // 方法层：安装页广告位请求入口，static void 7 参、第 3 参 Integer、末参回调接口
             if (Config.on(Config.K_AD_PKG, true)) {
                 Hooks.MethodFilter ad = m -> java.lang.reflect.Modifier.isStatic(m.getModifiers())
