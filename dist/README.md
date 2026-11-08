@@ -16,7 +16,7 @@
 
 ## 当前支持的版本
 
-Android 10 – Android 16 的 MIUI / HyperOS，LSPosed 2.2.x（libxposed API 100+）。
+Android 10 – Android 16 的 HyperOS，LSPosed 2.2.x（libxposed API 100+）。
 
 ## 使用前说明
 
@@ -57,10 +57,10 @@ Android 10 – Android 16 的 MIUI / HyperOS，LSPosed 2.2.x（libxposed API 100
 
 ## 致谢
 
-[HyperCeiler](https://github.com/ReChronoRain/HyperCeiler) · [XSOF Privacy](https://github.com/yunyizea/xsof-privacy) · [HyperOS4-XSOF-Analysis](https://github.com/FAQQAQ/HyperOS4-XSOF-Analysis) · [酷安 @OSAKOo](https://www.coolapk.com/feed/74882729?s=MzNlYzk4NWUxNWZhMjRnNmFlZTFjMDJ6a1664) · [libxposed API](https://github.com/libxposed/api) · LSPosed
+[HyperCeiler](https://github.com/ReChronoRain/HyperCeiler) · [XSOF Privacy](https://github.com/yunyizea/xsof-privacy) · [HyperOS4-XSOF-Analysis](https://github.com/FAQQAQ/HyperOS4-XSOF-Analysis) · [酷安 @OSAKOo](https://www.coolapk.com/feed/74882729?s=MzNlYzk4NWUxNWZhMjRnNmFlZTFjMDJ6a1664) · [Android OS Privacy Under the Loupe](https://ar5iv.labs.arxiv.org/html/2302.01890)（ACM WiSec '23）· [酷安 RooyCo](https://www.coolapk.com/feed/74911090) · [frauddb](https://github.com/acnekot/frauddb) · [misight-viewer](https://github.com/Artriai/misight-viewer) · [libxposed API](https://github.com/libxposed/api) · LSPosed
 
 ## 免责声明
 
 仅供在本人拥有完全控制权的设备上学习研究使用，不做商业分发。完整条款见 [DISCLAIMER.txt](https://github.com/vivibibi30/hyperpguard/blob/main/DISCLAIMER.txt)。
 
-GPL-3.0
+[GPL-3.0](https://github.com/vivibibi30/hyperpguard/blob/main/LICENSE)；第三方组件的许可见 [NOTICE](https://github.com/vivibibi30/hyperpguard/blob/main/NOTICE)。
