@@ -210,17 +210,10 @@ public class MainActivity extends Activity {
             LINE = 0xFF2C2C2E;
         }
         if (nightMode) {
-            getWindow().setBackgroundDrawable(
-                    new android.graphics.drawable.ColorDrawable(0xFF000000));
-            if (android.os.Build.VERSION.SDK_INT >= 30) {
-                android.view.WindowInsetsController c = getWindow().getInsetsController();
-                if (c != null) {
-                    c.setSystemBarsAppearance(0,
-                            android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                                    | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
-                }
-            } else {
-                getWindow().getDecorView().setSystemUiVisibility(0);
+            try {
+                getWindow().setBackgroundDrawable(
+                        new android.graphics.drawable.ColorDrawable(0xFF000000));
+            } catch (Throwable ignored) {
             }
         }
 
@@ -372,6 +365,21 @@ public class MainActivity extends Activity {
 
         setContentView(sv);
         I18n.apply(sv);
+        if (nightMode) {
+            // decorView 还没 attach 时 getInsetsController() 会 NPE，必须等 setContentView 之后
+            try {
+                android.view.WindowInsetsController c =
+                        getWindow().getDecorView().getWindowInsetsController();
+                if (c != null) {
+                    c.setSystemBarsAppearance(0,
+                            android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                                    | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
+                } else {
+                    getWindow().getDecorView().setSystemUiVisibility(0);
+                }
+            } catch (Throwable ignored) {
+            }
+        }
     }
 
     /** LSPosed 服务断开后重连：覆盖安装模块时服务端会重启一次 */
