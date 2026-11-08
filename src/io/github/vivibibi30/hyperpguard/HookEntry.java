@@ -410,6 +410,10 @@ public class HookEntry extends XposedModule {
             }
             if (pathOn && Config.on(Config.K_AD_PKG, true)) {
                 r.add(new NetGuard.Rule("api.installer.xiaomi.com", "/info/layout"));
+                // 安装页广告实际还走这几个域名，info/layout 只是其中一条
+                r.add(new NetGuard.Rule("api.ad.xiaomi.com"));
+                r.add(new NetGuard.Rule("monitor-check.ad.xiaomi.com"));
+                r.add(new NetGuard.Rule("sdkconfig.ad.xiaomi.com"));
             }
             // 方法层：安装页广告位请求入口，static void 7 参、第 3 参 Integer、末参回调接口
             if (Config.on(Config.K_AD_PKG, true)) {
