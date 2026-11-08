@@ -70,6 +70,41 @@ final class NetGuard {
             }
         }
 
+        // okhttp 自带 DNS：默认实现走 InetAddress（上面已拦），自定义实现（DoH / 内置 IP）
+        // 会绕过，这里按接口实现类补一层
+        try {
+            Class<?> dnsIface = Class.forName("okhttp3.Dns", false, cl);
+            int dn = 0;
+            for (String name : Hooks.classNames(cl, s -> s.toLowerCase().contains("dns"), 120)) {
+                Class<?> c;
+                try {
+                    c = Class.forName(name, false, cl);
+                } catch (Throwable ignored) {
+                    continue;
+                }
+                if (c == dnsIface || !dnsIface.isAssignableFrom(c)) continue;
+                for (final Method md : c.getDeclaredMethods()) {
+                    if (!md.getName().equals("lookup")) continue;
+                    if (md.getParameterCount() != 1 || md.getParameterTypes()[0] != String.class) continue;
+                    try {
+                        NetGuard.this.m.hook(md).intercept(chain -> {
+                            String host = (String) chain.getArg(0);
+                            if (host != null
+                                    && check(tag, host, null, rules, strictAll, pathOn, false)) {
+                                throw new java.net.UnknownHostException(
+                                        "blocked by HyperPGuard: " + host);
+                            }
+                            return chain.proceed();
+                        });
+                        dn++;
+                    } catch (Throwable ignored) {
+                    }
+                }
+            }
+            Logs.i(tag + " okhttp dns hooked=" + dn);
+        } catch (Throwable ignored) {
+        }
+
         try {
             for (Constructor<?> ctor : java.net.Socket.class.getDeclaredConstructors()) {
                 m.hook(ctor).intercept(chain -> {
