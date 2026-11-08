@@ -411,6 +411,22 @@ public class HookEntry extends XposedModule {
             if (pathOn && Config.on(Config.K_AD_PKG, true)) {
                 r.add(new NetGuard.Rule("api.installer.xiaomi.com", "/info/layout"));
             }
+            // 方法层：安装页广告位请求入口，static void 7 参、第 3 参 Integer、末参回调接口
+            if (Config.on(Config.K_AD_PKG, true)) {
+                Hooks.MethodFilter ad = m -> java.lang.reflect.Modifier.isStatic(m.getModifiers())
+                        && m.getReturnType() == void.class
+                        && m.getParameterCount() == 7
+                        && m.getParameterTypes()[0] == String.class
+                        && m.getParameterTypes()[1] == String.class
+                        && m.getParameterTypes()[2] == Integer.class
+                        && m.getParameterTypes()[3] == String.class
+                        && m.getParameterTypes()[6].isInterface();
+                int n = Hooks.hookBySignature(this,
+                        Hooks.classNames(cl, s -> !s.startsWith("android.")
+                                && !s.startsWith("java.") && !s.startsWith("kotlin."), 2500),
+                        cl, ad, chain -> null);
+                Logs.i("packageinstaller ad method hooked=" + n);
+            }
             // 方法层：安装活跃统计入口，AppActiveStatService 内的 void(List) 方法
             if (Config.on(Config.K_PKG_STAT, true)) {
                 int n = Hooks.hookBySignature(this,
