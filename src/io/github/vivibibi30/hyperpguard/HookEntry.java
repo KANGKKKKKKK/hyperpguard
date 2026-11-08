@@ -423,6 +423,17 @@ public class HookEntry extends XposedModule {
                 r.add(new NetGuard.Rule("api.installer.xiaomi.com", "/v2/cloud_config/query"));
                 r.add(new NetGuard.Rule("preview-api.installer.xiaomi.com", "/v2/cloud_config/query"));
             }
+            if (Config.on(Config.K_PKG_RISK, false)) {
+                // 云端风险校验：会带上待装应用的包名与哈希
+                r.add(new NetGuard.Rule("verify.sec.xiaomi.com"));
+                r.add(new NetGuard.Rule("tz.sec.xiaomi.com"));
+            }
+            if (Config.on(Config.K_PKG_GAME, false)) {
+                // 游戏安装时的防篡改检查，含 normal / safemode / enhancemode
+                r.add(new NetGuard.Rule("api.installer.xiaomi.com", "/v2/game/interceptcheck"));
+                r.add(new NetGuard.Rule("api.installer.xiaomi.com", "/v3/game/interceptcheck"));
+                r.add(new NetGuard.Rule("api.installer.xiaomi.com", "/v4/game/interceptcheck"));
+            }
             // 方法层：MSA OAID，返回空串
             if (Config.on(Config.K_PKG_OAID, true)) {
                 final java.util.List<String> oaCands = Hooks.classNames(

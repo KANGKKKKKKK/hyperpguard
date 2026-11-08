@@ -108,6 +108,9 @@ public final class Config {
     public static final String K_PKG_OAID = "block_pkg_oaid";
     /** 安装器云端参数下发（含新未注册应用的备案提示） */
     public static final String K_PKG_CLOUD = "block_pkg_cloud";
+    /** 安装时的云端风险校验与游戏防篡改检查（默认不拦，影响检测功能） */
+    public static final String K_PKG_RISK = "block_pkg_risk";
+    public static final String K_PKG_GAME = "block_pkg_game";
 
     /* 广告 */
     public static final String K_AD_MARKET = "block_ad_market";
