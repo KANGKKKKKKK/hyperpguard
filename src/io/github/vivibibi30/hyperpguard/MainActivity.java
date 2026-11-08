@@ -94,7 +94,7 @@ public class MainActivity extends Activity {
     private static final Group[] GROUPS = {
             new Group("SystemHelper", "com.mobiletools.systemhelper", Config.K_G_SYSHELPER, new Item[]{
                     new Item("拦截上报", "dm.wo.com.cn，设备 / SIM / 基站 / 应用列表", Config.K_SYSHELPER, true),
-                    new Item("全断网（推荐）", "该进程所有外网请求一并拦截，只留本机回环；它没有用户功能", Config.K_SYSHELPER_ALLNET, true),
+                    new Item("整进程断网", "默认关：只拦上报域名与方法层。开启后该进程所有外网请求一并拦截，只留本机回环", Config.K_SYSHELPER_ALLNET, false),
                     new Item("定位（GPS）", "只对本应用：位置查询返回空", Config.K_LOC_SH, false),
                     new Item("基站信息", "只对本应用：基站查询返回空，不影响信号显示", Config.K_CELL_SH, false),
                     new Item("Wi-Fi 扫描", "只对本应用：扫描列表置空，SSID / BSSID 清空", Config.K_WIFI_SH, false),

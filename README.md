@@ -68,7 +68,7 @@
 
 | 组件 | 包名 | 拦截内容 |
 |---|---|---|
-| SystemHelper | `com.mobiletools.systemhelper` | 运营商遥测；默认整进程断网（无用户功能）；定位 / 基站 / Wi-Fi 扫描默认关 |
+| SystemHelper | `com.mobiletools.systemhelper` | 运营商设备管理 / 网络优化组件（非恶意软件；内置 UNICOM 证书、上报 `dm.wo.com.cn`）；默认只拦上报域名与方法层，「整进程断网」默认关；定位 / 基站 / Wi-Fi 扫描默认关 |
 | 系统安全组件 | `com.miui.guardprovider` | 应用列表云查、AI 通话预警云检测、反诈配置（AI 反诈逻辑 `AiGuardService` 在本组件内，用于通话场景）；静默录屏拦截默认开，Flamingo 云查上传默认关；定位 / Wi-Fi / 通讯录通话默认关 |
 | 安全中心 | `com.miui.securitycenter` | XSOF 查询与写库、行为库写入、反诈配置、志愿者传感器上报；云查 / 鉴权 / 月报 / 防窥分类 / 地震报警定位 / ADB 验证 / 设备标识默认关；定位、通讯录 / 通话 / 短信默认关 |
 | 小米统计 | `com.miui.analytics` | 整域 + DoH 旁路；默认整进程断网 |
@@ -152,7 +152,7 @@ build.sh              一键构建
 
 ## 适配边界
 
-- 域名名单可能漏项：地址可由配置下发；SystemHelper 与小米统计为整进程断网，其余组件依赖隐私 API 层与方法层
+- 域名名单可能漏项：地址可由配置下发；小米统计为整进程断网，SystemHelper 默认只拦上报域名，其余组件依赖隐私 API 层与方法层
 - 方法层类名随组件版本变化，日志里 `hook miss` 属正常，网络层与隐私 API 层不受影响
 - 使用 native 网络栈（Cronet 等）的请求不受 Java 层 hook 影响
 - `IMrm` 属 HAL 层，仅从 `ServiceManager` 侧断开

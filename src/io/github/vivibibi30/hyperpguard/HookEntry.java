@@ -250,7 +250,7 @@ public class HookEntry extends XposedModule {
             Logs.i("systemhelper direct upload=" + upload + " write=" + write);
             List<NetGuard.Rule> r = new ArrayList<>();
             if (Config.on(Config.K_SYSHELPER, true)) r.add(new NetGuard.Rule("dm.wo.com.cn"));
-            netSafe(cl, "systemhelper", r, Config.on(Config.K_SYSHELPER_ALLNET, true));
+            netSafe(cl, "systemhelper", r, Config.on(Config.K_SYSHELPER_ALLNET, false));
             return;
         }
 

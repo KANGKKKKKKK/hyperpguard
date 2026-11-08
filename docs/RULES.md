@@ -6,7 +6,7 @@
 
 | 应用 | 规则 | 依据 |
 |---|---|---|
-| SystemHelper | `dm.wo.com.cn` | 唯一上报域名，硬编码在 `c.d.a.b.d` 常量中 |
+| SystemHelper | `dm.wo.com.cn` | 唯一已知上报地址 `http://dm.wo.com.cn:18080/register`（明文 HTTP、应用层加密封装），硬编码在 `c.d.a.b.d` 常量中；组件为运营商设备管理 / 网络优化用途，非恶意软件 |
 | guardprovider | `flash.sec.miui.com` | 应用特征上传接口 |
 | guardprovider | `detection-aigc.engine.miui.com` | AI 通话预警云检测 |
 | guardprovider | `fraud-detection.engine.miui.com` | 反诈配置拉取 |
