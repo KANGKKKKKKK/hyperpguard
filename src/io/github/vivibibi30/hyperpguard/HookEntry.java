@@ -30,6 +30,48 @@ public class HookEntry extends XposedModule {
     private final java.util.concurrent.atomic.AtomicBoolean dispatched =
             new java.util.concurrent.atomic.AtomicBoolean();
 
+    /** 兜底线程，热重载前需要让它退出 */
+    private volatile Thread fallbackThread;
+
+    /**
+     * 热重载请求。libxposed 默认返回 false，不覆写的话框架会判定本模块拒绝热重载，
+     * 模块更新后所有已注入进程都会被记成「热重载失败」。
+     */
+    @Override
+    public boolean onHotReloading(XposedModuleInterface.HotReloadingParam param) {
+        Thread t = fallbackThread;
+        if (t != null) t.interrupt();
+        Logs.i("hot reloading");
+        return true;
+    }
+
+    /**
+     * 热重载完成，此时已经跑在新的模块类加载器里。
+     * 框架不会重放 onModuleLoaded / onPackageReady，旧 hook 也要自己卸载，
+     * 所以这里手动清掉旧 hook 再按当前包重新安装一遍。
+     */
+    @Override
+    public void onHotReloaded(XposedModuleInterface.HotReloadedParam param) {
+        for (Object handle : param.getOldHookHandles()) {
+            if (!(handle instanceof io.github.libxposed.api.XposedInterface.HookHandle)) continue;
+            try {
+                ((io.github.libxposed.api.XposedInterface.HookHandle) handle).unhook();
+            } catch (Throwable t) {
+                Logs.i("hot reload unhook fail: " + t);
+            }
+        }
+        android.app.Application app = currentApplication();
+        if (app == null) {
+            Logs.i("hot reload: no Application in " + param.getProcessName());
+            return;
+        }
+        String pkg = app.getPackageName();
+        Config.load(app.getApplicationContext());
+        dispatched.set(false);
+        dispatchOnce(pkg, app.getClassLoader());
+        Logs.i("hot reloaded: " + pkg);
+    }
+
     @Override
     public void onPackageReady(XposedModuleInterface.PackageReadyParam param) {
         final String pkg = param.getPackageName();
@@ -64,17 +106,20 @@ public class HookEntry extends XposedModule {
                 return chain.proceed();
             });
             // 兜底：Application 迟迟不创建时，用默认值先把拦截装上
-            new Thread(() -> {
+            Thread fallback = new Thread(() -> {
                 try {
                     Thread.sleep(3000);
                 } catch (InterruptedException ignored) {
+                    return;
                 }
                 if (!dispatched.get()) {
                     Logs.i("onCreate timeout, use defaults: " + pkg);
                     Config.load(activityThreadContext(), pkg);
                     dispatchOnce(pkg, cl);
                 }
-            }, "hyperpguard-fallback").start();
+            }, "hyperpguard-fallback");
+            fallbackThread = fallback;
+            fallback.start();
             Logs.i("waiting Application.onCreate: " + pkg);
             return true;
         } catch (Throwable t) {
