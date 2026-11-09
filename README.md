@@ -187,6 +187,22 @@ build.sh              一键构建
 
 ## 更新日志
 
+### 1.6.9
+
+- 免责声明重排：正文按段一行，去掉 ASCII 分隔线，编号统一为 `1) `
+- 完整条款按标题、版本行、章节、列表分别上样式，正文 13sp、行距 1.25
+- 首启摘要改用单独的 `DISCLAIMER_BRIEF.txt`，不再按字符截断
+
+### 1.6.8
+
+- 实现 libxposed 热重载：模块更新后，已注入的进程直接换到新代码，不再报「进程热重载失败」
+- 热重载后重新安装拦截，不会出现「已重载但规则失效」
+
+### 1.6.7
+
+- 首次启动条款确认：摘要弹窗、版本号落盘，确认后不再弹出
+- 「关于」区域去掉多余按压反馈
+
 ### 1.6.6
 
 - 安装器云端配置补 `/v3/cloud_config/query`（5.4.x 改走 v3，之前只拦 v2），「未查询到备案」提示不再出现
@@ -201,90 +217,7 @@ build.sh              一键构建
 - 自定义规则页重做；行为库状态正文不可复制
 - LSPosed 断开重试 5 → 30 次，自检自动重连
 
-### 1.6.4
-
-- 顶部标题 34sp、去掉副标题；分组标题与标题统一 28dp 缩进
-- `tip：开关打开 = 拦截该行为` 并入「通用」行右侧
-- 「关于」新增版本行，日志弹窗标题右侧显示版本
-
-### 1.6.3
-
-- 修复深色模式启动崩溃（`getInsetsController` 取到空 DecorView）
-- 修复浅色模式状态栏图标不可见；补齐 `setDecorFitsSystemWindows(false)`
-- LSPosed 服务未连接时改为排队重试、绑定后自动执行
-- 分组未进入作用域时显示「未在作用域，点此加入」
-
-### 1.6.2
-
-- 修复深色模式启动崩溃
-- 顶部提示改为灰色小字；状态栏透明并补状态栏高度
-
-### 1.6.1
-
-- 修正列表分隔线：去掉多余左侧缩进，左右到卡片边缘距离一致
-- 免责声明 1.15：界面尺寸只取数值，不含图片、图标、字体或代码资源
-
-### 1.6.0
-
-- 界面按系统设置应用的度量重做：行标题 17sp、副标题 14sp 单行、行高 56dp、分隔线 0.75dp、卡片圆角 20dp
-- 开关改为 MIUI `SlidingSwitchCompat` 规格（49×28，滑块 20dp）
-- 深色模式跟随系统，页面纯黑
-
-### 1.5.16
-
-- 新增广告组件 `com.miui.systemAdSolution`：使用画像、OneTrack 埋点
-- 安全中心新增 10 条 `tracking.*.miui.com` / `sdkconfig.*.xiaomi.com` 规则
-- 界面接入深色配色
-
-### 1.5.15
-
-- 界面文案跟随系统语言，英文环境下设置页显示英文
-
-### 1.5.14
-
-- SystemHelper 的「整进程断网」改为默认关，默认只拦 `dm.wo.com.cn` 与方法层
-
-### 1.5.13
-
-- 自定义规则弹窗新增「使用说明」入口
-
-### 1.5.12
-
-- 自定义规则支持 `类名#方法` 写法，方法名 `*` 表示整类
-- `guardprovider`、`misightservice`、`registration`、`packageinstaller` 的网络层改为无条件装载
-
-### 1.5.11
-
-- 修复安全中心 13.6.6 上 XSOF 写库与评分 hook 失效：逐类兜住 `getDeclaredMethods` 异常，写库与评分改为结构识别
-
-### 1.5.10
-
-- 安装器新增「风险校验查询」：`verify.sec.xiaomi.com`、`tz.sec.xiaomi.com`，默认关，打开后风险检测失效
-- 安装器新增「游戏防篡改检查」：`/v2|v3|v4/game/interceptcheck`，默认关
-
-### 1.5.9
-
-- 安装页推荐位补拦图片 CDN（`t1/t2.a.market.xiaomi.com` 的 `/thumbnail/`）
-- 广告缓存读取置空：返回 `AdModel`、单参 `String` 的方法直接返回 null，推荐位不再渲染
-- 新增「云端配置下发」：拦 `/v2/cloud_config/query`，「未查询到备案」提示随之消失
-
-### 1.5.8
-
-- 「安装页广告位」补方法层：按「static void 7 参、第 3 参 Integer、末参回调接口」定位请求入口并置空
-- 安装页广告补拦 `api.ad.xiaomi.com`、`monitor-check.ad.xiaomi.com`、`sdkconfig.ad.xiaomi.com`
-- 新增「设备标识（OAID）」：MSA SDK 返回空串，只影响广告归因，不影响安装
-- 安装器四个子项各自独立开关
-
-### 1.5.7
-
-- 「安装活跃统计」补方法层：hook `AppActiveStatService` 内的 `void(List)` 入口，不再只依赖 `/statistics/appactive` 这条 URL
-- 安装器三个子项的说明写明层次与影响：AVL 与活跃统计是网络层 + 方法层，广告位是网络层
-
-### 1.5.6
-
-- 网络层补 okhttp 自定义 DNS：默认实现走 `InetAddress` 已被拦，DoH 或内置 IP 列表的 `Dns` 实现现在也会按规则抛 `UnknownHostException`
-
-更早版本见 [docs/CHANGELOG.md](docs/CHANGELOG.md) 或 Releases 页。
+更早版本见 [Releases](https://github.com/vivibibi30/hyperpguard/releases) 与 `docs/RELEASE-<版本>.md`。
 
 ## 参考来源
 
