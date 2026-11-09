@@ -439,20 +439,25 @@ public class HookEntry extends XposedModule {
             if (pathOn && Config.on(Config.K_PKG_STAT, true)) {
                 r.add(new NetGuard.Rule("api.installer.xiaomi.com", "/statistics/appactive"));
             }
-            if (pathOn && Config.on(Config.K_AD_PKG, true)) {
-                r.add(new NetGuard.Rule("api.installer.xiaomi.com", "/info/layout"));
-                // 安装页广告实际还走这几个域名，info/layout 只是其中一条
+            if (Config.on(Config.K_AD_PKG, true)) {
+                // 这三个是纯域名规则，不该受「路径特征拦截」开关影响
                 r.add(new NetGuard.Rule("api.ad.xiaomi.com"));
                 r.add(new NetGuard.Rule("monitor-check.ad.xiaomi.com"));
                 r.add(new NetGuard.Rule("sdkconfig.ad.xiaomi.com"));
-                // 推荐位的应用图标走商店图片 CDN，只拦缩略图路径
-                r.add(new NetGuard.Rule("t1.a.market.xiaomi.com", "/thumbnail/"));
-                r.add(new NetGuard.Rule("t2.a.market.xiaomi.com", "/thumbnail/"));
+                if (pathOn) {
+                    r.add(new NetGuard.Rule("api.installer.xiaomi.com", "/info/layout"));
+                    // 推荐位的应用图标走商店图片 CDN，只拦缩略图路径
+                    r.add(new NetGuard.Rule("t1.a.market.xiaomi.com", "/thumbnail/"));
+                    r.add(new NetGuard.Rule("t2.a.market.xiaomi.com", "/thumbnail/"));
+                }
             }
             if (Config.on(Config.K_PKG_CLOUD, true)) {
                 // 云端参数：新未注册应用的备案提示、按钮文案、安全模式默认值都从这里下发
+                // 5.4.x 安装器改走 /v3/cloud_config/query，v2 只覆盖老版本
                 r.add(new NetGuard.Rule("api.installer.xiaomi.com", "/v2/cloud_config/query"));
+                r.add(new NetGuard.Rule("api.installer.xiaomi.com", "/v3/cloud_config/query"));
                 r.add(new NetGuard.Rule("preview-api.installer.xiaomi.com", "/v2/cloud_config/query"));
+                r.add(new NetGuard.Rule("preview-api.installer.xiaomi.com", "/v3/cloud_config/query"));
             }
             if (Config.on(Config.K_PKG_RISK, false)) {
                 // 云端风险校验：会带上待装应用的包名与哈希
