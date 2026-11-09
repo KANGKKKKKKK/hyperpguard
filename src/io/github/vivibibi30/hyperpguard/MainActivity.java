@@ -242,34 +242,22 @@ public class MainActivity extends Activity {
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(16), dp(16) + statusBarHeight(), dp(16), dp(24) + navBarHeight());
+        root.setPadding(dp(16), dp(20) + statusBarHeight(), dp(16), dp(24) + navBarHeight());
         sv.addView(root, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         TextView title = new TextView(this);
         title.setText("HyperPGuard");
-        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
+        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 34);
         title.setTypeface(null, Typeface.BOLD);
         title.setTextColor(TEXT);
+        title.setPadding(dp(12), 0, 0, dp(10));
         root.addView(title);
 
-        TextView sub = new TextView(this);
-        sub.setText("v" + Config.VERSION + " · LSPosed 模块");
-        sub.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-        sub.setTextColor(SUB);
-        sub.setPadding(0, dp(4), 0, dp(10));
-        root.addView(sub);
 
-        // 顶部说明：开关语义，做成普通小字，不用色块
-        TextView hint = new TextView(this);
-        hint.setText("开关打开 = 拦截该行为，关闭 = 放行");
-        hint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-        hint.setTextColor(SUB);
-        hint.setPadding(dp(4), dp(2), 0, dp(10));
-        root.addView(hint);
 
         // 全局设置
-        root.addView(sectionTitle("通用"));
+        root.addView(sectionRow("通用", "tip：开关打开 = 拦截该行为，关闭 = 放行"));
         LinearLayout global = card();
         makeSwitchRow(global, "总开关", "关闭后本模块在所有进程不生效",
                 Config.K_MASTER, true, true);
@@ -369,6 +357,7 @@ public class MainActivity extends Activity {
         about.addView(line());
         about.addView(linkRow("问题反馈", "Issues", URL_ISSUES));
         about.addView(line());
+        about.addView(infoRow("版本", "v" + Config.VERSION));
         Button checkUpdateBtn = new Button(this);
         checkUpdateBtn.setText("检查更新");
         checkUpdateBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
@@ -714,6 +703,33 @@ public class MainActivity extends Activity {
     /* ---------------- 卡片与控件 ---------------- */
 
     /** 分组小标题：13sp 灰色，放在卡片外 */
+    /** 分组行：左侧小标题，右侧可放一句说明（右对齐，右侧留白与左侧一致） */
+    private android.view.View sectionRow(String title, String right) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.BOTTOM);
+        row.setMinimumHeight(dp(35));
+        row.setPadding(dp(12), dp(16), dp(12), dp(8));
+
+        TextView left = new TextView(this);
+        left.setText(title);
+        left.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        left.setTextColor(SUB);
+        row.addView(left, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        if (right != null && !right.isEmpty()) {
+            TextView r = new TextView(this);
+            r.setText(right);
+            r.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+            r.setTextColor(SUB);
+            r.setMaxLines(1);
+            r.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            row.addView(r);
+        }
+        return row;
+    }
+
     private TextView sectionTitle(String text) {
         TextView tv = new TextView(this);
         tv.setText(text);
@@ -721,7 +737,7 @@ public class MainActivity extends Activity {
         tv.setTextColor(SUB);
         tv.setMinHeight(dp(35));
         tv.setGravity(Gravity.BOTTOM);
-        tv.setPadding(dp(4), dp(16), 0, dp(8));
+        tv.setPadding(dp(12), dp(16), 0, dp(8));
         return tv;
     }
 
@@ -1598,8 +1614,25 @@ public class MainActivity extends Activity {
         ScrollView sv = new ScrollView(this);
         sv.addView(tv);
 
+        LinearLayout titleBar = new LinearLayout(this);
+        titleBar.setOrientation(LinearLayout.HORIZONTAL);
+        titleBar.setGravity(Gravity.CENTER_VERTICAL);
+        titleBar.setPadding(dp(24), dp(18), dp(24), dp(6));
+        TextView titleText = new TextView(this);
+        titleText.setText(title);
+        titleText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+        titleText.setTypeface(null, Typeface.BOLD);
+        titleText.setTextColor(TEXT);
+        titleBar.addView(titleText, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView titleVersion = new TextView(this);
+        titleVersion.setText("v" + Config.VERSION);
+        titleVersion.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        titleVersion.setTextColor(SUB);
+        titleBar.addView(titleVersion);
+
         new AlertDialog.Builder(this)
-                .setTitle(title)
+                .setCustomTitle(titleBar)
                 .setView(sv)
                 .setPositiveButton(T("复制"), (d, w) -> {
                     ClipboardManager cm =
@@ -1625,6 +1658,28 @@ public class MainActivity extends Activity {
     }
 
     /* ---------------- 关于 / 更新 ---------------- */
+
+    /** 与 linkRow 同规格的信息行：右侧值用次要色，不可点击 */
+    private ViewGroup infoRow(String label, String value) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setMinimumHeight(dp(56));
+        row.setPadding(0, dp(9), 0, dp(9));
+        TextView name = new TextView(this);
+        name.setText(label);
+        name.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        name.setTextColor(TEXT);
+        name.setLayoutParams(new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.addView(name);
+        TextView val = new TextView(this);
+        val.setText(value);
+        val.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        val.setTextColor(SUB);
+        row.addView(val);
+        return row;
+    }
 
     private ViewGroup linkRow(String label, String value, final String url) {
         LinearLayout row = new LinearLayout(this);
