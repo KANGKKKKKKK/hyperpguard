@@ -1,6 +1,6 @@
 # 更新记录
 
-较早版本的功能变更，按版本倒序排列。
+较早版本的功能变更，按版本倒序排列。1.5 起的版本见 [Releases](https://github.com/vivibibi30/hyperpguard/releases) 与 `docs/RELEASE-<版本>.md`。
 
 ### 1.1.2
 
