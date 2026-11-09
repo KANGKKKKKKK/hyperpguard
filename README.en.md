@@ -76,7 +76,7 @@ Network and method layers are independent: when obfuscated class names change, d
 | Prefix | Meaning |
 |---|---|
 | `attach <package>` | Module injected into a process |
-| `X(host)` / `X(host+path)` | A rule matched |
+| `X(host)` / `X(host+path)` | A rule matched; path rules log `X(host+path)`, so grep with `grep -F 'X(host'` |
 | `X(strict)` | Whole-process blocking active |
 | `? <tag> <host>` | "Log unblocked hosts" record: request was not blocked |
 | `hook ok` / `hook miss` | Method hook installed / target not found |
@@ -132,6 +132,7 @@ src/io/github/vivibibi30/hyperpguard/
 ## Limitations
 
 - Domain lists can be incomplete: addresses can be delivered from server config
+- Switches left at their default value are not written into `hyperpguard_conf`; a missing key does not mean the switch is off
 - Obfuscated class names change between versions; `hook miss` in the log is expected and does not affect the network layer
 - Requests made through native stacks (Cronet and friends) are not covered by Java-level hooks
 - `IMrm` is a HAL-level service; only the `ServiceManager` side is disconnected

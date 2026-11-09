@@ -78,7 +78,7 @@
 | 小米统计 | `com.miui.analytics` | 整域 + DoH 旁路；默认整进程断网 |
 | 应用安装器 | `com.miui.packageinstaller` | AVL 上报、活跃统计、安装页广告位 |
 | 应用商店 | `com.xiaomi.market` | 广告配置下发、OneTrack 统计上报（`tracking.miui.com/track/`） |
-| 广告组件 | `com.miui.systemAdSolution` | 广告使用画像（今日是否打开 / 最后使用时间）、OneTrack 埋点；域名层默认不拦 |
+| 广告组件 | `com.miui.systemAdSolution` | 广告使用画像（今日是否打开 / 最后使用时间）、OneTrack 埋点；域名层默认不拦。勾选作用域后要点一次卡片上的「重启」，旧进程不会自动补注入 |
 | 小米服务框架 | `com.xiaomi.xmsf` | 广告接口、OneTrack 统计上报（`tracking.miui.com/track/`） |
 | 运营商服务 | `com.xiaomi.registration` | 明文 CTEI 上报（默认拦）、设备注册（默认关）；定位 / 基站默认关 |
 | 移动 DM | `com.miui.dmregservice` | `fxltsbl.com` 上报、App 清单、SIM 标识；基站 / Wi-Fi 扫描默认关 |
@@ -99,7 +99,7 @@
 | 前缀 | 含义 |
 |---|---|
 | `attach <包名>` | 模块注入某进程成功 |
-| `X(host)` | 域名规则命中 |
+| `X(host)` | 域名规则命中；带路径规则时是 `X(host+path)`，grep 建议用 `grep -F 'X(host'` |
 | `X(host+path)` | 域名 + 路径规则命中 |
 | `X(strict)` | 整进程断网生效 |
 | `? <tag> <host>` | 「记录未拦截访问」记录：访问未被拦截 |
@@ -157,6 +157,7 @@ build.sh              一键构建
 
 ## 适配边界
 
+- 开关保持默认值时不会写进 `hyperpguard_conf`，`settings get` 里缺某个 key 不代表它关闭，以界面状态与日志为准
 - 域名名单可能漏项：地址可由配置下发；小米统计为整进程断网，SystemHelper 默认只拦上报域名，其余组件依赖隐私 API 层与方法层
 - 方法层类名随组件版本变化，日志里 `hook miss` 属正常，网络层与隐私 API 层不受影响
 - 使用 native 网络栈（Cronet 等）的请求不受 Java 层 hook 影响

@@ -64,6 +64,6 @@
 2. 在该 APK 中确认域名的全部子域，排除功能接口
 3. 在 `HookEntry` 对应分支增加 `Rule("host")` 或 `Rule("host", "/path")`
 4. 在 `Config` 增加开关常量，在 `MainActivity` 增加对应条目
-5. 重新构建，在目标应用上验证 `X(host)` 日志
+5. 重新构建，在目标应用上验证 `X(host)` / `X(host+path)` 日志（grep 用 `grep -F 'X(host'`）
 
 若某接口同时承担上报与功能，优先按路径拆分，不要整域拦截。
