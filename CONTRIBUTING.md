@@ -16,6 +16,8 @@
 
 ## 代码贡献
 
+- 先看 [AGENTS.md](AGENTS.md) 与 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，改完跑一次 `sh scripts/check_structure.sh`
+
 - 改动后请确认 `sh build.sh` 仍可复现构建
 - 只改与问题相关的部分，不要夹带格式化
 - 新增拦截目标时写明判据（域名、方法签名、表名）；类名与方法签名属事实，可以写，
