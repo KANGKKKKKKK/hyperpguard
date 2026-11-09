@@ -253,6 +253,8 @@ final class I18n {
         EN.put("关闭", "Close");
         EN.put("取消", "Cancel");
         EN.put("免责声明", "Disclaimer");
+        EN.put("我已阅读", "I have read it");
+        EN.put("查看完整条款", "View full terms");
         EN.put("清空日志缓冲？", "Clear the log buffer?");
         EN.put("我知道了", "Got it");
         EN.put("复制", "Copy");

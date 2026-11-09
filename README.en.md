@@ -144,7 +144,7 @@ Run "self-check" before opening an issue, redact identifiers in logs, and read [
 
 ## License and disclaimer
 
-GPL-3.0, see [LICENSE](LICENSE). Usage terms, legal notes and risk statements are in [DISCLAIMER.txt](DISCLAIMER.txt); please read them before use. The project is not affiliated with Xiaomi or China Unicom, and all trademarks belong to their respective owners.
+GPL-3.0, see [LICENSE](LICENSE). Usage terms, legal notes and risk statements are in [DISCLAIMER.txt](DISCLAIMER.txt); the English summary there is for convenience only and the Chinese text prevails. Please read it before use. The project is not affiliated with Xiaomi or China Unicom, and all trademarks belong to their respective owners.
 
 ## Credits
 

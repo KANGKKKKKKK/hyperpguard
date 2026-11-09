@@ -155,6 +155,8 @@ docs/                 技术笔记、规则说明、截图
 build.sh              一键构建
 ```
 
+新增组件、规则或界面改动的步骤见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。
+
 ## 适配边界
 
 - 开关保持默认值时不会写进 `hyperpguard_conf`，`settings get` 里缺某个 key 不代表它关闭，以界面状态与日志为准
@@ -312,7 +314,7 @@ build.sh              一键构建
 - 与小米、中国联通等厂商无隶属或合作关系，商标归各自权利人
 - 按「现状」提供，不提供任何明示或暗示担保
 
-完整九条条款见 [DISCLAIMER.txt](DISCLAIMER.txt)。
+完整九条条款见 [DISCLAIMER.txt](DISCLAIMER.txt)；文件中附有英文摘要，仅供阅读，与中文正文冲突时以中文为准。
 
 ## 许可
 

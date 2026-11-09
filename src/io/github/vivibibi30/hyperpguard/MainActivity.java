@@ -194,6 +194,8 @@ public class MainActivity extends Activity {
     private ScrollView scrollRoot;
     private AlertDialog shownDialog;
     private int appliedNight = -1;
+    /** DISCLAIMER.txt 的版本号，变了就重新弹一次确认 */
+    private static final int DISCLAIMER_VER = 14;
     private int restoreScrollY;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private XposedService xposed;
@@ -218,6 +220,7 @@ public class MainActivity extends Activity {
         if (restoreScrollY > 0 && scrollRoot != null) {
             scrollRoot.post(() -> scrollRoot.scrollTo(0, restoreScrollY));
         }
+        maybeShowDisclaimer();
     }
 
     /** 深浅色变化时不重建 Activity，避免对话框被关掉；只重建内容视图 */
@@ -415,8 +418,7 @@ public class MainActivity extends Activity {
         Button checkUpdateBtn = new Button(this);
         checkUpdateBtn.setText("检查更新");
         checkUpdateBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
-        checkUpdateBtn.setBackground(pressBackground());
-        checkUpdateBtn.setBackgroundTintList(null);
+        checkUpdateBtn.setBackground(null);
         checkUpdateBtn.setTextColor(ACCENT);
         checkUpdateBtn.setAllCaps(false);
         checkUpdateBtn.setPadding(0, dp(10), 0, dp(10));
@@ -1060,8 +1062,6 @@ public class MainActivity extends Activity {
         row.setPadding(dp(4), dp(9), dp(4), dp(9));
         row.setBackground(pressBackground());
         row.setClickable(true);
-        row.setBackground(pressBackground());
-        row.setPadding(dp(4), row.getPaddingTop(), dp(4), row.getPaddingBottom());
 
         TextView t1 = new TextView(this);
         t1.setText("清理日志缓冲");
@@ -2003,8 +2003,8 @@ public class MainActivity extends Activity {
 
     /* ---------------- 免责声明 ---------------- */
 
-    private void showDisclaimer() {
-        String text;
+    private String readDisclaimerText() {
+        String full;
         try {
             java.io.InputStream is = getAssets().open("DISCLAIMER.txt");
             BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
@@ -2012,10 +2012,46 @@ public class MainActivity extends Activity {
             String line;
             while ((line = br.readLine()) != null) sb.append(line).append('\n');
             br.close();
-            text = sb.toString();
+            full = sb.toString();
         } catch (Throwable t) {
-            text = "免责声明读取失败：" + t;
+            return "免责声明读取失败：" + t;
         }
+        if (!I18n.english()) return full;
+        // 英文界面只展示文件末尾的 English Summary 段
+        int idx = full.indexOf("English Summary");
+        if (idx < 0) return full;
+        int start = full.lastIndexOf('-', idx);
+        if (start < 0) start = idx;
+        return full.substring(start).replaceAll("^-+\\s*", "").trim();
+    }
+
+    /** 首次启动（或免责声明版本变化）时展示摘要并要求确认 */
+    private void maybeShowDisclaimer() {
+        try {
+            final android.content.SharedPreferences sp = Config.ui(this);
+            if (sp.getInt("disclaimer_ver", 0) == DISCLAIMER_VER) return;
+            String full = readDisclaimerText();
+            String brief = full;
+            int cut = full.indexOf("三、风险自负");
+            if (cut > 0) brief = full.substring(0, cut).trim();
+            if (brief.length() > 1400) brief = brief.substring(0, 1400) + "…";
+            AlertDialog.Builder b = new AlertDialog.Builder(this)
+                    .setTitle(T("免责声明"))
+                    .setMessage(brief)
+                    .setPositiveButton(T("我已阅读"), (d, w) ->
+                            sp.edit().putInt("disclaimer_ver", DISCLAIMER_VER).apply())
+                    .setNeutralButton(T("查看完整条款"), (d, w) -> {
+                        sp.edit().putInt("disclaimer_ver", DISCLAIMER_VER).apply();
+                        showDisclaimer();
+                    })
+                    .setCancelable(false);
+            showStyled(b);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private void showDisclaimer() {
+        String text = readDisclaimerText();
 
         TextView tv = new TextView(this);
         tv.setText(text);

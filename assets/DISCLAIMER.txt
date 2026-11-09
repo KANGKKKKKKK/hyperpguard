@@ -91,6 +91,9 @@
 
 ----------------------------------------
 English Summary
+本摘要仅为方便阅读，若与中文正文存在歧义或冲突，以中文正文为准。
+This summary is provided for convenience only. If there is any ambiguity or
+conflict, the Chinese text above prevails.
 ----------------------------------------
 HyperPGuard is a personal privacy tool for Android devices you own and fully
 control. It blocks preinstalled system components from transmitting device and
