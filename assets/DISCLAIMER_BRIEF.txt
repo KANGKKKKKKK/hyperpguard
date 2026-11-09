@@ -1,0 +1,19 @@
+本模块只在你本人拥有完全控制权的 Android 设备上，限制预装系统组件向厂商、运营商或第三方服务器发送设备标识、应用使用记录、位置等数据，不提供入侵、破解他人系统或获取他人数据的能力。
+
+依据《个人信息保护法》第七十二条，处理个人或家庭事务不适用该法；本模块处理的均为使用者本人设备上、本人产生的数据。
+
+使用本模块需要 root 与 LSPosed。解锁、root、刷写模块可能导致失去保修、无法通过安全校验或出现系统异常，后果由使用者承担。拦截可能导致目标组件功能减弱或失效，不同系统版本与机型上规则可能滞后或误判。
+
+本模块默认不联网、不收集、不上传任何用户信息；仅在主动点击「检查更新」时向 api.github.com 请求一次版本号。所有开关保存在设备本地。
+
+完整条款请点下方「查看完整条款」。
+
+English Summary
+
+This module only blocks preinstalled system components on a device you own and fully control from sending device identifiers, app usage records, or location data to vendor, carrier, or third-party servers. It does not break into, crack, or obtain data from anyone else's system.
+
+Using it requires root and LSPosed. Rooting and system modification may void warranties, fail integrity checks, or cause system issues; you accept those risks. Blocking may degrade the affected components' features, and rules may lag behind or misjudge behavior on some OS versions.
+
+The module is offline by default and collects or uploads nothing. It contacts api.github.com once only when you tap "Check for updates". All switches are stored locally.
+
+Tap "Full terms" below for the complete notice.

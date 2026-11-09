@@ -2020,9 +2020,7 @@ public class MainActivity extends Activity {
         // 英文界面只展示文件末尾的 English Summary 段
         int idx = full.indexOf("English Summary");
         if (idx < 0) return full;
-        int start = full.lastIndexOf('-', idx);
-        if (start < 0) start = idx;
-        return full.substring(start).replaceAll("^-+\\s*", "").trim();
+        return full.substring(idx + "English Summary".length()).trim();
     }
 
     /** 首次启动（或免责声明版本变化）时展示摘要并要求确认 */
@@ -2030,11 +2028,7 @@ public class MainActivity extends Activity {
         try {
             final android.content.SharedPreferences sp = Config.ui(this);
             if (sp.getInt("disclaimer_ver", 0) == DISCLAIMER_VER) return;
-            String full = readDisclaimerText();
-            String brief = full;
-            int cut = full.indexOf("三、风险自负");
-            if (cut > 0) brief = full.substring(0, cut).trim();
-            if (brief.length() > 1400) brief = brief.substring(0, 1400) + "…";
+            String brief = readDisclaimerBrief();
             AlertDialog.Builder b = new AlertDialog.Builder(this)
                     .setTitle(T("免责声明"))
                     .setMessage(brief)
@@ -2050,14 +2044,36 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void showDisclaimer() {
-        String text = readDisclaimerText();
+    /** 首启弹窗的摘要：单独一份文件，避免按字符截断句子 */
+    private String readDisclaimerBrief() {
+        try {
+            java.io.InputStream is = getAssets().open("DISCLAIMER_BRIEF.txt");
+            BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) sb.append(line).append('\n');
+            br.close();
+            String text = sb.toString().trim();
+            int idx = text.indexOf("English Summary");
+            if (idx < 0) return text;
+            // 中文摘要不带英文段，英文界面只取 English Summary 之后
+            if (I18n.english()) return text.substring(idx + "English Summary".length()).trim();
+            return text.substring(0, idx).trim();
+        } catch (Throwable t) {
+            return readDisclaimerText();
+        }
+    }
 
+    private void showDisclaimer() {
         TextView tv = new TextView(this);
-        tv.setText(text);
-        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        tv.setText(styleDisclaimer(readDisclaimerText()));
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
         tv.setTextIsSelectable(true);
-        tv.setPadding(dp(14), dp(8), dp(14), dp(8));
+        tv.setLineSpacing(0f, 1.25f);
+        tv.setTextColor(TEXT);
+        int padH = dp(18);
+        int padV = dp(10);
+        tv.setPadding(padH, padV, padH, padV);
 
         ScrollView sv = new ScrollView(this);
         sv.addView(tv);
@@ -2066,6 +2082,50 @@ public class MainActivity extends Activity {
                 .setTitle(T("免责声明"))
                 .setView(sv)
                 .setPositiveButton(T("我知道了"), null));
+    }
+
+    /**
+     * 免责声明排版：标题、版本行、章节、列表项分别上样式。
+     * 文本已按段一行，列表项用 LeadingMarginSpan，折行后的行也保持缩进。
+     */
+    private CharSequence styleDisclaimer(String text) {
+        android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder();
+        boolean en = I18n.english();
+        boolean first = true;
+        for (String raw : text.split("\n", -1)) {
+            String line = raw.trim();
+            if (line.isEmpty()) {
+                if (sb.length() == 0) continue;
+                if (sb.length() >= 2 && sb.charAt(sb.length() - 2) == '\n') continue;
+                sb.append('\n');
+                continue;
+            }
+            int start = sb.length();
+            sb.append(line);
+            int end = sb.length();
+            sb.append('\n');
+            if (first) {
+                if (!en) {
+                    sb.setSpan(new android.text.style.StyleSpan(Typeface.BOLD), start, end,
+                            android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    sb.setSpan(new android.text.style.RelativeSizeSpan(1.15f), start, end,
+                            android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                first = false;
+            } else if (!en && line.startsWith("版本 ")) {
+                sb.setSpan(new android.text.style.RelativeSizeSpan(0.85f), start, end,
+                        android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                sb.setSpan(new android.text.style.ForegroundColorSpan(SUB), start, end,
+                        android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else if (!en && line.matches("^[一二三四五六七八九十]+、.*")) {
+                sb.setSpan(new android.text.style.StyleSpan(Typeface.BOLD), start, end,
+                        android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else if (line.matches("^\\d+\\)\\s.*") || (en && line.startsWith("- "))) {
+                sb.setSpan(new android.text.style.LeadingMarginSpan.Standard(0, dp(18)),
+                        start, end + 1, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+        return sb;
     }
 
     /** 按下时的高亮底色：浅色模式比背景深，深色模式比背景浅 */
