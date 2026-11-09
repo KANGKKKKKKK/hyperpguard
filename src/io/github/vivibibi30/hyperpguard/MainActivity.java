@@ -191,6 +191,10 @@ public class MainActivity extends Activity {
     /** 组 key → 组开关 */
     private final Map<String, Switch> groupSwitches = new LinkedHashMap<>();
     private final Map<String, TextView> scopeHints = new LinkedHashMap<>();
+    private ScrollView scrollRoot;
+    private AlertDialog shownDialog;
+    private int appliedNight = -1;
+    private int restoreScrollY;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private XposedService xposed;
     private boolean updatingSwitch = false;
@@ -200,24 +204,71 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
-        nightMode = (getResources().getConfiguration().uiMode
-                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
-                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        applyPalette(getResources().getConfiguration());
+        applyWindowChrome();
+        bindServiceHelper();
+        restoreScrollY = b == null ? 0 : b.getInt("scrollY", 0);
+        buildUi();
+        try {
+            registerReceiver(themeReceiver,
+                    new android.content.IntentFilter(android.content.Intent.ACTION_CONFIGURATION_CHANGED));
+        } catch (Throwable t) {
+            android.util.Log.w("HyperPGuard", "theme receiver fail", t);
+        }
+        if (restoreScrollY > 0 && scrollRoot != null) {
+            scrollRoot.post(() -> scrollRoot.scrollTo(0, restoreScrollY));
+        }
+    }
+
+    /** 深浅色变化时不重建 Activity，避免对话框被关掉；只重建内容视图 */
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration cfg) {
+        super.onConfigurationChanged(cfg);
+        int y = scrollRoot == null ? 0 : scrollRoot.getScrollY();
+        applyPalette(cfg);
+        applyWindowChrome();
+        buildUi();
+        if (y > 0 && scrollRoot != null) {
+            scrollRoot.post(() -> scrollRoot.scrollTo(0, y));
+        }
+        if (shownDialog != null && shownDialog.isShowing()) {
+            styleDialog(shownDialog);
+        }
+    }
+
+    private void applyPalette(android.content.res.Configuration cfg) {
+        android.content.res.Configuration c =
+                cfg != null ? cfg : getResources().getConfiguration();
+        applyPalette((c.uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                == android.content.res.Configuration.UI_MODE_NIGHT_YES);
+    }
+
+    /** 以最终判定的深浅色重设色板与窗口背景 */
+    private void applyPalette(boolean night) {
+        nightMode = night;
+        appliedNight = night ? 1 : 0;
         if (nightMode) {
             BG = 0xFF000000;
             CARD = 0xFF1C1C1E;
             TEXT = 0xFFFFFFFF;
             SUB = 0xFF8E8E93;
             LINE = 0xFF2C2C2E;
+        } else {
+            BG = 0xFFF2F3F5;
+            CARD = 0xFFFFFFFF;
+            TEXT = 0xFF1A1A1A;
+            SUB = 0xFF8A8A8E;
+            LINE = 0xFFEFEFF0;
         }
-        if (nightMode) {
-            try {
-                getWindow().setBackgroundDrawable(
-                        new android.graphics.drawable.ColorDrawable(0xFF000000));
-            } catch (Throwable ignored) {
-            }
+        try {
+            getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(
+                    nightMode ? 0xFF000000 : BG));
+        } catch (Throwable ignored) {
         }
 
+    }
+
+    private void applyWindowChrome() {
         // 状态栏透明，让背景延伸到状态栏下面；图标颜色按深浅模式切换
         try {
             getWindow().addFlags(
@@ -235,8 +286,11 @@ public class MainActivity extends Activity {
             }
         } catch (Throwable ignored) {
         }
+    }
 
+    private void buildUi() {
         ScrollView sv = new ScrollView(this);
+        scrollRoot = sv;
         sv.setBackgroundColor(BG);
         sv.setFillViewport(true);
 
@@ -361,7 +415,8 @@ public class MainActivity extends Activity {
         Button checkUpdateBtn = new Button(this);
         checkUpdateBtn.setText("检查更新");
         checkUpdateBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
-        checkUpdateBtn.setBackground(null);
+        checkUpdateBtn.setBackground(pressBackground());
+        checkUpdateBtn.setBackgroundTintList(null);
         checkUpdateBtn.setTextColor(ACCENT);
         checkUpdateBtn.setAllCaps(false);
         checkUpdateBtn.setPadding(0, dp(10), 0, dp(10));
@@ -371,7 +426,6 @@ public class MainActivity extends Activity {
 
         root.addView(disclaimer);
 
-        bindServiceHelper();
 
         setContentView(sv);
         I18n.apply(sv);
@@ -385,7 +439,7 @@ public class MainActivity extends Activity {
             }
         } catch (Throwable ignored) {
         }
-    }
+        }
 
     /** 服务未连接时暂存的动作，绑定成功后自动执行一次 */
     private Runnable pendingAction;
@@ -436,15 +490,78 @@ public class MainActivity extends Activity {
                 public void onServiceDied(XposedService service) {
                     xposed = null;
                     android.util.Log.w("HyperPGuard", "XposedService died");
-                    if (bindRetry++ < 5) {
-                        ui.postDelayed(MainActivity.this::bindServiceHelper, 1500);
+                    bindRetry++;
+                    if (bindRetry < 30) {
+                        ui.postDelayed(MainActivity.this::bindServiceHelper, 2000);
                     }
                 }
             };
 
+    private final android.content.BroadcastReceiver themeReceiver =
+            new android.content.BroadcastReceiver() {
+                @Override
+                public void onReceive(android.content.Context context, android.content.Intent intent) {
+                    syncThemeIfNeeded();
+                }
+            };
+
+    /** 系统深浅色变了就重建一次；onConfigurationChanged 没回调时靠它兜底 */
+    private void syncThemeIfNeeded() {
+        android.content.res.Configuration c =
+                getApplicationContext().getResources().getConfiguration();
+        int want = (c.uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                == android.content.res.Configuration.UI_MODE_NIGHT_YES ? 1 : 0;
+        // 部分 ROM 上配置对象会滞后，直接用 UiModeManager 的显式设置兜底
+        try {
+            android.app.UiModeManager um =
+                    (android.app.UiModeManager) getSystemService(UI_MODE_SERVICE);
+            if (um != null) {
+                int mode = um.getNightMode();
+                if (mode == android.app.UiModeManager.MODE_NIGHT_YES) want = 1;
+                else if (mode == android.app.UiModeManager.MODE_NIGHT_NO) want = 0;
+            }
+        } catch (Throwable ignored) {
+        }
+        android.util.Log.i("HyperPGuard", "theme check want=" + want + " applied=" + appliedNight);
+        if (appliedNight == -1 || want == appliedNight) return;
+        int y = scrollRoot == null ? 0 : scrollRoot.getScrollY();
+        applyPalette(want == 1);
+        applyWindowChrome();
+        buildUi();
+        if (y > 0 && scrollRoot != null) {
+            scrollRoot.post(() -> scrollRoot.scrollTo(0, y));
+        }
+        if (shownDialog != null && shownDialog.isShowing()) styleDialog(shownDialog);
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (!hasFocus) return;
+        syncThemeIfNeeded();
+        // 系统主题广播可能晚于焦点变化，稍后再核一次
+        ui.postDelayed(this::syncThemeIfNeeded, 400);
+    }
+
+    @Override
+    protected void onDestroy() {
+        try {
+            unregisterReceiver(themeReceiver);
+        } catch (Throwable ignored) {
+        }
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle out) {
+        super.onSaveInstanceState(out);
+        if (scrollRoot != null) out.putInt("scrollY", scrollRoot.getScrollY());
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
+        syncThemeIfNeeded();
         if (xposed != null) {
             syncFromService();
         } else {
@@ -472,8 +589,10 @@ public class MainActivity extends Activity {
                         @Override
                         public void onScopeRequestFailed(String message) {
                             android.util.Log.w("HyperPGuard", "requestScope(" + pkg + ") failed: " + message);
-                            ui.post(() -> showScopeFailure("「" + g.title + "」加入作用域失败",
-                                    pkg, message));
+                            ui.post(() -> {
+                                showScopeFailure("「" + g.title + "」加入作用域失败", pkg, message);
+                                syncFromService();
+                            });
                         }
                     });
         } catch (Throwable t) {
@@ -549,12 +668,7 @@ public class MainActivity extends Activity {
     /** LSPosed 确认后才更新开关与配置 */
     private void commitState(final Group g, final Switch sw, boolean on, String msg) {
         Config.uiSet(this, g.key, on);
-        if (sw != null) {
-            updatingSwitch = true;
-            sw.setChecked(on);
-            updatingSwitch = false;
-        }
-        setGroupUi(g, on);
+        setGroupUi(g, on, true);
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
@@ -589,24 +703,37 @@ public class MainActivity extends Activity {
      * 常见于系统 priv-app：LSPosed 的 requestScope 会拒绝，但管理器里手动勾选可以。
      */
     private void showScopeFailure(String title, String pkg, String message) {
-        new AlertDialog.Builder(this)
+        showStyled(new AlertDialog.Builder(this)
                 .setTitle(title)
                 .setMessage("包名：" + pkg
                         + "\n\nLSPosed 返回：" + (message == null || message.isEmpty() ? "（无）" : message)
                         + "\n\n可以在 LSPosed 管理器 → 模块 → HyperPGuard → 作用域 里手动勾选该应用。"
                         + "\n手动勾选后回到本界面，开关会跟着变成开启。")
-                .setPositiveButton(T("知道了"), null)
-                .show();
+                .setPositiveButton(T("知道了"), null));
     }
 
     private void setGroupUi(Group g, boolean on) {
+        setGroupUi(g, on, false);
+    }
+
+    /** animate=false 用于作用域同步与回滚，避免状态还没确认就先播放动画 */
+    private void setGroupUi(Group g, boolean on, boolean animate) {
         TextView scopeHint = scopeHints.get(g.pkg);
         if (scopeHint != null) {
             scopeHint.setVisibility(on ? android.view.View.GONE : android.view.View.VISIBLE);
         }
         updatingSwitch = true;
         Switch gs = groupSwitches.get(g.pkg);
-        if (gs != null) gs.setChecked(on);
+        if (gs instanceof PgSwitch) {
+            PgSwitch pg = (PgSwitch) gs;
+            if (animate) {
+                pg.setChecked(on);
+            } else {
+                pg.setCheckedImmediate(on);
+            }
+        } else if (gs != null) {
+            gs.setChecked(on);
+        }
         updatingSwitch = false;
 
         List<Switch> children = childSwitches.get(g.pkg);
@@ -693,7 +820,8 @@ public class MainActivity extends Activity {
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
         tv.setTextColor(ACCENT);
         tv.setGravity(Gravity.CENTER);
-        tv.setPadding(0, dp(8), 0, dp(8));
+        tv.setBackground(pressBackground());
+        tv.setPadding(0, dp(10), 0, dp(10));
         tv.setLayoutParams(new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         tv.setOnClickListener(v -> action.run());
@@ -836,7 +964,8 @@ public class MainActivity extends Activity {
         reboot.setText("重启");
         reboot.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
         reboot.setTextColor(ACCENT);
-        reboot.setPadding(dp(12), dp(6), dp(8), dp(6));
+        reboot.setBackground(pressBackground());
+        reboot.setPadding(dp(14), dp(8), dp(14), dp(8));
         reboot.setOnClickListener(v -> restartApp(g.pkg));
         row.addView(reboot);
 
@@ -846,23 +975,18 @@ public class MainActivity extends Activity {
         sw.setLayoutParams(new LinearLayout.LayoutParams(dp(49), dp(28)));
         groupSwitches.put(g.pkg, sw);
         sw.setChecked(Config.get(this, g.key, true));
-        sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton v, boolean checked) {
+        if (sw instanceof PgSwitch) {
+            // 点击只上报目标状态，开关本身不动；等作用域真的变了再切
+            ((PgSwitch) sw).setOnToggleRequest(target -> {
                 if (updatingSwitch) return;
-                boolean current = Config.get(MainActivity.this, g.key, true);
-                if (checked == current) return;
-                // 先回滚，等 LSPosed 确认后再改
-                updatingSwitch = true;
-                sw.setChecked(!checked);
-                updatingSwitch = false;
-                if (checked) {
+                if (target) {
                     requestAdd(g.pkg, g, sw);
                 } else {
                     requestRemove(g.pkg, g, sw);
                 }
-            }
-        });
+            });
+        }
+        sw.setOnCheckedChangeListener(null);
         row.addView(sw);
         return row;
     }
@@ -933,8 +1057,11 @@ public class MainActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.VERTICAL);
         row.setMinimumHeight(dp(56));
-        row.setPadding(0, dp(9), 0, dp(9));
+        row.setPadding(dp(4), dp(9), dp(4), dp(9));
+        row.setBackground(pressBackground());
         row.setClickable(true);
+        row.setBackground(pressBackground());
+        row.setPadding(dp(4), row.getPaddingTop(), dp(4), row.getPaddingBottom());
 
         TextView t1 = new TextView(this);
         t1.setText("清理日志缓冲");
@@ -949,7 +1076,7 @@ public class MainActivity extends Activity {
 
         row.addView(t1);
         row.addView(t2);
-        row.setOnClickListener(v -> new AlertDialog.Builder(this)
+        row.setOnClickListener(v -> showStyled(new AlertDialog.Builder(this)
                 .setTitle(T("清空日志缓冲？"))
                 .setMessage("会清空系统 logcat 的全部缓冲，包括其他应用的日志。"
                         + "模块配置、已保存的截图与行为库都不受影响。")
@@ -957,8 +1084,7 @@ public class MainActivity extends Activity {
                     execShell("logcat -b all -c");
                     ui.post(() -> Toast.makeText(this, "已清空", Toast.LENGTH_SHORT).show());
                 }, "hyperpguard-clean-log").start())
-                .setNegativeButton(T("取消"), null)
-                .show());
+                .setNegativeButton(T("取消"), null)));
         parent.addView(row);
     }
 
@@ -970,6 +1096,8 @@ public class MainActivity extends Activity {
         row.setMinimumHeight(dp(56));
         row.setPadding(0, dp(9), 0, dp(9));
         row.setClickable(true);
+        row.setBackground(pressBackground());
+        row.setPadding(dp(4), row.getPaddingTop(), dp(4), row.getPaddingBottom());
 
         TextView t1 = new TextView(this);
         t1.setText("自定义规则");
@@ -1000,67 +1128,89 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void renderRules(final LinearLayout ruleList) {
+        ruleList.removeAllViews();
+        String raw = Config.customRulesRaw(MainActivity.this).trim();
+        if (raw.isEmpty()) {
+            TextView empty = new TextView(MainActivity.this);
+            empty.setText(T("还没有规则"));
+            empty.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+            empty.setTextColor(SUB);
+            empty.setPadding(0, dp(14), 0, dp(8));
+            ruleList.addView(empty);
+            return;
+        }
+        for (String one : raw.split(";;")) {
+            final String rule = one.trim();
+            if (rule.isEmpty()) continue;
+            LinearLayout row = new LinearLayout(MainActivity.this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setMinimumHeight(dp(44));
+            TextView name = new TextView(MainActivity.this);
+            name.setText(rule);
+            name.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+            name.setTextColor(TEXT);
+            name.setLayoutParams(new LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            row.addView(name);
+            TextView del = new TextView(MainActivity.this);
+            del.setText(T("删除"));
+            del.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+            del.setTextColor(ACCENT);
+            del.setTag("accent");
+            del.setBackground(pressBackground());
+            del.setPadding(dp(14), dp(8), dp(14), dp(8));
+            del.setOnClickListener(v -> {
+                StringBuilder sb = new StringBuilder();
+                for (String x : Config.customRulesRaw(MainActivity.this).trim().split(";;")) {
+                    String t = x.trim();
+                    if (t.isEmpty() || t.equals(rule)) continue;
+                    if (sb.length() > 0) sb.append(";;");
+                    sb.append(t);
+                }
+                Config.setCustomRules(MainActivity.this, sb.toString());
+                renderRules(ruleList);
+            });
+            row.addView(del);
+            ruleList.addView(row);
+        }
+    }
+
     private void showCustomRules() {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(dp(16), dp(8), dp(16), dp(8));
+        box.setPadding(dp(20), dp(4), dp(20), dp(6));
 
         final EditText input = new EditText(this);
-        input.setHint("tracking.miui.com 或 tracking.miui.com/track/ 或 jo.k#U0");
-        input.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        input.setHint(T("域名、域名/路径 或 类名#方法"));
+        input.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        input.setTextColor(TEXT);
+        input.setHintTextColor(SUB);
+        input.setSingleLine(true);
+        GradientDrawable fieldBg = new GradientDrawable();
+        fieldBg.setColor(nightMode ? 0xFF2C2C2E : 0xFFF2F3F5);
+        fieldBg.setCornerRadius(dp(12));
+        input.setBackground(fieldBg);
+        input.setPadding(dp(14), dp(12), dp(14), dp(12));
         box.addView(input);
 
-        final TextView list = new TextView(this);
-        list.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-        list.setTextIsSelectable(true);
-        list.setPadding(0, dp(8), 0, dp(8));
-        box.addView(list);
+        final LinearLayout ruleList = new LinearLayout(this);
+        ruleList.setOrientation(LinearLayout.VERTICAL);
 
-        Button add = new Button(this);
-        add.setText("添加");
-        add.setAllCaps(false);
-        add.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
-        box.addView(add);
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setGravity(Gravity.CENTER_VERTICAL);
+        actions.setPadding(0, dp(6), 0, dp(2));
 
-        Button clear = new Button(this);
-        clear.setText("清空");
-        clear.setAllCaps(false);
-        clear.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
-        box.addView(clear);
-
-        TextView doc = new TextView(this);
-        doc.setText("使用说明");
-        doc.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
-        doc.setTextColor(ACCENT);
-        doc.setPadding(0, dp(10), 0, 0);
-        doc.setOnClickListener(v -> openCustomRulesDoc());
-        box.addView(doc);
-
-        ScrollView sv = new ScrollView(this);
-        sv.addView(box);
-
-        final AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(T("自定义规则"))
-                .setView(sv)
-                .setNegativeButton(T("关闭"), null)
-                .create();
-
-        final Runnable render = () -> {
-            String raw = Config.customRulesRaw(MainActivity.this).trim();
-            if (raw.isEmpty()) {
-                list.setText("还没有规则。\n\n域名 = 拦该域及其子域；域名/路径 = 只拦该前缀；"
-                        + "类名#方法 = 方法直接返回默认值（* 表示整类）。"
-                        + "\n添加或删除后需要重启对应应用才生效。");
-                return;
-            }
-            StringBuilder sb = new StringBuilder();
-            for (String one : raw.split(";;")) {
-                if (!one.trim().isEmpty()) sb.append("• ").append(one.trim()).append('\n');
-            }
-            sb.append("\n添加或删除后需要重启对应应用才生效。");
-            list.setText(sb.toString());
-        };
-
+        TextView add = new TextView(this);
+        add.setText(T("添加"));
+        add.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        add.setTextColor(ACCENT);
+        add.setTag("accent");
+        add.setGravity(Gravity.CENTER);
+        add.setBackground(pressBackground());
+        add.setPadding(0, dp(10), 0, dp(10));
         add.setOnClickListener(v -> {
             String val = input.getText().toString().trim();
             boolean host = val.matches("[A-Za-z0-9._\\-]+(/[A-Za-z0-9._\\-]*)*");
@@ -1078,16 +1228,56 @@ public class MainActivity extends Activity {
             }
             Config.setCustomRules(this, raw.isEmpty() ? val : raw + ";;" + val);
             input.setText("");
-            render.run();
+            renderRules(ruleList);
         });
+        actions.addView(add, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
+        TextView clear = new TextView(this);
+        clear.setText(T("清空"));
+        clear.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        clear.setTextColor(ACCENT);
+        clear.setTag("accent");
+        clear.setGravity(Gravity.CENTER);
+        clear.setBackground(pressBackground());
+        clear.setPadding(0, dp(10), 0, dp(10));
         clear.setOnClickListener(v -> {
             Config.setCustomRules(this, "");
-            render.run();
+            renderRules(ruleList);
         });
+        actions.addView(clear, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
+        TextView doc = new TextView(this);
+        doc.setText(T("使用说明"));
+        doc.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        doc.setTextColor(ACCENT);
+        doc.setTag("accent");
+        doc.setBackground(pressBackground());
+        doc.setPadding(dp(4), dp(10), dp(4), dp(10));
+        doc.setOnClickListener(v -> openCustomRulesDoc());
+
+        TextView note = new TextView(this);
+        note.setText(T("添加或删除后需要重启对应应用才生效"));
+        note.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        note.setTextColor(SUB);
+
+        box.addView(actions);
+        box.addView(ruleList);
+        box.addView(doc);
+        box.addView(note);
+
+        ScrollView sv = new ScrollView(this);
+        sv.addView(box);
+
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(T("自定义规则"))
+                .setView(sv)
+                .setNegativeButton(T("关闭"), null)
+                .create();
         dialog.show();
-        render.run();
+        trackDialog(dialog);
+        renderRules(ruleList);
     }
 
     /* ---------------- 行为库状态 ---------------- */
@@ -1102,6 +1292,8 @@ public class MainActivity extends Activity {
         row.setMinimumHeight(dp(56));
         row.setPadding(0, dp(9), 0, dp(9));
         row.setClickable(true);
+        row.setBackground(pressBackground());
+        row.setPadding(dp(4), row.getPaddingTop(), dp(4), row.getPaddingBottom());
 
         TextView t1 = new TextView(this);
         t1.setText("行为库状态");
@@ -1127,17 +1319,22 @@ public class MainActivity extends Activity {
 
         TextView tv = new TextView(this);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-        tv.setTextIsSelectable(true);
+        tv.setTextColor(TEXT);
+        tv.setTextIsSelectable(false);
+        tv.setLongClickable(false);
         tv.setText("读取中…");
         box.addView(tv);
 
-        Button refresh = new Button(this);
-        refresh.setText("刷新");
-        refresh.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
-        refresh.setBackground(null);
+        TextView refresh = new TextView(this);
+        refresh.setText(T("刷新"));
+        refresh.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         refresh.setTextColor(ACCENT);
-        refresh.setAllCaps(false);
-        box.addView(refresh);
+        refresh.setTag("accent");
+        refresh.setGravity(Gravity.CENTER);
+        refresh.setBackground(pressBackground());
+        refresh.setPadding(0, dp(10), 0, dp(10));
+        box.addView(refresh, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         ScrollView sv = new ScrollView(this);
         sv.addView(box);
@@ -1158,6 +1355,7 @@ public class MainActivity extends Activity {
             load.run();
         });
         dialog.show();
+        trackDialog(dialog);
         load.run();
     }
 
@@ -1294,7 +1492,8 @@ public class MainActivity extends Activity {
         view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         view.setTextColor(ACCENT);
         view.setGravity(Gravity.CENTER);
-        view.setPadding(0, dp(8), 0, dp(8));
+        view.setBackground(pressBackground());
+        view.setPadding(0, dp(10), 0, dp(10));
         view.setLayoutParams(new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         view.setOnClickListener(v -> loadLog(false));
@@ -1305,7 +1504,8 @@ public class MainActivity extends Activity {
         share.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         share.setTextColor(ACCENT);
         share.setGravity(Gravity.CENTER);
-        share.setPadding(0, dp(8), 0, dp(8));
+        share.setBackground(pressBackground());
+        share.setPadding(0, dp(10), 0, dp(10));
         share.setLayoutParams(new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         share.setOnClickListener(v -> loadLog(true));
@@ -1316,7 +1516,8 @@ public class MainActivity extends Activity {
         diag.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         diag.setTextColor(ACCENT);
         diag.setGravity(Gravity.CENTER);
-        diag.setPadding(0, dp(8), 0, dp(8));
+        diag.setBackground(pressBackground());
+        diag.setPadding(0, dp(10), 0, dp(10));
         diag.setLayoutParams(new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         diag.setOnClickListener(v -> showDiagnostics());
@@ -1326,7 +1527,16 @@ public class MainActivity extends Activity {
     }
 
     /** 框架连接、真实作用域、开关数量、已注入进程，用来判断「为什么没拦住」 */
+    private boolean diagRetried;
+
     private void showDiagnostics() {
+        if (xposed == null && !diagRetried) {
+            diagRetried = true;
+            bindServiceHelper();
+            ui.postDelayed(this::showDiagnostics, 1500);
+            return;
+        }
+        diagRetried = false;
         Toast.makeText(this, "检测中…（需 root）", Toast.LENGTH_SHORT).show();
         new Thread(new Runnable() {
             @Override
@@ -1625,13 +1835,15 @@ public class MainActivity extends Activity {
         titleText.setTextColor(TEXT);
         titleBar.addView(titleText, new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        TextView titleVersion = new TextView(this);
-        titleVersion.setText("v" + Config.VERSION);
-        titleVersion.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-        titleVersion.setTextColor(SUB);
-        titleBar.addView(titleVersion);
+        if (title != null && !title.contains("自检")) {
+            TextView titleVersion = new TextView(this);
+            titleVersion.setText("v" + Config.VERSION);
+            titleVersion.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+            titleVersion.setTextColor(SUB);
+            titleBar.addView(titleVersion);
+        }
 
-        new AlertDialog.Builder(this)
+        showStyled(new AlertDialog.Builder(this)
                 .setCustomTitle(titleBar)
                 .setView(sv)
                 .setPositiveButton(T("复制"), (d, w) -> {
@@ -1641,8 +1853,7 @@ public class MainActivity extends Activity {
                     Toast.makeText(this, "已复制", Toast.LENGTH_SHORT).show();
                 })
                 .setNeutralButton(T("分享"), (d, w) -> doShare(log))
-                .setNegativeButton(T("关闭"), null)
-                .show();
+                .setNegativeButton(T("关闭"), null));
     }
 
     private void doShare(String log) {
@@ -1688,6 +1899,8 @@ public class MainActivity extends Activity {
         row.setMinimumHeight(dp(56));
         row.setPadding(0, dp(9), 0, dp(9));
         row.setClickable(true);
+        row.setBackground(pressBackground());
+        row.setPadding(dp(4), row.getPaddingTop(), dp(4), row.getPaddingBottom());
         TextView name = new TextView(this);
         name.setText(label);
         name.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
@@ -1757,12 +1970,11 @@ public class MainActivity extends Activity {
             return;
         }
         if (compareVersion(v, Config.VERSION) > 0) {
-            new AlertDialog.Builder(this)
+            showStyled(new AlertDialog.Builder(this)
                     .setTitle(T("发现新版本 v") + v)
                     .setMessage("当前 v" + Config.VERSION + "，最新 v" + v + "。")
                     .setPositiveButton(T("打开发布页"), (d, w) -> openUrl(URL_RELEASES))
-                    .setNegativeButton(T("稍后"), null)
-                    .show();
+                    .setNegativeButton(T("稍后"), null));
         } else {
             Toast.makeText(this, "已是最新版本（v" + Config.VERSION + "）",
                     Toast.LENGTH_SHORT).show();
@@ -1814,11 +2026,78 @@ public class MainActivity extends Activity {
         ScrollView sv = new ScrollView(this);
         sv.addView(tv);
 
-        new AlertDialog.Builder(this)
+        showStyled(new AlertDialog.Builder(this)
                 .setTitle(T("免责声明"))
                 .setView(sv)
-                .setPositiveButton(T("我知道了"), null)
-                .show();
+                .setPositiveButton(T("我知道了"), null));
+    }
+
+    /** 按下时的高亮底色：浅色模式比背景深，深色模式比背景浅 */
+    private android.graphics.drawable.Drawable pressBackground() {
+        int pressed = nightMode ? 0xFF3A3A3C : 0xFFE5E5E5;
+        android.graphics.drawable.GradientDrawable on =
+                new android.graphics.drawable.GradientDrawable();
+        on.setColor(pressed);
+        on.setCornerRadius(dp(12));
+        android.graphics.drawable.GradientDrawable off =
+                new android.graphics.drawable.GradientDrawable();
+        off.setColor(0x00000000);
+        android.graphics.drawable.StateListDrawable d =
+                new android.graphics.drawable.StateListDrawable();
+        d.addState(new int[]{android.R.attr.state_pressed}, on);
+        d.addState(new int[]{}, off);
+        return d;
+    }
+
+    /** 对话框跟随深浅色：圆角卡片底、按钮强调色、正文与附注分色 */
+    private void styleDialog(AlertDialog d) {
+        if (d == null || d.getWindow() == null) return;
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(CARD);
+        bg.setCornerRadius(dp(20));
+        d.getWindow().setBackgroundDrawable(bg);
+        paintDialogText(d.getWindow().getDecorView());
+    }
+
+    private void paintDialogText(android.view.View v) {
+        if (v == null) return;
+        if (v instanceof EditText) {
+            EditText et = (EditText) v;
+            et.setTextColor(TEXT);
+            et.setHintTextColor(SUB);
+            GradientDrawable field = new GradientDrawable();
+            field.setColor(nightMode ? 0xFF2C2C2E : 0xFFF2F3F5);
+            field.setCornerRadius(dp(12));
+            et.setBackground(field);
+        } else if (v instanceof Button) {
+            ((Button) v).setTextColor(ACCENT);
+        } else if (v instanceof TextView) {
+            TextView tv = (TextView) v;
+            if (!"accent".equals(tv.getTag())) {
+                float sp = tv.getTextSize() / getResources().getDisplayMetrics().scaledDensity;
+                tv.setTextColor(sp <= 12.5f ? SUB : TEXT);
+            }
+        }
+        if (v instanceof ViewGroup) {
+            ViewGroup g = (ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) paintDialogText(g.getChildAt(i));
+        }
+    }
+
+    private AlertDialog showStyled(AlertDialog.Builder b) {
+        AlertDialog d = b.create();
+        d.show();
+        trackDialog(d);
+        return d;
+    }
+
+    /** 记录当前对话框，切深浅色时可以就地重新着色 */
+    private void trackDialog(AlertDialog d) {
+        shownDialog = d;
+        d.setOnDismissListener(x -> {
+            if (shownDialog == d) shownDialog = null;
+        });
+        styleDialog(d);
     }
 
     private int dp(int v) {

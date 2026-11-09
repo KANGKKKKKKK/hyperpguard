@@ -274,6 +274,10 @@ final class I18n {
         EN.put("广告埋点上报", "Ad event tracking");
         EN.put("OneTrack 的 track / adTrack 方法直接返回空",
                 "OneTrack track / adTrack methods return immediately");
+        EN.put("删除", "Delete");
+        EN.put("还没有规则", "No rules yet");
+        EN.put("添加或删除后需要重启对应应用才生效", "Restart the target app after adding or removing a rule");
+        EN.put("域名、域名/路径 或 类名#方法", "domain, domain/path or class#method");
         EN.put("环境自检", "Self-check");
         EN.put("全断网（推荐）", "Block all traffic (recommended)");
         EN.put("该进程所有外网请求一并拦截；云端换域名也不用管",
