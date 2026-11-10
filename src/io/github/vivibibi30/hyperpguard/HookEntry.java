@@ -463,6 +463,66 @@ public class HookEntry extends XposedModule {
             return;
         }
 
+        if ("com.sohu.inputmethod.sogou.xiaomi".equals(pkg)) {
+            if (!Config.on(Config.K_G_IME_SOGOU, true)) return;
+            Logs.i("attach sogou ime");
+            if (Config.on(Config.K_SOGOU_CLIPBOARD, true)) {
+                stage("sogouClipboard", () -> ImHooks.sogouClipboard(this, cl));
+            }
+            List<NetGuard.Rule> r = new ArrayList<>();
+            if (Config.on(Config.K_SOGOU_PINGBACK, true)) {
+                // 统计域名是搜狗自有链路，与 OneTrack 无关；只影响埋点
+                r.add(new NetGuard.Rule("kpi2.android.shouji.sogou.com"));
+                r.add(new NetGuard.Rule("instantpb.android.shouji.sogou.com"));
+            }
+            netSafe(cl, "sogou", r, false);
+            return;
+        }
+
+        if ("com.xiaomi.type".equals(pkg)) {
+            // 小米输入法：内嵌 OneTrack；自研击键统计（duration_s / key_cnt / action_list）
+            // 类名混淆且没有稳定域名，暂不覆盖，见 docs/RULES.md
+            if (!Config.on(Config.K_G_IME_MITYPE, true)) return;
+            Logs.i("attach mitype ime");
+            if (Config.on(Config.K_MITYPE_TRACK, true)) TrackHooks.install(this, cl);
+            List<NetGuard.Rule> r = new ArrayList<>();
+            if (Config.on(Config.K_MITYPE_TRACK, true)) {
+                // OneTrack 上报域名：tracking 与 sdkconfig 各区域各一条
+                r.add(new NetGuard.Rule("tracking.miui.com"));
+                r.add(new NetGuard.Rule("tracking.intl.miui.com"));
+                r.add(new NetGuard.Rule("tracking.rus.miui.com"));
+                r.add(new NetGuard.Rule("tracking.india.miui.com"));
+                r.add(new NetGuard.Rule("tracking.eu.miui.com"));
+                r.add(new NetGuard.Rule("sdkconfig.xiaomi.com"));
+                r.add(new NetGuard.Rule("sdkconfig.intl.xiaomi.com"));
+                r.add(new NetGuard.Rule("sdkconfig.rus.xiaomi.com"));
+                r.add(new NetGuard.Rule("sdkconfig.india.xiaomi.com"));
+                r.add(new NetGuard.Rule("sdkconfig.eu.xiaomi.com"));
+            }
+            netSafe(cl, "mitype", r, false);
+            return;
+        }
+
+        if ("com.baidu.input_mi".equals(pkg)) {
+            if (!Config.on(Config.K_G_IME_BAIDU, true)) return;
+            Logs.i("attach baidu ime");
+            if (Config.on(Config.K_BAIDU_STATS, true)) {
+                stage("baiduStats", () -> ImHooks.baiduStats(this, cl));
+            }
+            if (Config.on(Config.K_BAIDU_SPEECH, true)) {
+                stage("baiduSpeech", () -> ImHooks.baiduSpeech(this, cl));
+            }
+            return;
+        }
+
+        if ("com.iflytek.inputmethod.miui".equals(pkg)) {
+            if (!Config.on(Config.K_G_IME_IFLYTEK, true)) return;
+            Logs.i("attach iflytek ime");
+            if (Config.on(Config.K_IFLYTEK_STATS, true)) {
+                stage("iflytekStats", () -> ImHooks.iflytekStats(this, cl));
+            }
+            return;
+        }
         if ("com.xiaomi.registration".equals(pkg)) {
             if (!Config.on(Config.K_G_REGISTRATION, true)) return;
             Logs.i("attach registration");

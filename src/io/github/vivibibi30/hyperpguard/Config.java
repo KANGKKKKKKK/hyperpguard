@@ -38,6 +38,10 @@ public final class Config {
     public static final String K_WIFI_DM = "wifi_dm";     // 移动 DM Wi-Fi 扫描
 
     /* 分组总开关 */
+    public static final String K_G_IME_SOGOU = "g_ime_sogou";
+    public static final String K_G_IME_MITYPE = "g_ime_mitype";
+    public static final String K_G_IME_BAIDU = "g_ime_baidu";
+    public static final String K_G_IME_IFLYTEK = "g_ime_iflytek";
     public static final String K_G_SYSHELPER = "g_syshelper";
     public static final String K_G_GUARD = "g_guardprovider";
     public static final String K_G_TRUST = "g_trustservice";
@@ -127,6 +131,26 @@ public final class Config {
     /** 应用商店 / 服务框架自带的 OneTrack 埋点，路径 /track/ */
     public static final String K_MARKET_TRACK = "block_market_track";
     public static final String K_XMSF_TRACK = "block_xmsf_track";
+
+    /* 搜狗输入法小米版 */
+    /** 统计上报：kpi2 / instantpb 两个域名 */
+    public static final String K_SOGOU_PINGBACK = "block_sogou_pingback";
+    /** 剪贴板采集：ClipboardLogHelper */
+    public static final String K_SOGOU_CLIPBOARD = "block_sogou_clipboard";
+
+    /* 小米输入法 */
+    /** OneTrack 埋点（自研击键统计无稳定域名，不在此列） */
+    public static final String K_MITYPE_TRACK = "block_mitype_track";
+
+    /* 百度输入法小米版 */
+    /** com.baidu.stats 统计 SDK */
+    public static final String K_BAIDU_STATS = "block_baidu_stats";
+    /** 语音识别 ASR 采集与上传 */
+    public static final String K_BAIDU_SPEECH = "block_baidu_speech";
+
+    /* 讯飞输入法小米版 */
+    /** com.iflytek.statssdk 统计 SDK */
+    public static final String K_IFLYTEK_STATS = "block_iflytek_stats";
 
     private Config() {
     }
