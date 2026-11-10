@@ -458,6 +458,9 @@ public class HookEntry extends XposedModule {
             if (Config.on(Config.K_MSA_TRACK, true)) {
                 stage("msaTrack", () -> new MsaHooks(this).installTrack(cl));
             }
+            if (Config.on(Config.K_MSA_SPLASH, true)) {
+                stage("msaSplash", () -> new MsaHooks(this).installSplash(cl));
+            }
             // 广告 SDK 失败会重试，域名层默认不拦，保留自定义规则入口
             netSafe(cl, "msa", new ArrayList<>(), false);
             return;
@@ -615,5 +618,41 @@ public class HookEntry extends XposedModule {
             netSafe(cl, "xmsf", r, false);
             return;
         }
+
+        if ("com.miui.wmsvc".equals(pkg)) {
+            // 网络管理服务：诊断类 OneTrack 埋点（tracking.miui.com / sdkconfig）
+            if (!Config.on(Config.K_G_WM, true)) return;
+            Logs.i("attach wmsvc");
+            if (Config.on(Config.K_WM_TRACK, true)) TrackHooks.install(this, cl);
+            List<NetGuard.Rule> r = new ArrayList<>();
+            if (Config.on(Config.K_WM_TRACK, true)) trackHosts(r);
+            netSafe(cl, "wmsvc", r, false);
+            return;
+        }
+
+        if ("com.xiaomi.aicr".equals(pkg)) {
+            // AI 内容识别组件：OneTrack 埋点；不影响本地识别与模型推理
+            if (!Config.on(Config.K_G_AICR, true)) return;
+            Logs.i("attach aicr");
+            if (Config.on(Config.K_AICR_TRACK, true)) TrackHooks.install(this, cl);
+            List<NetGuard.Rule> r = new ArrayList<>();
+            if (Config.on(Config.K_AICR_TRACK, true)) trackHosts(r);
+            netSafe(cl, "aicr", r, false);
+            return;
+        }
+    }
+
+    /** OneTrack 的上报域名：tracking 与 sdkconfig 各区域都各有一条 */
+    private static void trackHosts(List<NetGuard.Rule> r) {
+        r.add(new NetGuard.Rule("tracking.miui.com"));
+        r.add(new NetGuard.Rule("tracking.intl.miui.com"));
+        r.add(new NetGuard.Rule("tracking.rus.miui.com"));
+        r.add(new NetGuard.Rule("tracking.india.miui.com"));
+        r.add(new NetGuard.Rule("tracking.eu.miui.com"));
+        r.add(new NetGuard.Rule("sdkconfig.xiaomi.com"));
+        r.add(new NetGuard.Rule("sdkconfig.intl.xiaomi.com"));
+        r.add(new NetGuard.Rule("sdkconfig.rus.xiaomi.com"));
+        r.add(new NetGuard.Rule("sdkconfig.india.xiaomi.com"));
+        r.add(new NetGuard.Rule("sdkconfig.eu.xiaomi.com"));
     }
 }

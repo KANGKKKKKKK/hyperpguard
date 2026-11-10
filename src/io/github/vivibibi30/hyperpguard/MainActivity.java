@@ -158,6 +158,13 @@ public class MainActivity extends Activity {
             new Group(T("广告组件（MSA）"), "com.miui.systemAdSolution", Config.K_G_MSA, new Item[]{
                     new Item(T("广告使用画像"), T("读取应用今日是否打开、最后使用时间；按少推广告的一侧返回"), Config.K_MSA_USAGE, true),
                     new Item(T("广告埋点上报"), T("OneTrack 的 track / adTrack 方法直接返回空"), Config.K_MSA_TRACK, true),
+                    new Item(T("开屏广告"), T("requestSplashScreen 系列返回空 Intent；应用自己的启动页不受影响"), Config.K_MSA_SPLASH, true),
+            }),
+            new Group(T("网络管理服务"), "com.miui.wmsvc", Config.K_G_WM, new Item[]{
+                    new Item(T("诊断统计上报"), T("OneTrack 埋点 + tracking.miui.com；只影响统计，不影响网络设置与信号"), Config.K_WM_TRACK, true),
+            }),
+            new Group(T("AI 内容识别"), "com.xiaomi.aicr", Config.K_G_AICR, new Item[]{
+                    new Item(T("统计埋点"), T("OneTrack 埋点 + tracking.miui.com；不影响本地识别与模型推理"), Config.K_AICR_TRACK, true),
             }),
             new Group(T("运营商服务"), "com.xiaomi.registration", Config.K_G_REGISTRATION, new Item[]{
                     new Item(T("设备注册（zzhc）"), T("IMEI/IMSI/ICCID；关闭后 VoLTE / 运营商功能可能异常"), Config.K_REG_ZZHC, false),
