@@ -1,3 +1,5 @@
+com.baidu.input_mi
+com.iflytek.inputmethod.miui
 com.miui.analytics
 com.miui.dmregservice
 com.miui.guardprovider
@@ -8,8 +10,10 @@ com.miui.systemAdSolution
 com.miui.wmsvc
 com.mobiletools.systemhelper
 com.xiaomi.aicr
+com.sohu.inputmethod.sogou.xiaomi
 com.xiaomi.aiasst.vision
 com.xiaomi.market
 com.xiaomi.registration
 com.xiaomi.trustservice
+com.xiaomi.type
 com.xiaomi.xmsf

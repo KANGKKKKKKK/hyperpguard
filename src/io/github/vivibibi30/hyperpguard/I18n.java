@@ -297,5 +297,25 @@ final class I18n {
                 "Every outbound request in this process is blocked; host changes do not matter");
         EN.put("发现新版本 v", "New version v");
         EN.put("fxltsbl.com；App 清单 / SIM 标识", "fxltsbl.com — installed apps / SIM identifiers");
+        EN.put("搜狗输入法", "Sogou IME");
+        EN.put("统计埋点", "Event tracking");
+        EN.put("统计上报", "Usage stats");
+        EN.put("kpi2 / instantpb 两个埋点域名；只影响统计",
+                "kpi2 / instantpb endpoints; statistics only");
+        EN.put("剪贴板采集", "Clipboard collection");
+        EN.put("ClipboardLogHelper 记录剪贴板内容与长度；输入与候选不受影响",
+                "ClipboardLogHelper records clipboard text and length; typing and candidates unaffected");
+        EN.put("小米输入法", "Mi IME");
+        EN.put("OneTrack 埋点 + tracking.miui.com；击键统计没有稳定域名，暂未覆盖",
+                "OneTrack + tracking.miui.com; keystroke stats have no stable host and are not covered yet");
+        EN.put("百度输入法", "Baidu IME");
+        EN.put("com.baidu.stats 记录与上传入口；只影响统计",
+                "com.baidu.stats record and upload entries; statistics only");
+        EN.put("语音采集上传", "Voice data upload");
+        EN.put("com.baidu.speech.utils.analysis；关闭后语音输入仍可用，只是不再上传 ASR 数据",
+                "com.baidu.speech.utils.analysis; voice input still works, ASR data is no longer uploaded");
+        EN.put("讯飞输入法", "iFlytek IME");
+        EN.put("com.iflytek.statssdk 记录与上传入口；只影响统计",
+                "com.iflytek.statssdk record and upload entries; statistics only");
     }
 }
