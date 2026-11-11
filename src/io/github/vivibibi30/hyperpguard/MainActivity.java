@@ -175,7 +175,7 @@ public class MainActivity extends Activity {
             }),
             new Group(T("百度输入法"), "com.baidu.input_mi", Config.K_G_IME_BAIDU, new Item[]{
                     new Item(T("统计上报"), T("com.baidu.stats 记录与上传入口；只影响统计"), Config.K_BAIDU_STATS, true),
-                    new Item(T("语音采集上传"), T("com.baidu.speech.utils.analysis；关闭后语音输入仍可用，只是不再上传 ASR 数据"), Config.K_BAIDU_SPEECH, true),
+                    new Item(T("语音采集上传"), T("com.baidu.speech.utils.analysis；默认关：开启后不再上传 ASR 数据，语音输入仍可用"), Config.K_BAIDU_SPEECH, false),
             }),
             new Group(T("讯飞输入法"), "com.iflytek.inputmethod.miui", Config.K_G_IME_IFLYTEK, new Item[]{
                     new Item(T("统计上报"), T("com.iflytek.statssdk 记录与上传入口；只影响统计"), Config.K_IFLYTEK_STATS, true),

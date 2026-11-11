@@ -54,14 +54,27 @@ final class ImHooks {
      * 同一包前缀下所有类的 void 方法。
      *
      * 前缀必须是纯埋点包：这里的粒度是「整个 SDK 停写」，不能把界面或输入逻辑包进来。
+     * 初始化 / 生命周期 / 配置类方法放行，避免 SDK 带坏状态运行。
      */
     private static int voidPrefix(XposedModule m, ClassLoader cl, String prefix) {
-        java.util.List<String> cands = Hooks.classNames(cl, s -> s.startsWith(prefix), 400);
+        java.util.List<String> cands = Hooks.classNames(cl, s -> s.startsWith(prefix), 800);
         int n = Hooks.hookBySignature(m, cands, cl,
                 method -> method.getReturnType() == void.class
-                        && !Modifier.isNative(method.getModifiers()),
+                        && !Modifier.isNative(method.getModifiers())
+                        && !isControlMethod(method.getName()),
                 chain -> null);
         Logs.i("void hooks " + prefix + " classes=" + cands.size() + " hooked=" + n);
         return n;
+    }
+
+    /** init / set / start / register 这类控制方法不拦，否则 SDK 可能初始化失败或功能异常 */
+    private static boolean isControlMethod(String name) {
+        String n = name.toLowerCase(java.util.Locale.ROOT);
+        return n.startsWith("init") || n.startsWith("set") || n.startsWith("reset")
+                || n.startsWith("start") || n.startsWith("stop")
+                || n.startsWith("register") || n.startsWith("unregister")
+                || n.startsWith("create") || n.startsWith("config")
+                || n.startsWith("enable") || n.startsWith("disable")
+                || n.startsWith("bind") || n.startsWith("unbind");
     }
 }
