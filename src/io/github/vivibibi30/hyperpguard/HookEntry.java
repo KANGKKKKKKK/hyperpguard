@@ -473,11 +473,9 @@ public class HookEntry extends XposedModule {
                 stage("sogouClipboard", () -> ImHooks.sogouClipboard(this, cl));
             }
             List<NetGuard.Rule> r = new ArrayList<>();
-            // 统计域名是搜狗自有链路，与 OneTrack 无关；只影响埋点，两个域名各自开关
-            if (Config.on(Config.K_SOGOU_KPI2, true)) {
+            // 统计域名是搜狗自有链路，与 OneTrack 无关；两个域名同属统计上报，共用一个开关
+            if (Config.on(Config.K_SOGOU_PINGBACK, true)) {
                 r.add(new NetGuard.Rule("kpi2.android.shouji.sogou.com"));
-            }
-            if (Config.on(Config.K_SOGOU_INSTANT, true)) {
                 r.add(new NetGuard.Rule("instantpb.android.shouji.sogou.com"));
             }
             netSafe(cl, "sogou", r, false);
@@ -491,7 +489,7 @@ public class HookEntry extends XposedModule {
             Logs.i("attach mitype ime");
             if (Config.on(Config.K_MITYPE_TRACK, true)) TrackHooks.install(this, cl);
             List<NetGuard.Rule> r = new ArrayList<>();
-            if (Config.on(Config.K_MITYPE_HOSTS, true)) {
+            if (Config.on(Config.K_MITYPE_TRACK, true)) {
                 // OneTrack 上报域名：tracking 与 sdkconfig 各区域各一条
                 r.add(new NetGuard.Rule("tracking.miui.com"));
                 r.add(new NetGuard.Rule("tracking.intl.miui.com"));

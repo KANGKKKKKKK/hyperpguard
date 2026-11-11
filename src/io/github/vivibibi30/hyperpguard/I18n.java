@@ -302,21 +302,15 @@ final class I18n {
         EN.put("统计上报", "Usage stats");
         EN.put("kpi2 / instantpb 两个埋点域名；只影响统计",
                 "kpi2 / instantpb endpoints; statistics only");
-        EN.put("kpi2 统计", "kpi2 stats");
-        EN.put("instantpb 统计", "instantpb stats");
-        EN.put("OneTrack 埋点", "OneTrack events");
-        EN.put("OneTrack 域名", "OneTrack hosts");
-        EN.put("kpi2.android.shouji.sogou.com；只影响统计", "kpi2.android.shouji.sogou.com; statistics only");
-        EN.put("instantpb.android.shouji.sogou.com；只影响统计", "instantpb.android.shouji.sogou.com; statistics only");
-        EN.put("track / adTrack 方法返回空；击键统计没有稳定域名，暂未覆盖",
-                "track / adTrack return immediately; keystroke stats have no stable host and are not covered yet");
-        EN.put("tracking.*.miui.com / sdkconfig.*.xiaomi.com", "tracking.*.miui.com / sdkconfig.*.xiaomi.com");
+        EN.put("统计上报", "Usage stats");
+        EN.put("kpi2 与 instantpb 两个埋点域名；后果：只停统计，输入、候选与词库不受影响",
+                "kpi2 and instantpb endpoints; effect: statistics only, typing/candidates/user dictionary unaffected");
         EN.put("剪贴板采集", "Clipboard collection");
-        EN.put("ClipboardLogHelper 记录剪贴板内容与长度；输入与候选不受影响",
-                "ClipboardLogHelper records clipboard text and length; typing and candidates unaffected");
+        EN.put("ClipboardLogHelper 记录剪贴板内容与长度；后果：关闭后剪贴板历史可能不可用，复制粘贴本身不受影响",
+                "ClipboardLogHelper records clipboard text and length; effect: clipboard history may stop working, copy/paste itself is unaffected");
         EN.put("小米输入法", "Mi IME");
-        EN.put("OneTrack 埋点 + tracking.miui.com；击键统计没有稳定域名，暂未覆盖",
-                "OneTrack + tracking.miui.com; keystroke stats have no stable host and are not covered yet");
+        EN.put("OneTrack 方法层 + tracking/sdkconfig 域名；后果：只停埋点，输入与联想不受影响。自研击键统计无稳定域名，未覆盖",
+                "OneTrack methods + tracking/sdkconfig hosts; effect: tracking only, typing and suggestions unaffected. Keystroke stats have no stable host and are not covered");
         EN.put("百度输入法", "Baidu IME");
         EN.put("com.baidu.stats 记录与上传入口；只影响统计",
                 "com.baidu.stats record and upload entries; statistics only");

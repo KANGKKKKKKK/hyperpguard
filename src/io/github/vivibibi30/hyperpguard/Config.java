@@ -14,7 +14,7 @@ public final class Config {
 
     public static final String PKG = "io.github.vivibibi30.hyperpguard";
     public static final String PREFS = "pg";
-    public static final String VERSION = "1.6.12";
+    public static final String VERSION = "1.6.13";
 
     /* 全局 */
     public static final String K_MASTER = "master";
@@ -145,18 +145,14 @@ public final class Config {
     public static final String K_XMSF_TRACK = "block_xmsf_track";
 
     /* 搜狗输入法小米版 */
-    /** 统计上报：kpi2 域名 */
-    public static final String K_SOGOU_KPI2 = "block_sogou_kpi2";
-    /** 统计上报：instantpb 域名 */
-    public static final String K_SOGOU_INSTANT = "block_sogou_instant";
+    /** 统计上报：kpi2 与 instantpb 两个域名，同属搜狗自有统计链路 */
+    public static final String K_SOGOU_PINGBACK = "block_sogou_pingback";
     /** 剪贴板采集：ClipboardLogHelper */
     public static final String K_SOGOU_CLIPBOARD = "block_sogou_clipboard";
 
     /* 小米输入法 */
-    /** OneTrack 埋点（自研击键统计无稳定域名，不在此列） */
+    /** OneTrack 埋点：方法层 + tracking/sdkconfig 域名（自研击键统计无稳定域名，不在此列） */
     public static final String K_MITYPE_TRACK = "block_mitype_track";
-    /** OneTrack 上报域名：tracking / sdkconfig 各区域 */
-    public static final String K_MITYPE_HOSTS = "block_mitype_hosts";
 
     /* 百度输入法小米版 */
     /** com.baidu.stats 统计 SDK */

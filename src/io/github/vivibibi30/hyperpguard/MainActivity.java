@@ -167,13 +167,11 @@ public class MainActivity extends Activity {
                     new Item(T("统计埋点"), T("OneTrack 埋点 + tracking.miui.com；不影响本地识别与模型推理"), Config.K_AICR_TRACK, true),
             }),
             new Group(T("搜狗输入法"), "com.sohu.inputmethod.sogou.xiaomi", Config.K_G_IME_SOGOU, new Item[]{
-                    new Item(T("kpi2 统计"), T("kpi2.android.shouji.sogou.com；只影响统计"), Config.K_SOGOU_KPI2, true),
-                    new Item(T("instantpb 统计"), T("instantpb.android.shouji.sogou.com；只影响统计"), Config.K_SOGOU_INSTANT, true),
-                    new Item(T("剪贴板采集"), T("ClipboardLogHelper 记录剪贴板内容与长度；默认关，关闭后剪贴板历史可能不可用"), Config.K_SOGOU_CLIPBOARD, false),
+                    new Item(T("统计上报"), T("kpi2 与 instantpb 两个埋点域名；后果：只停统计，输入、候选与词库不受影响"), Config.K_SOGOU_PINGBACK, true),
+                    new Item(T("剪贴板采集"), T("ClipboardLogHelper 记录剪贴板内容与长度；后果：关闭后剪贴板历史可能不可用，复制粘贴本身不受影响"), Config.K_SOGOU_CLIPBOARD, false),
             }),
             new Group(T("小米输入法"), "com.xiaomi.type", Config.K_G_IME_MITYPE, new Item[]{
-                    new Item(T("OneTrack 埋点"), T("track / adTrack 方法返回空；击键统计没有稳定域名，暂未覆盖"), Config.K_MITYPE_TRACK, true),
-                    new Item(T("OneTrack 域名"), T("tracking.*.miui.com / sdkconfig.*.xiaomi.com"), Config.K_MITYPE_HOSTS, true),
+                    new Item(T("统计埋点"), T("OneTrack 方法层 + tracking/sdkconfig 域名；后果：只停埋点，输入与联想不受影响。自研击键统计无稳定域名，未覆盖"), Config.K_MITYPE_TRACK, true),
             }),
             new Group(T("百度输入法"), "com.baidu.input_mi", Config.K_G_IME_BAIDU, new Item[]{
                     new Item(T("统计上报"), T("com.baidu.stats 记录与上传入口；只影响统计"), Config.K_BAIDU_STATS, true),
