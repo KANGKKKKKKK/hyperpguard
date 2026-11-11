@@ -302,6 +302,15 @@ final class I18n {
         EN.put("统计上报", "Usage stats");
         EN.put("kpi2 / instantpb 两个埋点域名；只影响统计",
                 "kpi2 / instantpb endpoints; statistics only");
+        EN.put("kpi2 统计", "kpi2 stats");
+        EN.put("instantpb 统计", "instantpb stats");
+        EN.put("OneTrack 埋点", "OneTrack events");
+        EN.put("OneTrack 域名", "OneTrack hosts");
+        EN.put("kpi2.android.shouji.sogou.com；只影响统计", "kpi2.android.shouji.sogou.com; statistics only");
+        EN.put("instantpb.android.shouji.sogou.com；只影响统计", "instantpb.android.shouji.sogou.com; statistics only");
+        EN.put("track / adTrack 方法返回空；击键统计没有稳定域名，暂未覆盖",
+                "track / adTrack return immediately; keystroke stats have no stable host and are not covered yet");
+        EN.put("tracking.*.miui.com / sdkconfig.*.xiaomi.com", "tracking.*.miui.com / sdkconfig.*.xiaomi.com");
         EN.put("剪贴板采集", "Clipboard collection");
         EN.put("ClipboardLogHelper 记录剪贴板内容与长度；输入与候选不受影响",
                 "ClipboardLogHelper records clipboard text and length; typing and candidates unaffected");
