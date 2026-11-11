@@ -4,6 +4,8 @@ on:
   push:
     branches: [ main ]
     tags: [ 'v*', '[0-9]*-*' ]
+  # PR 也跑一遍构建与自查：之前只有 main 与 tag 触发，改动的分支在合并前没有 CI 结果
+  pull_request:
   workflow_dispatch:
 
 permissions:
