@@ -63,11 +63,31 @@ final class Hooks {
         return n;
     }
 
-    static void allByName(XposedModule m, Class<?> c, String name, Interceptor interceptor) {
-        for (Method method : c.getDeclaredMethods()) {
-            if (!method.getName().equals(name)) continue;
-            m.hook(method).intercept(interceptor::intercept);
+    /**
+     * 同类名方法全部 hook，返回挂上的数量。
+     *
+     * getDeclaredMethods() 与 hookBySignature 是同一个坑：类里含运行时缺失的类型
+     * （AutoValue 生成的 javax.lang.model.element.* 等）时会整类抛错，
+     * 这里要兜住，不能让异常冒到摘取 provider 的调用方。
+     */
+    static int allByName(XposedModule m, Class<?> c, String name, Interceptor interceptor) {
+        Method[] methods;
+        try {
+            methods = c.getDeclaredMethods();
+        } catch (Throwable t) {
+            Logs.i("allByName scan fail " + c.getName() + "#" + name + " -> " + t);
+            return 0;
         }
+        int n = 0;
+        for (Method method : methods) {
+            if (!method.getName().equals(name)) continue;
+            try {
+                m.hook(method).intercept(interceptor::intercept);
+                n++;
+            } catch (Throwable ignored) {
+            }
+        }
+        return n;
     }
 
     /**
@@ -112,7 +132,7 @@ final class Hooks {
     static int hookBySignature(XposedModule m, java.util.List<String> classNames,
                                ClassLoader cl, MethodFilter filter, Interceptor interceptor) {
         int n = 0;
-        int broken = 0;
+        java.util.List<String> broken = new java.util.ArrayList<>();
         for (String name : classNames) {
             Method[] ms;
             try {
@@ -120,7 +140,7 @@ final class Hooks {
                 // （如 AutoValue 生成的 javax.lang.model.element.*）会整类抛错
                 ms = Class.forName(name, false, cl).getDeclaredMethods();
             } catch (Throwable t) {
-                broken++;
+                broken.add(name);
                 continue;
             }
             for (Method method : ms) {
@@ -138,7 +158,11 @@ final class Hooks {
                 }
             }
         }
-        if (broken > 0) Logs.i("hookBySignature skipped classes=" + broken);
+        // 记前几个类名：只知道数量时，排查「哪一类没挂上」还得从头再扫一遍
+        if (!broken.isEmpty()) {
+            Logs.i("hookBySignature skipped=" + broken.size()
+                    + " " + broken.subList(0, Math.min(5, broken.size())));
+        }
         return n;
     }
 
