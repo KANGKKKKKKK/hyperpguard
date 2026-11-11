@@ -194,6 +194,13 @@ build.sh              一键构建
 
 ## 更新日志
 
+### 1.6.11
+
+- 新增 MSA 开屏广告拦截（`requestSplashScreen` 返回空 Intent）
+- 新增网络管理服务（`com.miui.wmsvc`）与 AI 内容识别（`com.xiaomi.aicr`）的 OneTrack 收口
+- 新增四个预装输入法的统计埋点拦截：搜狗（含 `ClipboardLogHelper` 剪贴板记录）、小米（OneTrack）、百度（`com.baidu.stats` + 语音 ASR）、讯飞（`com.iflytek.statssdk`）
+- 输入法拦截排除 `init` / `set` / `start` / `register` 等控制方法；百度语音上传默认关
+
 ### 1.6.10
 
 - 修复组开关点击方向相反：开着的组点「关」会请求加入作用域，关着的组点「开」会请求移出；1.6.5–1.6.9 均受影响
@@ -214,11 +221,6 @@ build.sh              一键构建
 
 - 首次启动条款确认：摘要弹窗、版本号落盘，确认后不再弹出
 - 「关于」区域去掉多余按压反馈
-
-### 1.6.6
-
-- 安装器云端配置补 `/v3/cloud_config/query`（5.4.x 改走 v3，之前只拦 v2），「未查询到备案」提示不再出现
-- `api.ad.xiaomi.com` 等三条纯域名规则不再受「路径特征拦截」开关影响
 
 更早版本见 [Releases](https://github.com/vivibibi30/hyperpguard/releases) 与 `docs/RELEASE-<版本>.md`。
 
