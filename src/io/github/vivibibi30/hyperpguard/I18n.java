@@ -276,6 +276,17 @@ final class I18n {
         EN.put("广告埋点上报", "Ad event tracking");
         EN.put("OneTrack 的 track / adTrack 方法直接返回空",
                 "OneTrack track / adTrack methods return immediately");
+        EN.put("开屏广告", "Splash ads");
+        EN.put("requestSplashScreen 系列返回空 Intent；应用自己的启动页不受影响",
+                "requestSplashScreen returns a null Intent; the app's own launch screen is untouched");
+        EN.put("网络管理服务", "Network manager");
+        EN.put("诊断统计上报", "Diagnostics upload");
+        EN.put("OneTrack 埋点 + tracking.miui.com；只影响统计，不影响网络设置与信号",
+                "OneTrack + tracking.miui.com; statistics only, network settings unaffected");
+        EN.put("AI 内容识别", "AI content recognition");
+        EN.put("统计埋点", "Event tracking");
+        EN.put("OneTrack 埋点 + tracking.miui.com；不影响本地识别与模型推理",
+                "OneTrack + tracking.miui.com; local recognition and inference stay intact");
         EN.put("删除", "Delete");
         EN.put("还没有规则", "No rules yet");
         EN.put("添加或删除后需要重启对应应用才生效", "Restart the target app after adding or removing a rule");

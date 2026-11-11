@@ -80,7 +80,9 @@
 | 小米统计 | `com.miui.analytics` | 整域 + DoH 旁路；默认整进程断网 |
 | 应用安装器 | `com.miui.packageinstaller` | AVL 上报、活跃统计、安装页广告位 |
 | 应用商店 | `com.xiaomi.market` | 广告配置下发、OneTrack 统计上报（`tracking.miui.com/track/`） |
-| 广告组件 | `com.miui.systemAdSolution` | 广告使用画像（今日是否打开 / 最后使用时间）、OneTrack 埋点；域名层默认不拦。勾选作用域后要点一次卡片上的「重启」，旧进程不会自动补注入 |
+| 广告组件 | `com.miui.systemAdSolution` | 广告使用画像（今日是否打开 / 最后使用时间）、OneTrack 埋点、开屏广告（`requestSplashScreen` 返回空 Intent）；域名层默认不拦。勾选作用域后要点一次卡片上的「重启」，旧进程不会自动补注入 |
+| 网络管理服务 | `com.miui.wmsvc` | 诊断类 OneTrack 埋点、`tracking.*.miui.com`；只影响统计 |
+| AI 内容识别 | `com.xiaomi.aicr` | OneTrack 埋点；本地识别与推理不受影响 |
 | 小米服务框架 | `com.xiaomi.xmsf` | 广告接口、OneTrack 统计上报（`tracking.miui.com/track/`） |
 | 运营商服务 | `com.xiaomi.registration` | 明文 CTEI 上报（默认拦）、设备注册（默认关）；定位 / 基站默认关 |
 | 移动 DM | `com.miui.dmregservice` | `fxltsbl.com` 上报、App 清单、SIM 标识；基站 / Wi-Fi 扫描默认关 |

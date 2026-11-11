@@ -48,6 +48,8 @@ public final class Config {
     public static final String K_G_AD_MARKET = "g_ad_market";
     public static final String K_G_AD_XMSF = "g_ad_xmsf";
     public static final String K_G_MSA = "g_msa";
+    public static final String K_G_WM = "g_wmsvc";
+    public static final String K_G_AICR = "g_aicr";
 
     /* SystemHelper */
     public static final String K_SYSHELPER = "block_syshelper";
@@ -71,6 +73,16 @@ public final class Config {
     public static final String K_MSA_USAGE = "block_msa_usage";
     /** 广告埋点：OneTrack 的 track / adTrack 方法 */
     public static final String K_MSA_TRACK = "block_msa_track";
+    /** 开屏广告：requestSplashScreen 系列返回空 Intent */
+    public static final String K_MSA_SPLASH = "block_msa_splash";
+
+    /* 网络管理服务（com.miui.wmsvc） */
+    /** OneTrack 诊断埋点 + tracking.miui.com */
+    public static final String K_WM_TRACK = "block_wmsvc_track";
+
+    /* AI 内容识别（com.xiaomi.aicr） */
+    /** OneTrack 埋点 + tracking.miui.com */
+    public static final String K_AICR_TRACK = "block_aicr_track";
 
     /* 翻译组件 */
     public static final String K_AIASST = "block_aiasst";
