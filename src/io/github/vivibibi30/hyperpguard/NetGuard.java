@@ -38,8 +38,8 @@ final class NetGuard {
 
     void install(ClassLoader cl, final String tag, final List<Rule> rules,
                  final boolean strictAll) {
-        final boolean pathOn = Config.on(Config.K_PATH, true);
-        final boolean sniffOn = Config.on(Config.K_SNIFF, false);
+        final boolean pathOn = Config.on(Config.K_PATH);
+        final boolean sniffOn = Config.on(Config.K_SNIFF);
 
         try {
             Method open = URL.class.getDeclaredMethod("openConnection");

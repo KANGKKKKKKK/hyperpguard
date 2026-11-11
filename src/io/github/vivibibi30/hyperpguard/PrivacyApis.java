@@ -81,7 +81,7 @@ final class PrivacyApis {
         if (caps != null) {
             int on = 0;
             for (String k : caps) {
-                if (!Config.on(k, false)) continue;
+                if (!Config.on(k)) continue;
                 on++;
                 if (k.startsWith("loc_")) hookLocation(cl);
                 else if (k.startsWith("cell_")) hookCell(cl);

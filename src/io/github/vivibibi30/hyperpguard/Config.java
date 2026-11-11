@@ -149,10 +149,18 @@ public final class Config {
     public static final String K_SOGOU_PINGBACK = "block_sogou_pingback";
     /** 剪贴板采集：ClipboardLogHelper */
     public static final String K_SOGOU_CLIPBOARD = "block_sogou_clipboard";
+    /** 1.6.12 的两个统计域名键：1.6.13 起并入 K_SOGOU_PINGBACK，仅用于升级迁移 */
+    @Deprecated
+    public static final String K_SOGOU_KPI2_OLD = "block_sogou_kpi2";
+    @Deprecated
+    public static final String K_SOGOU_INSTANT_OLD = "block_sogou_instant";
 
     /* 小米输入法 */
     /** OneTrack 埋点：方法层 + tracking/sdkconfig 域名（自研击键统计无稳定域名，不在此列） */
     public static final String K_MITYPE_TRACK = "block_mitype_track";
+    /** 1.6.12 的域名单独开关：1.6.13 起并入 K_MITYPE_TRACK，仅用于升级迁移 */
+    @Deprecated
+    public static final String K_MITYPE_HOSTS_OLD = "block_mitype_hosts";
 
     /* 百度输入法小米版 */
     /** com.baidu.stats 统计 SDK */
@@ -163,6 +171,219 @@ public final class Config {
     /* 讯飞输入法小米版 */
     /** com.iflytek.statssdk 统计 SDK */
     public static final String K_IFLYTEK_STATS = "block_iflytek_stats";
+
+    /**
+     * 各开关的默认值：全仓唯一一份。
+     *
+     * 界面（MainActivity 的 Item 与开关行）和 hook 侧（HookEntry / NetGuard / PrivacyApis）
+     * 都通过 def(key) / on(key) 取值，调用点不再写 true / false 字面量。此前的两份默认值
+     * 漂过一次：1.6.12 把搜狗剪贴板的界面默认值改成关闭，hook 侧仍是 true，结果界面显示
+     * 「关」而实际一直在拦截。
+     */
+    private static final java.util.Map<String, Boolean> DEFAULTS = new java.util.HashMap<>();
+
+    static {
+        // 全局
+        DEFAULTS.put(K_MASTER, true);
+        DEFAULTS.put(K_PATH, true);
+        DEFAULTS.put(K_SNIFF, false);
+
+        // 敏感数据：按应用独立，默认全部关闭
+        DEFAULTS.put(K_LOC_SH, false);
+        DEFAULTS.put(K_CELL_SH, false);
+        DEFAULTS.put(K_WIFI_SH, false);
+        DEFAULTS.put(K_LOC_REG, false);
+        DEFAULTS.put(K_CELL_REG, false);
+        DEFAULTS.put(K_LOC_GP, false);
+        DEFAULTS.put(K_WIFI_GP, false);
+        DEFAULTS.put(K_SOCIAL_GP, false);
+        DEFAULTS.put(K_LOC_SC, false);
+        DEFAULTS.put(K_SOCIAL_SC, false);
+        DEFAULTS.put(K_CELL_DM, false);
+        DEFAULTS.put(K_WIFI_DM, false);
+
+        // 分组总开关
+        DEFAULTS.put(K_G_IME_SOGOU, true);
+        DEFAULTS.put(K_G_IME_MITYPE, true);
+        DEFAULTS.put(K_G_IME_BAIDU, true);
+        DEFAULTS.put(K_G_IME_IFLYTEK, true);
+        DEFAULTS.put(K_G_SYSHELPER, true);
+        DEFAULTS.put(K_G_GUARD, true);
+        DEFAULTS.put(K_G_TRUST, true);
+        DEFAULTS.put(K_G_ANALYTICS, true);
+        DEFAULTS.put(K_G_AIASST, true);
+        DEFAULTS.put(K_G_SECCENTER, true);
+        DEFAULTS.put(K_G_PKG, true);
+        DEFAULTS.put(K_G_AD_MARKET, true);
+        DEFAULTS.put(K_G_AD_XMSF, true);
+        DEFAULTS.put(K_G_MSA, true);
+        DEFAULTS.put(K_G_WM, true);
+        DEFAULTS.put(K_G_AICR, true);
+
+        // SystemHelper
+        DEFAULTS.put(K_SYSHELPER, true);
+
+        // guardprovider
+        DEFAULTS.put(K_GUARD_APPLIST, true);
+        DEFAULTS.put(K_GUARD_AIGC, true);
+        DEFAULTS.put(K_GUARD_FRAUD, true);
+
+        // trustservice
+        DEFAULTS.put(K_TRUST, false);
+
+        // analytics
+        DEFAULTS.put(K_ANALYTICS, true);
+        DEFAULTS.put(K_ANALYTICS_DOH, true);
+        DEFAULTS.put(K_ANALYTICS_ALLNET, true);
+        DEFAULTS.put(K_SYSHELPER_ALLNET, false);
+
+        // MSA 广告组件
+        DEFAULTS.put(K_MSA_USAGE, true);
+        DEFAULTS.put(K_MSA_TRACK, true);
+        DEFAULTS.put(K_MSA_SPLASH, true);
+
+        // 网络管理服务（com.miui.wmsvc）
+        DEFAULTS.put(K_WM_TRACK, true);
+
+        // AI 内容识别（com.xiaomi.aicr）
+        DEFAULTS.put(K_AICR_TRACK, true);
+
+        // 翻译组件
+        DEFAULTS.put(K_AIASST, false);
+
+        // 安全中心
+        DEFAULTS.put(K_SECCENTER, true);
+        DEFAULTS.put(K_SC_VIRUS, false);
+        DEFAULTS.put(K_SC_FRAMEWORK, false);
+        DEFAULTS.put(K_SC_DATA, false);
+        DEFAULTS.put(K_SC_APPCLASS, false);
+        DEFAULTS.put(K_SC_VOLUNTEER, true);
+        DEFAULTS.put(K_SC_LOCATION, false);
+        DEFAULTS.put(K_SC_ADB, false);
+        DEFAULTS.put(K_SC_DBGUARD, true);
+        DEFAULTS.put(K_SC_IDS, false);
+        DEFAULTS.put(K_SC_MISC, true);
+        DEFAULTS.put(K_SC_TRACKING, true);
+        DEFAULTS.put(K_GP_ENGINELOG, true);
+        DEFAULTS.put(K_GP_CLOUDSCAN, false);
+        DEFAULTS.put(K_GP_SCREENGUARD, true);
+        DEFAULTS.put(K_TRUST_FIND, false);
+        DEFAULTS.put(K_G_REGISTRATION, true);
+        DEFAULTS.put(K_G_DMREG, true);
+        DEFAULTS.put(K_G_MISIGHT, true);
+        DEFAULTS.put(K_MISIGHT_UPLOAD, true);
+        DEFAULTS.put(K_MISIGHT_MQSAS, true);
+        DEFAULTS.put(K_MISIGHT_KEFU, true);
+        DEFAULTS.put(K_MISIGHT_EVENTLOG, true);
+        DEFAULTS.put(K_DMREG, true);
+        DEFAULTS.put(K_REG_ZZHC, false);
+        DEFAULTS.put(K_REG_TYPDM, true);
+        DEFAULTS.put(K_XSOF, true);
+
+        // 安装器
+        DEFAULTS.put(K_PKG_AVL, true);
+        DEFAULTS.put(K_PKG_STAT, true);
+        DEFAULTS.put(K_AD_PKG, true);
+        DEFAULTS.put(K_PKG_OAID, true);
+        DEFAULTS.put(K_PKG_CLOUD, true);
+        DEFAULTS.put(K_PKG_RISK, false);
+        DEFAULTS.put(K_PKG_GAME, false);
+
+        // 广告
+        DEFAULTS.put(K_AD_MARKET, true);
+        DEFAULTS.put(K_AD_XMSF, true);
+        DEFAULTS.put(K_MARKET_TRACK, true);
+        DEFAULTS.put(K_XMSF_TRACK, true);
+
+        // 搜狗输入法小米版
+        DEFAULTS.put(K_SOGOU_PINGBACK, true);
+        DEFAULTS.put(K_SOGOU_CLIPBOARD, false);
+
+        // 小米输入法
+        DEFAULTS.put(K_MITYPE_TRACK, true);
+
+        // 百度输入法小米版
+        DEFAULTS.put(K_BAIDU_STATS, true);
+        DEFAULTS.put(K_BAIDU_SPEECH, false);
+
+        // 讯飞输入法小米版
+        DEFAULTS.put(K_IFLYTEK_STATS, true);
+    }
+
+    /** 某个键的默认值；未登记的键按 false 处理，并记一条日志便于自查 */
+    public static boolean def(String key) {
+        Boolean v = DEFAULTS.get(key);
+        if (v == null) {
+            Logs.i("config default missing: " + key);
+            return false;
+        }
+        return v;
+    }
+
+    /* ---------------- 版本迁移 ---------------- */
+
+    /** 迁移标记：每个迁移只跑一次。放在独立偏好里，不跟着 pg 一起同步进 Settings */
+    private static final String K_MIGRATED_1613 = "migrated_1613";
+    private static final String PREFS_MIGRATION = "pg_migration";
+
+    /**
+     * 1.6.13 把三个开关并进两个，旧键不再被读取。升级时把旧键上的选择搬过去：
+     * 旧键里只要有一个被关掉，新键就取关——用户关过其中一条，说明他不想让这条链路继续。
+     * 新键已经写过值时不动（说明升级后用户自己改过，以现值为准）。
+     *
+     * 迁移在模块界面启动时执行：hook 侧只读配置，没有写入口。
+     */
+    public static void migrateLegacyKeys(Context ctx) {
+        SharedPreferences done = ctx.getSharedPreferences(PREFS_MIGRATION, Context.MODE_PRIVATE);
+        SharedPreferences sp = ui(ctx);
+        // 迁移标记不该跟着 pg 同步进 Settings：1.6.13 测试期内曾写在这里，见到就清掉
+        if (sp.contains(K_MIGRATED_1613)) sp.edit().remove(K_MIGRATED_1613).apply();
+        if (done.getBoolean(K_MIGRATED_1613, false)) return;
+        mergeLegacy(ctx, sp, "sogou pingback",
+                new String[]{K_SOGOU_KPI2_OLD, K_SOGOU_INSTANT_OLD}, K_SOGOU_PINGBACK);
+        mergeLegacy(ctx, sp, "mitype hosts",
+                new String[]{K_MITYPE_HOSTS_OLD}, K_MITYPE_TRACK);
+        done.edit().putBoolean(K_MIGRATED_1613, true).apply();
+    }
+
+    private static void mergeLegacy(Context ctx, SharedPreferences sp, String what,
+                                    String[] olds, String now) {
+        if (sp.contains(now) || settingsValue(ctx, now) != null) {
+            Logs.i("migrate skip " + what + ": " + now + " already set");
+            return;
+        }
+        Boolean merged = null;
+        for (String old : olds) {
+            Boolean v = sp.contains(old) ? Boolean.valueOf(sp.getBoolean(old, false))
+                    : settingsValue(ctx, old);
+            if (v == null) continue;
+            merged = merged == null ? v : Boolean.valueOf(merged && v);
+        }
+        if (merged == null) {
+            Logs.i("migrate skip " + what + ": no legacy key");
+            return;
+        }
+        Logs.i("migrate " + what + " -> " + now + " = " + merged);
+        uiSet(ctx, now, merged);
+    }
+
+    /** Settings.Global 里那份配置的某个键；没有这个键时返回 null */
+    private static Boolean settingsValue(Context ctx, String key) {
+        try {
+            String all = android.provider.Settings.Global.getString(
+                    ctx.getContentResolver(), GLOBAL_KEY);
+            if (all == null || all.isEmpty()) return null;
+            for (String kv : all.split("\\|")) {
+                int i = kv.indexOf('=');
+                if (i > 0 && key.equals(kv.substring(0, i).trim())) {
+                    return Boolean.valueOf("true".equals(kv.substring(i + 1).trim()));
+                }
+            }
+        } catch (Throwable t) {
+            Logs.i("settings read fail: " + key + " -> " + t);
+        }
+        return null;
+    }
 
     private Config() {
     }
@@ -281,7 +502,7 @@ public final class Config {
     /* ---------------- Hook 侧 ---------------- */
 
     public static boolean masterOn() {
-        return on(K_MASTER, true);
+        return on(K_MASTER);
     }
 
     /** 唯一的对外写入：Settings.Global 下的一个自定义 key */
@@ -412,9 +633,10 @@ public final class Config {
         return REMOTE.size();
     }
 
-    public static boolean on(String key, boolean fallback) {
+    /** hook 侧读取开关：配置里没有这个键时取 DEFAULTS 里的默认值 */
+    public static boolean on(String key) {
         Boolean v = REMOTE.get(key);
-        return v == null ? fallback : v;
+        return v == null ? def(key) : v;
     }
 
     public static boolean strict() {

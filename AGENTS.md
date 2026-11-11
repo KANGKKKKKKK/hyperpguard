@@ -18,7 +18,8 @@ sh scripts/check_structure.sh   # 静态一致性自查，几秒钟
 - **注入的 dex 尽量保持精简**：它会被加载进十几个系统进程，现在只有 libxposed service 一项必需三方组件，加库前先想想是否值得
 - **类名不要写死**：混淆名每个版本都会漂，能按「修饰符 + 参数类型 + 返回类型 + 声明类所在包」判定就别硬编码
 - **失败要留痕**：hook 失败打 `hook miss ...`，扫描中断打 `... skipped classes=N`，不要静默吞掉
-- **文案与日志统一**：日志 tag 用 `HyperPGuard`，中文为默认文案，英文在 `I18n.java` 查表
+- **默认值只写一处**：新开关的默认值登记在 `Config.DEFAULTS`，界面与 hook 侧都取 `Config.def(key)` / `Config.on(key)`，调用点不要写 `true` / `false`。两处各写一份会漂——1.6.12 把搜狗剪贴板的界面默认值改成关闭时漏改 hook 侧，界面显示「关」而实际一直在拦
+- **文案与日志统一**：日志 tag 用 `HyperPGuard`，中文为默认文案，英文在 `I18n.java` 查表；同一个中文键只登记一次，重复的行后者会覆盖前者
 - **界面复用现成的**：卡片 `card()`、分组行 `sectionRow()`、开关 `PgSwitch`、弹窗 `showStyled()`，别再造一套
 
 ## 加一个新组件时，这六处通常都要动
