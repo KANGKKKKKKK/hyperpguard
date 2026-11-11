@@ -74,22 +74,15 @@ final class PgSwitch extends Switch {
         if (toggleRequest == null) return super.onTouchEvent(event);
         if (event.getActionMasked() == android.view.MotionEvent.ACTION_UP && isEnabled()) {
             performClick();
+            toggleRequest.onRequest(!isChecked());
         }
         return true;
     }
 
-    /**
-     * 有 toggleRequest 时只上报目标状态，不切换自身。
-     * 旧实现先 super.performClick()（Switch 会就地翻转）再取反，导致上报的是翻转后的反值：
-     * 开着的组点一下变成「请求加入作用域」，关着的组点一下变成「请求移出」，方向正好相反。
-     */
     @Override
     public boolean performClick() {
-        if (toggleRequest != null) {
-            toggleRequest.onRequest(!isChecked());
-            return true;
-        }
-        return super.performClick();
+        super.performClick();
+        return true;
     }
 
     /** 直接落位，不播放动画：用于回滚与作用域同步 */
