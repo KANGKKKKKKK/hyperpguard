@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Structure check
-        run: sh scripts/check_structure.sh
+        run: sh scripts/check_structure.sh --strict
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
